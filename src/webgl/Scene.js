@@ -16,14 +16,24 @@ import { paletteColors, paletteNames, palettes } from './palettes.js';
 // Default look — slow and languid, low-frequency two-tone field (see spec:
 // "Motion feel — this matters most").
 const DEFAULTS = {
-  speed: 0.15, // morph speed — how fast the cells reshape
-  scale: 1.7, // cell/channel density (low = big cells)
-  thick: 0.09, // channel (bright core) width
-  glow: 3.0, // warm-glow spread beyond the core
-  smoke: 0.12, // wispy turbulence in the glow
-  grain: 0.05, // subtle film grain
-  palette: 'pinkCream',
+  speed: 0.18, // morph speed — how fast the cells reshape
+  scale: 1.55, // cell/channel density (low = big cells)
+  thick: 0.15, // channel (bright core) width
+  glow: 3.4, // warm-glow spread beyond the core
+  smoke: 0.22, // wispy turbulence in the glow
+  grain: 0.12, // subtle film grain
+  palette: 'bluePurple',
 };
+
+// Palette transition: a wavefront (driven by the shader's uMix) that expands
+// outward from the channel centres, so the new palette flows out from the core
+// through the field. PALETTE_FADE is how long that outward flow takes.
+const PALETTE_FADE = 1.8; // seconds for the front to sweep the whole field
+
+// Mouse-move speed boost: moving the pointer temporarily accelerates the morph,
+// decaying back to normal speed once the pointer stops.
+const MOUSE_BOOST = 2.4; // extra speed multiplier at full boost (rate = 1 + this)
+const MOUSE_BOOST_DECAY = 0.4; // seconds — how quickly the boost fades out
 
 /**
  * Full-screen animated gooey gradient background rendered with a Three.js
@@ -36,8 +46,10 @@ export default class Scene {
 
     // Manual time source (rather than THREE.Clock) so we can pause on tab-hide
     // and resume without the shader time jumping forward by the hidden span.
-    this.time = 0; // seconds of animation elapsed, fed to uTime
+    this.time = 0; // shader animation time, fed to uTime
+    this.realTime = 0; // true elapsed seconds (drives palette-fade timing)
     this.lastTime = performance.now();
+    this.speedBoost = 0; // extra morph-speed multiplier from pointer movement
 
     this.renderer = new WebGLRenderer({ canvas, antialias: true });
     // Output raw shader values so the sampled palette hex renders faithfully
@@ -71,6 +83,13 @@ export default class Scene {
         uColorC: { value: colorC },
         uColorD: { value: colorD },
         uColorE: { value: colorE },
+        // Target palette + transition front (idle: target == current, uMix 0).
+        uColorA2: { value: colorA.clone() },
+        uColorB2: { value: colorB.clone() },
+        uColorC2: { value: colorC.clone() },
+        uColorD2: { value: colorD.clone() },
+        uColorE2: { value: colorE.clone() },
+        uMix: { value: 0 },
       },
     });
 
@@ -81,9 +100,11 @@ export default class Scene {
     this.tick = this.tick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
+    this.onPointerMove = this.onPointerMove.bind(this);
 
     window.addEventListener('resize', this.resize);
     window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('pointermove', this.onPointerMove);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.resize();
     this.renderer.setAnimationLoop(this.tick);
@@ -96,16 +117,46 @@ export default class Scene {
     }
   }
 
-  /** Swap the active palette at runtime without recompiling the shader. */
+  /**
+   * Swap the active palette at runtime. Sets the target-palette uniforms and
+   * animates the shader's uMix 0 → 1, expanding a wavefront outward from the
+   * channel centres so the new palette flows out from the core. tick() advances
+   * uMix and commits the target as the new base when the front completes.
+   */
   setPalette(name) {
-    if (!palettes[name]) return;
+    if (!palettes[name] || name === this.paletteName) return;
+
+    const u = this.material.uniforms;
+    // If a transition is still running, commit its target as the new base so
+    // this one starts cleanly from the palette we were heading toward.
+    if (this.paletteMix) this.commitPalette();
+
     this.paletteName = name;
-    const [colorA, colorB, colorC, colorD, colorE] = paletteColors(name);
-    this.material.uniforms.uColorA.value.copy(colorA);
-    this.material.uniforms.uColorB.value.copy(colorB);
-    this.material.uniforms.uColorC.value.copy(colorC);
-    this.material.uniforms.uColorD.value.copy(colorD);
-    this.material.uniforms.uColorE.value.copy(colorE);
+    const [a, b, c, d, e] = paletteColors(name);
+    u.uColorA2.value.copy(a);
+    u.uColorB2.value.copy(b);
+    u.uColorC2.value.copy(c);
+    u.uColorD2.value.copy(d);
+    u.uColorE2.value.copy(e);
+    u.uMix.value = 0;
+    this.paletteMix = { start: this.realTime };
+  }
+
+  /** Fold the target palette into the base colours and end the transition. */
+  commitPalette() {
+    const u = this.material.uniforms;
+    u.uColorA.value.copy(u.uColorA2.value);
+    u.uColorB.value.copy(u.uColorB2.value);
+    u.uColorC.value.copy(u.uColorC2.value);
+    u.uColorD.value.copy(u.uColorD2.value);
+    u.uColorE.value.copy(u.uColorE2.value);
+    u.uMix.value = 0;
+    this.paletteMix = null;
+  }
+
+  /** Moving the pointer accelerates the morph; tick() decays it back down. */
+  onPointerMove() {
+    this.speedBoost = MOUSE_BOOST;
   }
 
   /** Number keys 1..N cycle through the named palettes. */
@@ -138,10 +189,25 @@ export default class Scene {
     const now = performance.now();
     const dt = (now - this.lastTime) / 1000;
     this.lastTime = now;
+    this.realTime += dt;
 
-    // Render every frame (full display refresh rate), advancing animation time
-    // continuously so motion speed stays correct across a pause/resume.
-    this.time += dt;
+    // Decay the pointer-move boost, then advance time at the boosted rate so the
+    // morph surges while the mouse moves and settles back when it stops.
+    this.speedBoost *= Math.exp(-dt / MOUSE_BOOST_DECAY);
+    this.time += dt * (1 + this.speedBoost);
+
+    // Palette wavefront: advance uMix so the shader's front sweeps outward. When
+    // it reaches the edge, fold the target into the base colours.
+    if (this.paletteMix) {
+      const t = (this.realTime - this.paletteMix.start) / PALETTE_FADE;
+      if (t >= 1) {
+        this.commitPalette();
+      } else {
+        // Linear — the shader's FRONT_CURVE shapes how the front grows.
+        this.material.uniforms.uMix.value = t;
+      }
+    }
+
     this.material.uniforms.uTime.value = this.time;
     this.renderer.render(this.scene, this.camera);
   }
@@ -150,6 +216,7 @@ export default class Scene {
     this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('pointermove', this.onPointerMove);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.mesh.geometry.dispose();
     this.material.dispose();

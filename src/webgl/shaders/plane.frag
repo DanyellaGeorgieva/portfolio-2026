@@ -24,6 +24,15 @@ uniform vec3 uColorB; // background — high
 uniform vec3 uColorC; // outer rim — deep/warm, where glow meets background
 uniform vec3 uColorD; // mid glow — warm amber
 uniform vec3 uColorE; // channel centre — bright
+// Target palette during a transition, plus the front position uMix (0 = show
+// current palette everywhere, 1 = show target everywhere). The front expands
+// outward from the channel centres, so the new palette flows out from the core.
+uniform vec3 uColorA2;
+uniform vec3 uColorB2;
+uniform vec3 uColorC2;
+uniform vec3 uColorD2;
+uniform vec3 uColorE2;
+uniform float uMix;
 
 varying vec2 vUv;
 
@@ -104,6 +113,16 @@ float grainHash(vec2 p) {
   return fract((p3.x + p3.y) * p3.z);
 }
 
+// Build the cross-section colour for one palette from the band masks:
+// background gradient → rim (smoke) → mid glow → bright centre.
+vec3 assemble(vec3 cA, vec3 cB, vec3 cC, vec3 cD, vec3 cE,
+              float bgT, float glow, float glowMid, float core) {
+  vec3 col = mix(mix(cA, cB, bgT), cC, glow);
+  col = mix(col, cD, glowMid);
+  col = mix(col, cE, core);
+  return col;
+}
+
 void main() {
   // Aspect-correct UVs so the cells keep their proportions.
   vec2 uv = vUv;
@@ -124,12 +143,29 @@ void main() {
 
   // Background colored gradient, slowly varying across space (static).
   float bgT = clamp(0.5 + 0.5 * fbm(p * 0.5 + 4.0), 0.0, 1.0);
-  vec3 base = mix(uColorA, uColorB, bgT);
 
-  // Cross-section gradient: background → red rim → amber → bright centre.
-  vec3 color = mix(base, uColorC, glow);      // pink → deep red rim (outer edge)
-  color = mix(color, uColorD, glowMid);       // red → warm amber
-  color = mix(color, uColorE, core);          // amber → bright centre
+  // Assemble the current and target palettes for this pixel...
+  vec3 colFrom = assemble(uColorA, uColorB, uColorC, uColorD, uColorE,
+                          bgT, glow, glowMid, core);
+  vec3 colTo = assemble(uColorA2, uColorB2, uColorC2, uColorD2, uColorE2,
+                        bgT, glow, glowMid, core);
+
+  // ...then reveal the target behind a soft front that expands outward from the
+  // channel centres (d = 0) into the field (d ≈ 1) as uMix goes 0 → 1. Pixels the
+  // front has passed (d < front) show the new palette; the moving boundary is the
+  // outward "flow". EDGE softens the boundary; the +EDGE bias guarantees full
+  // coverage at uMix = 1.
+  const float EDGE = 0.35;
+  // FRONT_CURVE < 1 races the front through the centre and slows it outward, so
+  // the inner colour transitions quickly and the outer field lingers behind it.
+  const float FRONT_CURVE = 0.7;
+  // Sweep the front from -EDGE (nothing revealed) to 1+EDGE (all revealed).
+  // Starting below zero means even the centre-line (d = 0) passes through the
+  // soft EDGE window, so every colour — the inner core included — cross-fades
+  // old→new as the front reaches it, instead of snapping.
+  float front = mix(-EDGE, 1.0 + EDGE, pow(uMix, FRONT_CURVE));
+  float reveal = smoothstep(front, front + EDGE, d); // 0 = new (reached), 1 = old
+  vec3 color = mix(colTo, colFrom, reveal);
 
   // Film grain — animated per frame (non-diagonal offset) so it shimmers.
   float g = grainHash(gl_FragCoord.xy + fract(uTime) * vec2(137.0, 291.0)) - 0.5;
