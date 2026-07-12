@@ -11,10 +11,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Media (keep large/copyrighted assets out of the repo)
-*.mp4
-*.mov
-
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json

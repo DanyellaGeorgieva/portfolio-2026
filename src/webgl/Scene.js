@@ -30,11 +30,6 @@ const DEFAULTS = {
 // through the field. PALETTE_FADE is how long that outward flow takes.
 const PALETTE_FADE = 1.8; // seconds for the front to sweep the whole field
 
-// Mouse-move speed boost: moving the pointer temporarily accelerates the morph,
-// decaying back to normal speed once the pointer stops.
-const MOUSE_BOOST = 2.4; // extra speed multiplier at full boost (rate = 1 + this)
-const MOUSE_BOOST_DECAY = 0.4; // seconds — how quickly the boost fades out
-
 /**
  * Full-screen animated gooey gradient background rendered with a Three.js
  * ShaderMaterial. All visual logic lives in plane.frag; this class only sets
@@ -49,7 +44,6 @@ export default class Scene {
     this.time = 0; // shader animation time, fed to uTime
     this.realTime = 0; // true elapsed seconds (drives palette-fade timing)
     this.lastTime = performance.now();
-    this.speedBoost = 0; // extra morph-speed multiplier from pointer movement
 
     this.renderer = new WebGLRenderer({ canvas, antialias: true });
     // Output raw shader values so the sampled palette hex renders faithfully
@@ -100,11 +94,9 @@ export default class Scene {
     this.tick = this.tick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
-    this.onPointerMove = this.onPointerMove.bind(this);
 
     window.addEventListener('resize', this.resize);
     window.addEventListener('keydown', this.onKeyDown);
-    window.addEventListener('pointermove', this.onPointerMove);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     this.resize();
     this.renderer.setAnimationLoop(this.tick);
@@ -154,11 +146,6 @@ export default class Scene {
     this.paletteMix = null;
   }
 
-  /** Moving the pointer accelerates the morph; tick() decays it back down. */
-  onPointerMove() {
-    this.speedBoost = MOUSE_BOOST;
-  }
-
   /** Number keys 1..N cycle through the named palettes. */
   onKeyDown(event) {
     const index = Number(event.key) - 1;
@@ -191,10 +178,8 @@ export default class Scene {
     this.lastTime = now;
     this.realTime += dt;
 
-    // Decay the pointer-move boost, then advance time at the boosted rate so the
-    // morph surges while the mouse moves and settles back when it stops.
-    this.speedBoost *= Math.exp(-dt / MOUSE_BOOST_DECAY);
-    this.time += dt * (1 + this.speedBoost);
+    // Shader time advances at a constant rate.
+    this.time += dt;
 
     // Palette wavefront: advance uMix so the shader's front sweeps outward. When
     // it reaches the edge, fold the target into the base colours.
@@ -216,7 +201,6 @@ export default class Scene {
     this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown);
-    window.removeEventListener('pointermove', this.onPointerMove);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.mesh.geometry.dispose();
     this.material.dispose();

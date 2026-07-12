@@ -37,8 +37,9 @@ body {
   &__title {
     font-size: 7rem;
     font-weight: 700;
-    color: #1e1424;
+    color: #fff;
     letter-spacing: -0.2rem;
+    mix-blend-mode: exclusion;
 
     @media (max-width: $bp-tablet) {
       font-size: 4.5rem;

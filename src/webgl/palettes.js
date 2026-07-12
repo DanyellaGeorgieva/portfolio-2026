@@ -1,27 +1,31 @@
 import { Vector3 } from "three";
 
 /**
- * Named palettes for the gooey gradient background. Each is five sRGB hex stops,
+ * Named palettes for the gooey gradient background. Each is four sRGB hex stops,
  * in this order — think of them as the visual layers, front to back:
  *
- *   [ background, background, smoke, glow, inner ]
- *      0           1          2      3     4
+ *   [ background, smoke, glow, inner ]
+ *      0          1      2     3
  *
- *   • background (0 & 1) — the soft two-tone field behind everything (low → high)
- *   • smoke      (2)     — the rim where the glow meets the background (wispy layer)
- *   • glow       (3)     — the warm mid halo around the channels
- *   • inner      (4)     — the bright core of the channel lines
+ *   • background (0) — the field behind everything
+ *   • smoke      (1) — the rim where the glow meets the background (wispy layer)
+ *   • glow       (2) — the warm mid halo around the channels
+ *   • inner      (3) — the bright core of the channel lines
  *
  * A channel's cross-section ramps background → smoke → glow → inner
  * (outer edge inward to the bright centre).
  */
+// Colours sampled from the reference (one hue stop per ~3.6s of its 18s
+// loop). Backgrounds are that frame's soft gradient tone; smoke/glow/inner are a
+// shared accent stream (blue→magenta→yellow→green→sky) windowed so each palette's
+// inner becomes the next one's glow — the colours flow outward on each step.
 export const palettes = {
-  //          background   background     smoke       glow          inner
-  bluePurple: ["#cbcdfe", "#e2e3f6", "#437fee", "#9676ed", "#fa94f5"], // bg green→lime · smoke deep green · glow lime · inner cream
-  pinkCream: ["#F8E9F2", "#F0CDE1", "#ef1ca9", "#dfa586", "#FFEAB8"], // bg pale pink · smoke magenta · glow rose · inner pale yellow
-  // greenYellow: ["#CEFAE5", "#98D0EF", "#9EEEC1", "#6aa0e0", "#9DB8F3"], // bg mint→sky · smoke green · glow blue · inner periwinkle
-  // blueGreen: ["#D9F7CD", "#ecfbe7", "#AAF8F4", "#AAF8F4", "#AAF8F4"], // bg pale aqua→teal · smoke deep teal · glow teal · inner bright aqua
-  // purpleBlue: ["#BEF9DD", "#e0f8ed", "#93DCE9", "#93DCE9", "#98AEF5"], // bg pale aqua→teal · smoke deep teal · glow teal · inner bright aqua
+  //          background    smoke            glow          inner
+  bluePurple: ["#ffffff",  "#3C98F3",  "#8F6CED", "#E694EF"], // periwinkle bg · sky · blue · magenta
+  pinkCream: ["#ffffff",   "#8F6CED",  "#E694EF", "#F4D499"], // peach bg · blue · magenta · yellow
+  greenYellow: ["#ffffff", "#E694EF",  "#F4D499", "#B1F8A1"], // yellow-green bg · magenta · yellow · green
+  blueGreen: ["#ffffff",   "#F4D499",  "#B1F8A1", "#3C98F3"], // mint bg · yellow · green · sky
+  purpleBlue: ["#ffffff",  "#B1F8A1",   "#3C98F3", "#8F6CED"], // periwinkle-blue bg · green · sky · blue
 };
 
 export const paletteNames = Object.keys(palettes);
@@ -36,7 +40,13 @@ function hexToVec3(hex) {
   );
 }
 
-/** Return the [bgLow, bgHigh, rim, glow, center] Vector3 colors for a palette. */
+/**
+ * Return the five layer colours the shader still expects, as Vector3s in 0..1:
+ * [background, background, smoke, glow, inner]. Palettes are authored with a
+ * single background, which we duplicate into both background slots — a flat
+ * background for now; split it back into two tones later to restore the depth.
+ */
 export function paletteColors(name) {
-  return palettes[name].map(hexToVec3);
+  const [bg, smoke, glow, inner] = palettes[name].map(hexToVec3);
+  return [bg, bg.clone(), smoke, glow, inner];
 }
