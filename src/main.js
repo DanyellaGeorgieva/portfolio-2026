@@ -24,3 +24,8 @@ document.querySelectorAll('.hero__nav a').forEach((link) => {
     scene.setPalette(PALETTE_QUEUE[paletteIndex]);
   });
 });
+
+// Say Hi → release a drift of iridescent heart bubbles rising up the screen.
+document
+  .querySelector('.hero__nav a[href="#contact"]')
+  ?.addEventListener('click', () => scene.releaseHearts());

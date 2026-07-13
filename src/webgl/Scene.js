@@ -12,6 +12,7 @@ import {
 import vertexShader from './shaders/plane.vert';
 import fragmentShader from './shaders/plane.frag';
 import { paletteColors, paletteNames, palettes } from './palettes.js';
+import Hearts from './Hearts.js';
 
 // Default look — slow and languid, low-frequency two-tone field (see spec:
 // "Motion feel — this matters most").
@@ -92,6 +93,10 @@ export default class Scene {
     this.mesh = new Mesh(new PlaneGeometry(2, 2), this.material);
     this.scene.add(this.mesh);
 
+    // Heart-bubble pass — its own scene + perspective camera, rendered over the
+    // gradient in tick(). Created before resize() so it can be sized too.
+    this.hearts = new Hearts();
+
     this.resize = this.resize.bind(this);
     this.tick = this.tick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
@@ -166,6 +171,12 @@ export default class Scene {
     this.renderer.setPixelRatio(1);
     this.renderer.setSize(w, h);
     this.material.uniforms.uResolution.value.set(w, h);
+    this.hearts.setSize(w, h);
+  }
+
+  /** Release a drift of rising heart bubbles (wired to the "Say Hi" link). */
+  releaseHearts(count = 8) {
+    this.hearts.release(count);
   }
 
   /** Stop rendering entirely while the tab is backgrounded; resume on return. */
@@ -201,7 +212,19 @@ export default class Scene {
     }
 
     this.material.uniforms.uTime.value = this.time;
+    this.hearts.update(dt, this.realTime);
+
+    // Pass 1: the gradient (clears the frame).
     this.renderer.render(this.scene, this.camera);
+
+    // Pass 2: heart bubbles composited on top. Keep the gradient's colour but
+    // clear depth so the ortho plane doesn't occlude the perspective hearts.
+    if (this.hearts.active) {
+      this.renderer.autoClear = false;
+      this.renderer.clearDepth();
+      this.renderer.render(this.hearts.scene, this.hearts.camera);
+      this.renderer.autoClear = true;
+    }
   }
 
   dispose() {
@@ -211,6 +234,7 @@ export default class Scene {
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.mesh.geometry.dispose();
     this.material.dispose();
+    this.hearts.dispose();
     this.renderer.dispose();
   }
 }
