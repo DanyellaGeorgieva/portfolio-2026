@@ -18,17 +18,17 @@ import { paletteColors, paletteNames, palettes } from './palettes.js';
 const DEFAULTS = {
   speed: 0.18, // morph speed — how fast the cells reshape
   scale: 1.55, // cell/channel density (low = big cells)
-  thick: 0.15, // channel (bright core) width
-  glow: 3.4, // warm-glow spread beyond the core
-  smoke: 0.22, // wispy turbulence in the glow
+  thick: 0.24, // channel (bright core) width
+  glow: 4.2, // warm-glow spread beyond the core
+  smoke: 0.26, // wispy turbulence in the glow
   grain: 0.12, // subtle film grain
-  palette: 'bluePurple',
+  palette: 'periwinkle',
 };
 
 // Palette transition: a wavefront (driven by the shader's uMix) that expands
 // outward from the channel centres, so the new palette flows out from the core
 // through the field. PALETTE_FADE is how long that outward flow takes.
-const PALETTE_FADE = 1.8; // seconds for the front to sweep the whole field
+const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
 
 /**
  * Full-screen animated gooey gradient background rendered with a Three.js
@@ -45,7 +45,9 @@ export default class Scene {
     this.realTime = 0; // true elapsed seconds (drives palette-fade timing)
     this.lastTime = performance.now();
 
-    this.renderer = new WebGLRenderer({ canvas, antialias: true });
+    // No antialias: the scene is a single full-screen quad with no polygon
+    // edges, so MSAA buys nothing here and only adds fill-rate cost.
+    this.renderer = new WebGLRenderer({ canvas, antialias: false });
     // Output raw shader values so the sampled palette hex renders faithfully
     // (no extra linear→sRGB encoding on top of the already-sRGB ramp).
     this.renderer.outputColorSpace = LinearSRGBColorSpace;
@@ -156,7 +158,12 @@ export default class Scene {
 
   resize() {
     const { innerWidth: w, innerHeight: h } = window;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // This is a fill-rate-bound full-screen shader: every physical pixel runs
+    // the whole fragment program each frame, so cost scales with pixelRatio².
+    // The gradient is soft with no hard edges, so rendering at DPR 1 (instead of
+    // the display's native 2 on HiDPI) is ~4× cheaper and near-indistinguishable.
+    // Bump toward 1.5 if it looks too soft on a fast GPU.
+    this.renderer.setPixelRatio(1);
     this.renderer.setSize(w, h);
     this.material.uniforms.uResolution.value.set(w, h);
   }

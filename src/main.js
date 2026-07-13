@@ -5,14 +5,15 @@ const canvas = document.getElementById('webgl');
 const scene = new Scene(canvas);
 
 // Palette queue: clicking any nav link advances to the next palette in this
-// fixed order and wraps around. Index 0 (bluePurple) is the initial palette, so
-// the first click lands on pinkCream.
+// fixed order and wraps around. Index 0 (periwinkle) is the initial palette, so
+// the first click lands on lilac.
 const PALETTE_QUEUE = [
-  'bluePurple',
-  'pinkCream',
-  'greenYellow',
-  'blueGreen',
-  'purpleBlue',
+  'periwinkle',
+  'lilac',
+  'peach',
+  'coralPink',
+  'lime',
+  'aquaMint',
 ];
 let paletteIndex = 0;
 

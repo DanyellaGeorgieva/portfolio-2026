@@ -15,17 +15,20 @@ import { Vector3 } from "three";
  * A channel's cross-section ramps background → smoke → glow → inner
  * (outer edge inward to the bright centre).
  */
-// Colours sampled from the reference (one hue stop per ~3.6s of its 18s
-// loop). Backgrounds are that frame's soft gradient tone; smoke/glow/inner are a
-// shared accent stream (blue→magenta→yellow→green→sky) windowed so each palette's
-// inner becomes the next one's glow — the colours flow outward on each step.
+// Colours sampled across the reference's ~18s loop (six background zones).
+// Backgrounds are kept white for now (see paletteColors); smoke/glow/inner are a
+// shared accent stream windowed so each palette's inner becomes the next one's
+// glow — the colours flow outward on each step. The stream is a cyclic 7-hue
+// spectrum from the bubbles' iridescent rims:
+//   sky → lavender → magenta → coral → gold → lime → aqua → (back to sky)
 export const palettes = {
-  //          background    smoke            glow          inner
-  bluePurple: ["#ffffff",  "#3C98F3",  "#8F6CED", "#E694EF"], // periwinkle bg · sky · blue · magenta
-  pinkCream: ["#ffffff",   "#8F6CED",  "#E694EF", "#F4D499"], // peach bg · blue · magenta · yellow
-  greenYellow: ["#ffffff", "#E694EF",  "#F4D499", "#B1F8A1"], // yellow-green bg · magenta · yellow · green
-  blueGreen: ["#ffffff",   "#F4D499",  "#B1F8A1", "#3C98F3"], // mint bg · yellow · green · sky
-  purpleBlue: ["#ffffff",  "#B1F8A1",   "#3C98F3", "#8F6CED"], // periwinkle-blue bg · green · sky · blue
+  //           background   smoke        glow         inner
+  periwinkle: ["#ffffff", "#3C98F3", "#8F6CED", "#E694EF"], // sky · lavender · magenta
+  lilac:      ["#ffffff", "#8F6CED", "#E694EF", "#F49A86"], // lavender · magenta · coral
+  peach:      ["#ffffff", "#E694EF", "#F49A86", "#F4D499"], // magenta · coral · gold
+  coralPink:  ["#ffffff", "#F49A86", "#F4D499", "#B1F8A1"], // coral · gold · lime
+  lime:       ["#ffffff", "#F4D499", "#B1F8A1", "#6FE3C9"], // gold · lime · aqua
+  aquaMint:   ["#ffffff", "#B1F8A1", "#6FE3C9", "#3C98F3"], // lime · aqua · sky (loops back)
 };
 
 export const paletteNames = Object.keys(palettes);

@@ -24,7 +24,10 @@ body {
 
 .content {
   position: relative;
-  z-index: 1;
+  // Deliberately NO z-index here. A z-index would make `.content` a stacking
+  // context, which isolates it from the canvas below and stops the title's
+  // mix-blend-mode from blending with the shader. The canvas sits at z-index:-1,
+  // so normal-flow content already renders in front of it without one.
 }
 
 .hero {
@@ -37,9 +40,13 @@ body {
   &__title {
     font-size: 7rem;
     font-weight: 700;
-    color: #fff;
     letter-spacing: -0.2rem;
-    mix-blend-mode: exclusion;
+    // Deep violet ink + `multiply` so the title reads like ink on coloured
+    // paper: legible everywhere over the light field, but deepening and picking
+    // up whatever channel colour drifts beneath it. (Plain `screen` on black
+    // text was invisible — screen only ever lightens.)
+    color: #231018;
+    mix-blend-mode: overlay;
 
     @media (max-width: $bp-tablet) {
       font-size: 4.5rem;
