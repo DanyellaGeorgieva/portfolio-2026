@@ -3,27 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dana Paneva — Front-End Developer</title>
+    <title>Daniela Paneva — Front-End Developer</title>
     <meta name="description" content="Portfolio of Daniela Paneva, front-end developer specialising in WebGL and creative interfaces." />
   </head>
   <body>
-    <canvas id="webgl"></canvas>
+    {{> chrome }}
 
-    <main class="content">
-      <header class="hero">
-        <h1 class="hero__title">Dana Paneva</h1>
-        <nav class="hero__nav" aria-label="Primary">
-          <a href="#work">Selected Works</a>
-          <a href="#lab">Lab</a>
-          <a href="#contact">Say Hi</a>
-        </nav>
-      </header>
+    <!-- Only #swup is swapped between pages; everything above persists. -->
+    <main id="swup" class="view" data-page="home">
+      <section class="landing">
+      </section>
     </main>
-
-    <p class="credit">
-      Visual homage to the Red Hot Chili Peppers'
-      <em>Return of the Dream Canteen</em> — on repeat for three months.
-    </p>
 
     <script type="module" src="/src/main.js"></script>
   </body>

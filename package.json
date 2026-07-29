@@ -9,7 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "three": "^0.169.0"
+    "gsap": "^3.15.0",
+    "swup": "^4.9.2",
+    "three": "^0.169.0",
+    "vite-plugin-handlebars": "^2.0.3"
   },
   "devDependencies": {
     "sass": "^1.80.0",

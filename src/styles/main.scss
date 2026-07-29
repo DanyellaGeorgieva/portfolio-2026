@@ -1,19 +1,19 @@
-@use "variables" as *;
-@use "reset";
-
 @font-face {
   font-family: "Hanken Grotesk";
-  src: url("../assets/fonts/HankenGrotesk-VariableFont_wght.ttf") format("truetype");
+  src: url("../assets/fonts/HankenGrotesk-VariableFont_wght.ttf")
+    format("truetype");
   font-weight: 100 900;
   font-display: swap;
 }
 
 body {
+  margin: 0; // no reset anymore — kill the default 8px so 100vh doesn't overflow
   font-family: "Hanken Grotesk";
-  overflow-x: hidden;
 }
 
-// Full-viewport WebGL canvas sitting behind the content.
+// Not styling of the scaffold — just keeps the full-size WebGL canvas pinned
+// behind the content, so the raw HTML is visible on top instead of being pushed
+// down by a viewport-sized canvas sitting in the normal flow.
 #webgl {
   position: fixed;
   inset: 0;
@@ -22,74 +22,10 @@ body {
   z-index: -1;
 }
 
-.content {
-  position: relative;
-  // Deliberately NO z-index here. A z-index would make `.content` a stacking
-  // context, which isolates it from the canvas below and stops the title's
-  // mix-blend-mode from blending with the shader. The canvas sits at z-index:-1,
-  // so normal-flow content already renders in front of it without one.
-}
+// main,
+// section {
+//   min-height: 100vh;
+//   max-height: 100vh;
+// }
 
-.hero {
-  display: flex;
-  flex-direction: column;
-  justify-content: top;
-  min-height: 100vh;
-  padding: 2rem;
 
-  &__title {
-    font-size: 7rem;
-    font-weight: 700;
-    letter-spacing: -0.2rem;
-    // Deep violet ink + `multiply` so the title reads like ink on coloured
-    // paper: legible everywhere over the light field, but deepening and picking
-    // up whatever channel colour drifts beneath it. (Plain `screen` on black
-    // text was invisible — screen only ever lightens.)
-    color: #231018;
-    mix-blend-mode: overlay;
-
-    @media (max-width: $bp-tablet) {
-      font-size: 4.5rem;
-    }
-    @media (max-width: $bp-mobile) {
-      font-size: 2.8rem;
-    }
-  }
-
-  &__nav {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 2.5rem;
-    margin-top: 1.5rem;
-    a {
-      color: #1e1424;
-      font-size: 1.5rem;
-      text-decoration: none;
-    }
-
-    @media (max-width: $bp-mobile) {
-      gap: 1.25rem;
-      a {
-        font-size: 1.25rem;
-      }
-    }
-  }
-}
-
-// Small personal credit pinned to the bottom-right corner.
-.credit {
-  position: fixed;
-  left: 2rem;
-  bottom: 2rem;
-  z-index: 2;
-  max-width: 25rem;
-  font-size: 1rem;
-  letter-spacing: 0.01em;
-  color: #1e1424;
-  opacity: 0.72;
-
-  em {
-    font-style: italic;
-  }
-}
