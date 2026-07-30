@@ -11,7 +11,66 @@
 
     <!-- Only #swup is swapped between pages; everything above persists. -->
     <main id="swup" class="view" data-page="home">
-      <section class="landing">
+      <section class="landing" id="top"></section>
+
+      <section class="section" id="works">
+        <h2 class="section__title">Works</h2>
+        <p class="section__intro">
+          A selection of things I've designed and built — mostly creative
+          front-end, WebGL, and interfaces that try to feel a little alive.
+          Placeholder copy for now; each project links to its own page.
+        </p>
+        <ul class="cards">
+          <li class="card">
+            <a class="card__link" href="/work/project-one/">
+              <h3 class="card__title">Project One</h3>
+              <p class="card__blurb">A one-line teaser for the first project.</p>
+            </a>
+          </li>
+          <li class="card">
+            <a class="card__link" href="/work/project-two/">
+              <h3 class="card__title">Project Two</h3>
+              <p class="card__blurb">A one-line teaser for the second project.</p>
+            </a>
+          </li>
+          <li class="card">
+            <a class="card__link" href="/work/project-three/">
+              <h3 class="card__title">Project Three</h3>
+              <p class="card__blurb">A one-line teaser for the third project.</p>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section" id="lab">
+        <h2 class="section__title">Lab</h2>
+        <p class="section__intro">
+          Unfinished experiments and sketches — shader studies, interaction toys,
+          and half-baked ideas I poke at on weekends. Rough by design.
+          Placeholder copy for now; each sketch links to its own page.
+        </p>
+        <ul class="cards">
+          <li class="card">
+            <a class="card__link" href="/lab/experiment-one/">
+              <h3 class="card__title">Experiment One</h3>
+              <p class="card__blurb">A shader / interaction sketch.</p>
+            </a>
+          </li>
+          <li class="card">
+            <a class="card__link" href="/lab/experiment-two/">
+              <h3 class="card__title">Experiment Two</h3>
+              <p class="card__blurb">Another half-finished idea.</p>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section" id="contact">
+        <h2 class="section__title">Say hi</h2>
+        <div class="contact">
+          <p>Always up for a chat about creative front-end and WebGL.</p>
+          <p><a href="mailto:danyellageorgieva@gmail.com">danyellageorgieva@gmail.com</a></p>
+        </div>
       </section>
     </main>
 

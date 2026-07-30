@@ -7,13 +7,10 @@
 }
 
 body {
-  margin: 0; // no reset anymore — kill the default 8px so 100vh doesn't overflow
+  margin: 0;
   font-family: "Hanken Grotesk";
 }
 
-// Not styling of the scaffold — just keeps the full-size WebGL canvas pinned
-// behind the content, so the raw HTML is visible on top instead of being pushed
-// down by a viewport-sized canvas sitting in the normal flow.
 #webgl {
   position: fixed;
   inset: 0;
@@ -22,10 +19,176 @@ body {
   z-index: -1;
 }
 
-// main,
-// section {
-//   min-height: 100vh;
-//   max-height: 100vh;
-// }
+// The name — top-left, two lines, like the original hero title.
+.brand {
+  position: fixed;
+  top: 3rem;
+  left: 3rem;
+  z-index: 10;
+  font-size: 7rem;
+  font-weight: 900;
+  letter-spacing: -0.3rem;
+  line-height: 0.75;
+  text-box: trim-both cap alphabetic;
+  color: white;
+  mix-blend-mode: overlay;
+  text-decoration: none;
 
+  // Stack the two words onto their own lines.
+  &__line {
+    display: block;
+  }
 
+  @media (max-width: 768px) {
+    font-size: 4.5rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 2.8rem;
+  }
+}
+
+// Nav — under the brand; links styled as pills.
+.mainnav {
+  position: fixed;
+  top: 16rem;
+  left: 3rem;
+  z-index: 10;
+  display: flex;
+  gap: 1rem;
+
+  a {
+    padding: 12px 24px;
+    border-radius: 99px;
+    background: white;
+    color: black;
+    font-size: 1rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    text-decoration: none;
+    mix-blend-mode: overlay;
+
+    &.is-active {
+      background: #1e1424;
+      color: white;
+    }
+  }
+}
+
+// Empty first screen (just the name over the gradient).
+.landing {
+  min-height: 100vh;
+}
+
+// Page sections — content vertically centred in the viewport.
+.section {
+  box-sizing: border-box;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+// Works / Lab — left-aligned text, block starting from the middle of the screen,
+// aligned to the top.
+#works,
+#lab {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 3rem 3rem 3rem 50%;
+}
+
+// --- Typography -------------------------------------------------------------
+.section__title,
+.page__title {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: white;
+  mix-blend-mode: overlay;
+}
+
+.section__intro,
+.page__lead {
+  margin: 0 0 2.5rem;
+  max-width: 32rem;
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #1e1424;
+}
+
+.page__body {
+  margin: 0 0 1.25rem;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #1e1424;
+}
+
+// --- Card list (works / lab) ------------------------------------------------
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.card__link {
+  color: #1e1424;
+  text-decoration: none;
+}
+
+.card__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.card__blurb {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+// --- Detail page (project / lab item) ---------------------------------------
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 3rem 3rem 4rem 50%;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: #1e1424;
+  font-weight: 700;
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+// Credit — always pinned bottom-left, on every page.
+.credit {
+  position: fixed;
+  left: 2rem;
+  bottom: 2rem;
+  z-index: 10;
+  margin: 0;
+  max-width: 25rem;
+  font-size: 0.95rem;
+  color: #1e1424;
+  opacity: 0.72;
+
+  em {
+    font-style: italic;
+  }
+}
