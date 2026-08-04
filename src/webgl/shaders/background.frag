@@ -11,9 +11,13 @@
 // Written in GLSL ES 1.00 to match Three.js ShaderMaterial (gl_FragColor).
 // See gooey-gradient-background-spec.md.
 
-uniform float uTime;
+uniform float uTime;  // real seconds — grain shimmer only
 uniform vec2 uResolution;
-uniform float uSpeed; // morph speed — how fast the cells reshape (slow ~0.15)
+// Morph phase: the z-slice through the noise field, accumulated on the JS side
+// as phase += dt * speed. Passing the phase rather than (time × speed) means
+// changing the speed bends the rate without jumping the slice — multiplying a
+// large uTime by a new speed would teleport the pattern.
+uniform float uPhase;
 uniform float uScale; // cell/channel density (low = big cells)
 uniform float uThick; // channel (bright core) width
 uniform float uGlow;  // warm-glow spread beyond the core (>1 = bigger glow)
@@ -33,6 +37,20 @@ uniform vec3 uColorC2;
 uniform vec3 uColorD2;
 uniform vec3 uColorE2;
 uniform float uMix;
+
+// Glass hearts, in the same aspect-corrected uv space as everything else:
+// .xy = centre, .z = size (0 = empty slot). Filled by the floaters released on
+// arriving at "say hi". HEART_COUNT must match Scene.js's HEART_COUNT.
+#define HEART_COUNT 5
+uniform vec3 uHearts[HEART_COUNT];
+uniform float uGlassBend; // how far the edge bends its lookup
+uniform float uGlassBevel; // depth over which the bend eases off
+uniform float uGlassAberration; // per-channel spread in the bend
+uniform float uGlassFrost; // milkiness across the whole panel
+uniform float uGlassRim; // specular highlight strength
+uniform float uGlassRimWidth; // how far in that highlight reaches
+uniform float uWobble; // bubble-wobble amplitude, in the shape's local units
+uniform float uWobbleRate; // how fast the outline breathes, radians per second
 
 varying vec2 vUv;
 
@@ -123,13 +141,20 @@ vec3 assemble(vec3 cA, vec3 cB, vec3 cC, vec3 cD, vec3 cE,
   return col;
 }
 
-void main() {
-  // Aspect-correct UVs so the cells keep their proportions.
-  vec2 uv = vUv;
-  uv.x *= uResolution.x / uResolution.y;
+// Anchor the zoom at the left edge, vertically centred: whatever sits at
+// SCALE_ORIGIN stays put as uScale changes, and the field densifies away from
+// it. Scaling uv directly would instead pin the bottom-left corner, since
+// that's where uv is (0, 0). x is in aspect-corrected units, so the left edge
+// is still 0; y runs 0 (bottom) to 1 (top).
+const vec2 SCALE_ORIGIN = vec2(0.0, 0.5);
 
-  vec2 p = uv * uScale;
-  float t = uTime * uSpeed;
+// The whole background as a function of position — everything except the grain,
+// which is per-pixel and must not be refracted with the field. Being able to ask
+// for the field at an *arbitrary* coordinate is what lets the glass panel bend
+// its lookup: refraction here is a real resample, not a displaced screenshot.
+vec3 fieldAt(in vec2 uv) {
+  vec2 p = (uv - SCALE_ORIGIN) * uScale;
+  float t = uPhase;
 
   float d = channelDist(p, t);
   // Smoky turbulence: perturb the distance used for the GLOW bands only (the
@@ -165,9 +190,179 @@ void main() {
   // old→new as the front reaches it, instead of snapping.
   float front = mix(-EDGE, 1.0 + EDGE, pow(uMix, FRONT_CURVE));
   float reveal = smoothstep(front, front + EDGE, d); // 0 = new (reached), 1 = old
-  vec3 color = mix(colTo, colFrom, reveal);
+  return mix(colTo, colFrom, reveal);
+}
 
-  // Film grain — animated per frame (non-diagonal offset) so it shimmers.
+// --- Glass panel ------------------------------------------------------------
+// The panel's shape is a signed distance field: negative inside, 0 on the edge.
+// Its gradient is the surface normal, which is what the SVG approach bakes into
+// the red/green channels of a displacement image — only computed, so it costs no
+// texture, stays exact at any size, and works for any shape with an SDF.
+// Shape of the gather across the bevel: higher packs the squeeze closer to the
+// rim, 1.0 spreads it evenly across the whole band.
+const float GATHER_CURVE = 2.0;
+
+// Same idea for the colour split: higher confines the fringe to the outer edge,
+// 0.0 gives the old behaviour of an even spread across the whole bevel.
+const float ABERRATION_CURVE = 2.0;
+
+// Heart, in a local space with the tip at the origin and the lobes above it.
+// Half-extents of that shape, used to fit it into the tracked element's box.
+const float HEART_HALF_W = 0.604;
+const float HEART_HALF_H = 0.552;
+
+// How wide the join is where two hearts meet, as a fraction of the smaller
+// heart's size. 0 = a hard seam; larger values pull the merge further out.
+const float SMOOTH = 0.45;
+
+float dot2(in vec2 v) { return dot(v, v); }
+
+// Inigo Quilez's heart SDF: mirrored about x, a circle for each lobe above the
+// diagonal, and the distance to the point/edge below it.
+float sdHeart(in vec2 p) {
+  p.x = abs(p.x);
+  if (p.y + p.x > 1.0) {
+    return sqrt(dot2(p - vec2(0.25, 0.75))) - sqrt(2.0) / 4.0;
+  }
+  return sqrt(min(dot2(p - vec2(0.0, 1.0)),
+                  dot2(p - 0.5 * max(p.x + p.y, 0.0)))) * sign(p.x - p.y);
+}
+
+// One heart's distance, in uv units. Scaled uniformly so it keeps its
+// proportions — a non-uniform fit would stretch it and skew the distances the
+// bevel and normals are built from. `phase` offsets the wobble per heart so a
+// group of them never breathes in unison.
+float heartDist(in vec2 rel, in float size, in float phase) {
+  vec2 q = rel / size;
+  q.y += HEART_HALF_H; // local origin sits at the tip, not the centre
+
+  // Soap-bubble wobble: pushing the surface in and out by a smoothly varying
+  // amount makes the outline undulate, as if surface tension were still
+  // settling. Two sines over local space — no atan and no noise octave, so it is
+  // a few ALU ops per heart. Driven by uTime, not uPhase, so the wobble keeps
+  // its own pace even where the background's morph speed is dialled down.
+  float t = uTime * uWobbleRate + phase;
+  float w = uWobble * sin(q.x * 4.5 + t) * sin(q.y * 3.9 - t * 0.83);
+
+  return (sdHeart(q) + w) * size; // back into uv units, so the bevel reads the same
+}
+
+// Every heart combined into one field. A plain min() would let the nearest heart
+// cut a hard seam across its neighbour; the polynomial smooth-min rounds the
+// join instead, so overlapping hearts fuse like drops of liquid. Also carries the
+// blended size out, since the bevel is measured against it.
+float heartsAt(in vec2 uv, out float size) {
+  float d = 1e9;
+  size = 0.0;
+  for (int i = 0; i < HEART_COUNT; i++) {
+    if (uHearts[i].z <= 0.0) continue; // empty slot
+    // Slot index as the wobble phase: constant per heart and free.
+    float di = heartDist(uv - uHearts[i].xy, uHearts[i].z, float(i) * 2.399);
+
+    if (size <= 0.0) {
+      d = di; // first contributor seeds the field
+      size = uHearts[i].z;
+    } else {
+      // Blend width scales with the smaller heart, so a small one melting into a
+      // large one doesn't get swallowed by an oversized joint.
+      float k = SMOOTH * min(size, uHearts[i].z);
+      float h = clamp(0.5 + 0.5 * (di - d) / k, 0.0, 1.0);
+      d = mix(di, d, h) - k * h * (1.0 - h);
+      size = mix(uHearts[i].z, size, h);
+    }
+  }
+  return d;
+}
+
+vec3 glassAt(in vec2 uv, in float px) {
+  float size;
+  float d = heartsAt(uv, size);
+  // No hearts at all, or outside them (with a pixel of slack for the edge blend).
+  if (size <= 0.0 || d > px) return fieldAt(uv);
+
+  // The bevel is a fraction of the heart's own half-thickness, not an absolute
+  // depth — one setting then works at any size, so a small floater gets the same
+  // proportioned edge as a large one.
+  float bevel = uGlassBevel * HEART_HALF_H * size;
+  float k = clamp(-d / bevel, 0.0, 1.0); // 0 at the rim, 1 past the bevel
+
+  // How far this pixel reaches outward for its sample: the full gather at the
+  // rim, easing to nothing where the bevel meets the flat middle. The gather is a
+  // multiple of the bevel width, so the band shows a compressed copy of a stretch
+  // of field several times wider than the band itself — that squeeze is the
+  // effect. (A true spherical slope is asymptotic at the rim, which concentrates
+  // all the displacement into a band a few pixels wide: correct, but invisible.)
+  float reach = uGlassBend * bevel * pow(1.0 - k, GATHER_CURVE);
+  float rim = 1.0 - smoothstep(0.0, uGlassRimWidth, -d);
+
+  // The flat middle of a heart bends nothing and catches no highlight, so it is
+  // just frosted field. Bailing here skips the normal (four more shape probes)
+  // and the aberration samples for the bulk of a large heart's area — the single
+  // biggest saving, since that middle is most of the pixels.
+  if (reach < px && rim <= 0.0) {
+    return mix(fieldAt(uv), vec3(1.0), uGlassFrost);
+  }
+
+  // Surface normal from the gradient of the *blended* field, so the merge region
+  // gets a continuous surface rather than two normals meeting at a crease.
+  vec2 e = vec2(px, 0.0);
+  float s0, s1, s2, s3; // sizes at the probe points — not needed, but required
+  vec2 n = normalize(vec2(
+    heartsAt(uv + e.xy, s0) - heartsAt(uv - e.xy, s1),
+    heartsAt(uv + e.yx, s2) - heartsAt(uv - e.yx, s3)
+  ) + 1e-6);
+
+  vec2 off = n * reach;
+
+  // Chromatic aberration: the same bend at three strengths, one per channel —
+  // exactly what the SVG filter's three feDisplacementMaps do. The spread is
+  // concentrated at the rim rather than applied evenly across the bevel: at a
+  // large setting a constant spread makes the mid-bevel pull its channels from
+  // far-apart, unrelated parts of the field, which drifts independently of the
+  // shape. Fading it with depth keeps the strong split where the edge is and
+  // leaves the mid-bevel coherent. Only worth three samples while the bend can
+  // actually separate them; below a pixel they would read the same coordinate.
+  float spread = uGlassAberration * pow(1.0 - k, ABERRATION_CURVE);
+  vec3 col;
+  if (spread > 0.0 && reach > px) {
+    col = vec3(
+      fieldAt(uv + off * (1.0 + spread)).r,
+      fieldAt(uv + off).g,
+      fieldAt(uv + off * (1.0 - spread)).b
+    );
+  } else {
+    col = fieldAt(uv + off);
+  }
+
+  // Frost, then a specular rim that catches the light from the upper left.
+  col = mix(col, vec3(1.0), uGlassFrost);
+  float facing = 0.5 + 0.5 * dot(n, normalize(vec2(-0.6, 0.8)));
+  col += rim * facing * uGlassRim;
+
+  // Soften the boundary itself so the edge isn't a stairstep. Only the pixels
+  // straddling it need this; further in, `inside` is already 1 and the extra
+  // field evaluation was being computed and thrown away.
+  if (d > -px) {
+    float inside = 1.0 - smoothstep(-px, px, d);
+    col = mix(fieldAt(uv), col, inside);
+  }
+  return col;
+}
+
+void main() {
+  // Aspect-correct UVs so the cells keep their proportions.
+  vec2 uv = vUv;
+  uv.x *= uResolution.x / uResolution.y;
+
+  // One pixel, in uv units — both axes share a scale, since x was multiplied by
+  // the aspect ratio above.
+  float px = 1.0 / uResolution.y;
+
+  // glassAt() falls through to the plain field when no heart is near.
+  vec3 color = glassAt(uv, px);
+
+  // Film grain — animated per frame (non-diagonal offset) so it shimmers. Sits
+  // on top of the glass, like grain on the lens rather than behind it.
   float g = grainHash(gl_FragCoord.xy + fract(uTime) * vec2(137.0, 291.0)) - 0.5;
   color += g * uGrain;
 

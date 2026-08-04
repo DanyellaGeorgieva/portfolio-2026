@@ -47,30 +47,89 @@ body {
   }
 }
 
-// Nav — under the brand; links styled as pills.
+// Nav — a timeline down the left edge: one node per section, threaded onto a
+// single spine. Each link is a fixed height so the spine can start and stop
+// exactly at the first and last dot centres.
+$node: 10px; // dot diameter — also the spine's horizontal centre
+$row: 1rem; // link height; half of it is where a dot centres
+
 .mainnav {
   position: fixed;
-  top: 16rem;
+  top: 50%;
   left: 3rem;
+  transform: translateY(-50%);
   z-index: 10;
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 2.75rem;
+
+  // The spine, running between the outermost dot centres.
+  &::before {
+    content: "";
+    position: absolute;
+    left: calc($node / 2);
+    top: calc($row / 2);
+    bottom: calc($row / 2);
+    width: 1px;
+    background: rgba(30, 20, 36, 0.22);
+  }
 
   a {
-    padding: 12px 24px;
-    border-radius: 99px;
-    background: white;
-    color: black;
-    font-size: 1rem;
-    font-weight: 900;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: $row;
+    padding-left: 2rem;
+    color: #1e1424;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    // _reset.scss is not imported anywhere, so this rule carries its own.
     text-decoration: none;
-    mix-blend-mode: overlay;
+    opacity: 0.5;
+    transition: opacity 0.35s ease;
 
-    &.is-active {
-      background: #1e1424;
-      color: white;
+    // The node itself.
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      box-sizing: border-box; // keeps the border inside $node, so it centres
+      width: $node;
+      height: $node;
+      border-radius: 50%;
+      border: 1px solid #1e1424;
+      background: transparent;
+      transform: translateY(-50%);
+      transition:
+        background 0.35s ease,
+        transform 0.35s ease;
     }
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.8;
+    }
+
+    // Reached — the node fills in.
+    &.is-active {
+      opacity: 1;
+
+      &::before {
+        background: #1e1424;
+        transform: translateY(-50%) scale(1.3);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    left: 1.5rem;
+    gap: 2rem;
+  }
+  @media (max-width: 480px) {
+    left: 1.25rem;
   }
 }
 
@@ -79,25 +138,32 @@ body {
   min-height: 100vh;
 }
 
-// Page sections — content vertically centred in the viewport.
+// All content starts at the middle of the screen; the left half stays clear for
+// the nav timeline and the credit line.
+$content-left: 50%;
+
+// Page sections — left-aligned column, vertically centred in the viewport.
 .section {
   box-sizing: border-box;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  text-align: center;
+  text-align: left;
+  padding: 3rem 3rem 3rem $content-left;
+
+  // Too narrow to give away half — clear the nav and use the full width.
+  @media (max-width: 768px) {
+    padding: 3rem 1.5rem 3rem 5rem;
+  }
 }
 
-// Works / Lab — left-aligned text, block starting from the middle of the screen,
-// aligned to the top.
+// Works / Lab — card lists are tall, so they start at the top rather than
+// centring.
 #works,
 #lab {
-  align-items: flex-start;
   justify-content: flex-start;
-  text-align: left;
-  padding: 3rem 3rem 3rem 50%;
 }
 
 // --- Typography -------------------------------------------------------------
@@ -164,7 +230,11 @@ body {
 .page {
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 3rem 3rem 4rem 50%;
+  padding: 3rem 3rem 4rem $content-left;
+
+  @media (max-width: 768px) {
+    padding: 3rem 1.5rem 4rem 5rem;
+  }
 }
 
 .back {
@@ -192,3 +262,4 @@ body {
     font-style: italic;
   }
 }
+

@@ -7,6 +7,14 @@ import Scene from './webgl/Scene.js';
 const canvas = document.getElementById('webgl');
 const scene = new Scene(canvas);
 
+// Vite replaces this module on edit without reloading the page, which would
+// leave the previous Scene's render loop running: two Scenes then draw to the
+// same canvas and context from different uniforms, alternating frames. That
+// shows up as a torn image — part of the screen a frame behind the rest.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => scene.dispose());
+}
+
 const navLinks = [...document.querySelectorAll('.mainnav a')];
 
 // Every view change — entering a section, or opening a page — advances the
@@ -29,6 +37,13 @@ function goToView(key) {
 // so the right nav pill highlights.
 const PAGE_SECTION = { work: 'works', lab: 'lab' };
 
+// Opening a project pulls the background right back: uScale far above its 1.55
+// default packs the field into small, dense cells, and the morph speed drops to
+// a crawl, so a project page reads as still and distant behind the content.
+// Scene's defaults come back on return to home.
+const PAGE_SCALE = 4.6; // vs 1.55 default
+const PAGE_SPEED = 0.05; // vs 0.18 default — barely moving
+
 // Nav hrefs are "/#works" etc.; the section id is the part after the hash.
 function navTarget(link) {
   return link.getAttribute('href').split('#')[1];
@@ -48,6 +63,14 @@ function setupHome(main) {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         setActiveNav(entry.target.id);
+        // The hearts belong to "say hi" only: released on arriving, recalled on
+        // leaving. Compared against lastViewKey before goToView() updates it, so
+        // scrolling around within the section doesn't re-release them.
+        if (entry.target.id === 'contact') {
+          if (lastViewKey !== 'contact') scene.releaseHearts();
+        } else if (lastViewKey === 'contact') {
+          scene.retireHearts();
+        }
         goToView(entry.target.id); // stepping into a section advances the palette
       }
     },
@@ -70,11 +93,17 @@ function setupPage() {
   const page = main.dataset.page;
 
   if (page === 'home') {
+    // Back to the default field.
+    scene.setScale();
+    scene.setSpeed();
     setupHome(main);
   } else {
     window.scrollTo(0, 0);
     setActiveNav(PAGE_SECTION[page]); // highlight works / lab
     goToView(location.pathname); // opening a page advances the palette
+    scene.retireHearts(); // they belong to "say hi", not to a project page
+    scene.setScale(PAGE_SCALE);
+    scene.setSpeed(PAGE_SPEED);
   }
 }
 

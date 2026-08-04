@@ -24,11 +24,11 @@ import { Vector3 } from "three";
 export const palettes = {
   //           background   smoke        glow         inner
   periwinkle: ["#ffffff", "#3C98F3", "#8F6CED", "#E694EF"], // sky · lavender · magenta
-  lilac:      ["#ffffff", "#8F6CED", "#E694EF", "#F49A86"], // lavender · magenta · coral
-  peach:      ["#ffffff", "#E694EF", "#F49A86", "#F4D499"], // magenta · coral · gold
-  coralPink:  ["#ffffff", "#F49A86", "#F4D499", "#B1F8A1"], // coral · gold · lime
-  lime:       ["#ffffff", "#F4D499", "#B1F8A1", "#6FE3C9"], // gold · lime · aqua
-  aquaMint:   ["#ffffff", "#B1F8A1", "#6FE3C9", "#3C98F3"], // lime · aqua · sky (loops back)
+  lilac:      ["#ffffff", "#8F6CED", "#e66df3", "#e8aa90"], // lavender · magenta · coral
+  peach:      ["#ffffff", "#E694EF", "#ef6d50", "#F4F055"], // magenta · coral · gold
+  coralPink:  ["#ffffff", "#F49A86", "#F4F055", "#B1F8A1"], // coral · gold · lime
+  lime:       ["#ffffff", "#F4F055", "#B1F8A1", "#23e7e7"], // gold · lime · aqua
+  aquaMint:   ["#ffffff", "#B1F8A1", "#6FE3C9", "#9577e7"], // lime · aqua · sky (loops back)
 };
 
 export const paletteNames = Object.keys(palettes);

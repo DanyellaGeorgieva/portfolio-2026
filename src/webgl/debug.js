@@ -54,6 +54,20 @@ export function createDebugPanel(scene) {
   slider('smoke', 'uSmoke', 0, 0.5, 0.01);
   slider('grain', 'uGrain', 0, 0.2, 0.005);
 
+  const glass = document.createElement('div');
+  glass.textContent = 'glass';
+  glass.style.cssText = 'margin:10px 0 6px;opacity:0.6;letter-spacing:0.08em';
+  panel.append(glass);
+
+  slider('bend', 'uGlassBend', 0, 8, 0.1);
+  slider('bevel', 'uGlassBevel', 0.05, 1, 0.01);
+  slider('aberration', 'uGlassAberration', 0, 3, 0.02);
+  slider('frost', 'uGlassFrost', 0, 0.3, 0.005);
+  slider('rim', 'uGlassRim', 0, 1, 0.01);
+  slider('rim width', 'uGlassRimWidth', 0.001, 0.02, 0.001);
+  slider('wobble', 'uWobble', 0, 0.15, 0.005);
+  slider('wobble rate', 'uWobbleRate', 0, 2, 0.05);
+
   const buttons = document.createElement('div');
   buttons.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:4px';
   paletteNames.forEach((name, i) => {
