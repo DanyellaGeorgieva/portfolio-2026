@@ -63,13 +63,12 @@ function setupHome(main) {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         setActiveNav(entry.target.id);
-        // The hearts belong to "say hi" only: released on arriving, recalled on
-        // leaving. Compared against lastViewKey before goToView() updates it, so
-        // scrolling around within the section doesn't re-release them.
-        if (entry.target.id === 'contact') {
-          if (lastViewKey !== 'contact') scene.releaseHearts();
-        } else if (lastViewKey === 'contact') {
-          scene.retireHearts();
+        // Arriving at "say hi" sends up a drift of glass hearts, which then
+        // finish their climb wherever you scroll next. Compared against
+        // lastViewKey before goToView() updates it, so scrolling around within
+        // the section doesn't re-release them.
+        if (entry.target.id === 'contact' && lastViewKey !== 'contact') {
+          scene.releaseHearts();
         }
         goToView(entry.target.id); // stepping into a section advances the palette
       }
@@ -101,7 +100,6 @@ function setupPage() {
     window.scrollTo(0, 0);
     setActiveNav(PAGE_SECTION[page]); // highlight works / lab
     goToView(location.pathname); // opening a page advances the palette
-    scene.retireHearts(); // they belong to "say hi", not to a project page
     scene.setScale(PAGE_SCALE);
     scene.setSpeed(PAGE_SPEED);
   }

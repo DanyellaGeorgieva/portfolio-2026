@@ -52,12 +52,12 @@ const FLOAT = {
   size: [0.22, 0.38], // scale factor; heart height is ~1.1× this, in uv units
   rise: [0.07, 0.16], // upward speed per second — a drift, not a launch
   stagger: 0.3, // extra depth below the edge, so they don't enter in a row
+  jitter: 0.7, // how far a heart may stray within its band, as a fraction of it
   swayAmp: [0.01, 0.05],
   swayFreq: [0.25, 0.7],
   grow: 0.7, // seconds to swell to full size, so nothing pops in
   fadeFrom: 0.75, // uv height where they start shrinking away
   exit: 1.15, // uv height at which the slot frees
-  retire: 0.5, // seconds to shrink away when recalled early
 };
 
 // Palette transition: a wavefront (driven by the shader's uMix) that expands
@@ -255,11 +255,16 @@ export default class Scene {
       if (slot === -1) break; // all slots busy
 
       const size = rand(FLOAT.size);
+      // Spread across the width in bands rather than independently at random:
+      // four random x's cluster together surprisingly often, and hearts landing
+      // on each other read as one blob instead of a drift. The jitter keeps it
+      // from looking measured out, while the band keeps them from ever stacking.
+      const band = this.aspect / count;
+      const x = band * (n + 0.5 + (Math.random() - 0.5) * FLOAT.jitter);
 
       this.floaters[slot] = {
         size,
-        retireAge: -1, // >= 0 once recalled
-        x: Math.random() * this.aspect,
+        x,
         // Parked just below the edge — its own half-height clears it, whatever
         // its size — plus a little stagger so they arrive as a loose stream
         // rather than a row. Anything deeper is time spent climbing unseen.
@@ -270,17 +275,6 @@ export default class Scene {
         phase: Math.random() * Math.PI * 2,
         age: 0,
       };
-    }
-  }
-
-  /**
-   * Recall the drift: every heart shrinks away over FLOAT.retire instead of
-   * finishing its climb. A heart takes up to twenty seconds to cross the screen,
-   * so without this they keep drifting over whatever section you scroll to next.
-   */
-  retireHearts() {
-    for (const f of this.floaters) {
-      if (f && f.retireAge < 0) f.retireAge = 0;
     }
   }
 
@@ -307,19 +301,7 @@ export default class Scene {
       const shrink = 1 - Math.max(0, (f.y - FLOAT.fadeFrom) / (FLOAT.exit - FLOAT.fadeFrom));
       const sway = Math.sin(f.phase + f.age * f.swayFreq) * f.swayAmp;
 
-      // Recalled: shrink out where it stands, then free the slot.
-      let recall = 1;
-      if (f.retireAge >= 0) {
-        f.retireAge += dt;
-        recall = 1 - f.retireAge / FLOAT.retire;
-        if (recall <= 0) {
-          this.floaters[i] = null;
-          slots[i].set(0, 0, 0);
-          continue;
-        }
-      }
-
-      slots[i].set(f.x + sway, f.y, f.size * grow * Math.max(shrink, 0) * recall);
+      slots[i].set(f.x + sway, f.y, f.size * grow * Math.max(shrink, 0));
     }
   }
 
