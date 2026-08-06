@@ -19,34 +19,6 @@ body {
   z-index: -1;
 }
 
-// The name — top-left, two lines, like the original hero title.
-.brand {
-  position: fixed;
-  top: 3rem;
-  left: 3rem;
-  z-index: 10;
-  font-size: 7rem;
-  font-weight: 900;
-  letter-spacing: -0.3rem;
-  line-height: 0.75;
-  text-box: trim-both cap alphabetic;
-  color: white;
-  mix-blend-mode: overlay;
-  text-decoration: none;
-
-  // Stack the two words onto their own lines.
-  &__line {
-    display: block;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 4.5rem;
-  }
-  @media (max-width: 480px) {
-    font-size: 2.8rem;
-  }
-}
-
 // Nav — a timeline down the left edge: one node per section, threaded onto a
 // single spine. Each link is a fixed height so the spine can start and stop
 // exactly at the first and last dot centres.
@@ -138,44 +110,106 @@ $row: 1rem; // link height; half of it is where a dot centres
   min-height: 100vh;
 }
 
-// All content starts at the middle of the screen; the left half stays clear for
-// the nav timeline and the credit line.
-$content-left: 50%;
+// The title line, shared by the pinned .morph title and the sections that hang
+// beneath it. Custom properties rather than Sass variables because .morph is
+// fixed chrome and .section is page content: they are styled far apart but have
+// to agree on this geometry exactly, and one of them needs it inside a calc().
+:root {
+  // Content starts at the middle of the screen; the left half stays clear for
+  // the nav timeline and the credit line.
+  --content-left: 50%;
+  // Where the title sits, measured from the top of the screen. Sections all
+  // hang from this one offset, so Works, Lab and Say hi each announce
+  // themselves at exactly the same height — which is what lets a single pinned
+  // word morph between them instead of three titles sliding past.
+  --title-top: 22vh;
+  --title-size: clamp(2.5rem, 5vw, 4rem);
+  --title-gap: 1.5rem; // breathing room between the title and the copy below
 
-// Page sections — left-aligned column, vertically centred in the viewport.
+  // Narrow screens can't give away half the width, so content clears the nav
+  // instead. Wide enough for the timeline's longest label ("works") plus its
+  // dot and gutter — at 5rem the labels ran under the text.
+  @media (max-width: 768px) {
+    --content-left: 7.5rem;
+  }
+}
+
+// --- Pinned section title ---------------------------------------------------
+// The two words stack in the same box; the threshold filter over both is what
+// welds them together mid-morph. Blurring alone would just cross-fade.
+.morph {
+  position: fixed;
+  top: var(--title-top);
+  left: var(--content-left);
+  z-index: 5;
+  height: var(--title-size);
+  filter: url(#threshold) blur(0.6px);
+  pointer-events: none;
+
+  &.is-hidden {
+    display: none;
+  }
+}
+
+.morph__text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  font-size: var(--title-size);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+// The SVG only carries the filter definition — it must stay in the document
+// (display: none would take the filter with it) but occupy nothing.
+.filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+// Page sections — left-aligned column, starting below the pinned title.
 .section {
   box-sizing: border-box;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: left;
-  padding: 3rem 3rem 3rem $content-left;
+  padding: calc(var(--title-top) + var(--title-size) + var(--title-gap)) 3rem
+    4rem var(--content-left);
 
   // Too narrow to give away half — clear the nav and use the full width.
   @media (max-width: 768px) {
-    padding: 3rem 1.5rem 3rem 5rem;
+    padding-right: 1.5rem;
   }
 }
 
-// Works / Lab — card lists are tall, so they start at the top rather than
-// centring.
-#works,
-#lab {
-  justify-content: flex-start;
+// --- Typography -------------------------------------------------------------
+// The section headings stay in the markup for document structure and search,
+// but the visible title is the pinned .morph element, so they are hidden from
+// sight only — not from screen readers.
+.section__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-// --- Typography -------------------------------------------------------------
-.section__title,
 .page__title {
-  margin: 0 0 1.5rem;
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin: 0 0 var(--title-gap);
+  font-size: var(--title-size);
   font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 1;
-  color: white;
-  mix-blend-mode: overlay;
 }
 
 .section__intro,
@@ -226,14 +260,54 @@ $content-left: 50%;
   opacity: 0.85;
 }
 
+// --- Say hi -----------------------------------------------------------------
+// The address is the whole section, so it is set at card-title weight rather
+// than left as body copy with a default link underline.
+.contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.contact__email {
+  font-size: clamp(1.35rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #1e1424;
+  text-decoration: none;
+  // A rule that draws itself in from the left on hover. Painted as a background
+  // gradient rather than a border or underline so only its width animates —
+  // nothing in the layout moves, and it can sit at its own distance from the
+  // baseline.
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  // The address is one long unbreakable token; let it wrap rather than push out
+  // of the column on a narrow screen.
+  overflow-wrap: anywhere;
+
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
 // --- Detail page (project / lab item) ---------------------------------------
 .page {
   box-sizing: border-box;
   min-height: 100vh;
-  padding: 3rem 3rem 4rem $content-left;
+  padding: 3rem 3rem 4rem var(--content-left);
 
   @media (max-width: 768px) {
-    padding: 3rem 1.5rem 4rem 5rem;
+    padding-right: 1.5rem;
   }
 }
 

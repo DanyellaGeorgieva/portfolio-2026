@@ -60,6 +60,16 @@ const FLOAT = {
   exit: 1.15, // uv height at which the slot frees
 };
 
+// The pointer's poke. Nothing is drawn at the pointer — the shader pushes a
+// heart's own surface outward near it, so a heart the pointer is over bulges
+// under it, and where there is no heart there is nothing to push.
+const POKE = {
+  radius: 0.2, // how far from the pointer the swelling reaches, in uv units
+  amount: 0.02, // how far the surface is pushed out, same units
+  pull: 13, // how hard the poke is drawn toward the pointer, per second
+  fade: 0.28, // seconds to swell in once the pointer first moves
+};
+
 // Palette transition: a wavefront (driven by the shader's uMix) that expands
 // outward from the channel centres, so the new palette flows out from the core
 // through the field. PALETTE_FADE is how long that outward flow takes.
@@ -69,6 +79,14 @@ const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
 // over this long. Shorter than the palette sweep — it reads as a response to the
 // click, but slow enough that neither value visibly steps.
 const TWEEN_FADE = 1.8; // seconds
+
+// On load the field sits pulled well back — small, dense cells — and stays there
+// until the first click, which eases it in to the page's normal scale. The
+// pattern blooms outward from the centre of the screen (where the shader anchors
+// the zoom), so the site lands on a deliberate gesture rather than on a timer.
+// Slower than a normal tween: this one is the arrival, not a reaction to a click.
+const INTRO_SCALE = 5.5; // vs 1.55 default
+const INTRO_FADE = 3.4; // seconds
 
 /**
  * Full-screen animated gooey gradient background rendered with a Three.js
@@ -113,7 +131,8 @@ export default class Scene {
         // Read by tick() to advance uPhase — the shader never sees it. Kept in
         // uniforms so the ?debug slider can drive it like any other knob.
         uSpeed: { value: DEFAULTS.speed },
-        uScale: { value: DEFAULTS.scale },
+        // Starts pulled back; the intro tween kicked off below eases it in.
+        uScale: { value: INTRO_SCALE },
         uThick: { value: DEFAULTS.thick },
         uGlow: { value: DEFAULTS.glow },
         uSmoke: { value: DEFAULTS.smoke },
@@ -142,14 +161,30 @@ export default class Scene {
         uGlassRimWidth: { value: GLASS.rimWidth },
         uWobble: { value: GLASS.wobble },
         uWobbleRate: { value: GLASS.wobbleRate },
+        uPointer: { value: new Vector2() },
+        uPoke: { value: 0 },
+        uPokeRadius: { value: POKE.radius },
+        uPokeAmount: { value: POKE.amount },
       },
     });
 
     this.paletteMix = null;
-    this.tweens = new Map(); // uniform name → { from, to, start }
-    // Floater state, one entry per uHearts slot.
+    // The intro is still waiting on its click, and where it should land when it
+    // gets one. setScale() keeps scaleTarget current meanwhile, so a page that
+    // wants a different scale (a project page) lands on that instead.
+    this.introPending = true;
+    this.scaleTarget = DEFAULTS.scale;
+    this.tweens = new Map(); // uniform name → { from, to, start, duration }
+    // Floater state, one entry per floater slot.
     this.floaters = Array.from({ length: HEART_COUNT }, () => null);
     this.aspect = 1;
+
+    // Poke: where it currently sits, the pointer it chases, and how far it has
+    // swelled in. `pointer` stays null until the pointer first moves, so it does
+    // nothing before then (and never on a touch device that only taps).
+    this.poke = { x: 0, y: 0 };
+    this.pointer = null;
+    this.pokeAmount = 0;
 
     this.mesh = new Mesh(new PlaneGeometry(2, 2), this.material);
     this.scene.add(this.mesh);
@@ -158,10 +193,18 @@ export default class Scene {
     this.tick = this.tick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
+    this.onPointerMove = this.onPointerMove.bind(this);
+    this.onFirstClick = this.onFirstClick.bind(this);
 
     window.addEventListener('resize', this.resize);
+    // pointerdown rather than click: it fires on touch too, and it lands the
+    // field on the press instead of waiting for the release.
+    window.addEventListener('pointerdown', this.onFirstClick);
     window.addEventListener('keydown', this.onKeyDown);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
+    // On window, not the canvas: the canvas sits at z-index -1 with the page
+    // content above it, so it never sees a pointer event itself.
+    window.addEventListener('pointermove', this.onPointerMove);
     this.resize();
     this.renderer.setAnimationLoop(this.tick);
 
@@ -211,26 +254,47 @@ export default class Scene {
   }
 
   /**
-   * Ease a scalar uniform toward a new value. tick() advances it; a call
-   * mid-tween re-aims from wherever the value currently sits, so it never snaps.
+   * Ease a scalar uniform toward a new value over `duration` seconds. tick()
+   * advances it; a call mid-tween re-aims from wherever the value currently
+   * sits, so it never snaps.
    */
-  tweenTo(name, target) {
+  tweenTo(name, target, duration = TWEEN_FADE) {
     // Already there, or already heading there (setupPage() re-runs on every
-    // swup view, so the same target can arrive twice).
+    // swup view, so the same target can arrive twice). Leaving the running
+    // tween alone is also what protects the slow intro from being restarted at
+    // the normal duration by setupPage()'s setScale() on first load.
     const running = this.tweens.get(name);
     if (running?.to === target) return;
     const from = this.material.uniforms[name].value;
     if (!running && target === from) return;
 
-    this.tweens.set(name, { from, to: target, start: this.realTime });
+    this.tweens.set(name, { from, to: target, start: this.realTime, duration });
   }
 
   /**
    * Cell/channel density — a higher target packs the field into more, smaller
    * cells. No argument returns to the default.
+   *
+   * Before the intro click this only records where to land: the field has to
+   * stay pulled back until the click, and setupPage() asks for the page's scale
+   * as soon as the page loads.
    */
   setScale(target = DEFAULTS.scale) {
+    this.scaleTarget = target;
+    if (this.introPending) return;
     this.tweenTo('uScale', target);
+  }
+
+  /**
+   * The arrival. The first click anywhere eases the opening scale in to whatever
+   * the current page asked for, over the longer INTRO_FADE — after that the
+   * listener is gone and scale changes go back to being ordinary tweens.
+   */
+  onFirstClick() {
+    if (!this.introPending) return;
+    this.introPending = false;
+    window.removeEventListener('pointerdown', this.onFirstClick);
+    this.tweenTo('uScale', this.scaleTarget, INTRO_FADE);
   }
 
   /**
@@ -276,6 +340,43 @@ export default class Scene {
         age: 0,
       };
     }
+  }
+
+  /**
+   * Pointer position in the shader's uv units: both axes are scaled by the
+   * viewport height (uv.x runs 0..aspect), and uv.y counts up from the bottom.
+   */
+  onPointerMove(event) {
+    const x = event.clientX / window.innerHeight;
+    const y = 1 - event.clientY / window.innerHeight;
+
+    // First sighting: drop the poke on the pointer rather than letting it sweep
+    // in from the corner, deforming every heart on the way.
+    if (!this.pointer) {
+      this.poke.x = x;
+      this.poke.y = y;
+    }
+    this.pointer = { x, y };
+  }
+
+  /** Drag the poke along behind the pointer and hand it to the shader. */
+  updatePoke(dt) {
+    // Exponential easing rather than a fixed step per frame, so the lag feels
+    // the same on a 60Hz and a 120Hz display. The lag is what gives the bulge
+    // its viscosity — it trails the pointer instead of tracking it rigidly.
+    const pull = 1 - Math.exp(-POKE.pull * dt);
+    const fade = 1 - Math.exp(-dt / POKE.fade);
+
+    this.pokeAmount += ((this.pointer ? 1 : 0) - this.pokeAmount) * fade;
+
+    if (this.pointer) {
+      this.poke.x += (this.pointer.x - this.poke.x) * pull;
+      this.poke.y += (this.pointer.y - this.poke.y) * pull;
+    }
+
+    const u = this.material.uniforms;
+    u.uPointer.value.set(this.poke.x, this.poke.y);
+    u.uPoke.value = this.pokeAmount;
   }
 
   /** Advance the floaters and write every slot into uHearts. */
@@ -360,8 +461,8 @@ export default class Scene {
 
     // Uniform tweens — ease-out so values settle rather than arriving flat.
     // Runs before the phase step so a speed change takes effect this frame.
-    for (const [name, { from, to, start }] of this.tweens) {
-      const t = Math.min((this.realTime - start) / TWEEN_FADE, 1);
+    for (const [name, { from, to, start, duration }] of this.tweens) {
+      const t = Math.min((this.realTime - start) / duration, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       this.material.uniforms[name].value = from + (to - from) * eased;
       if (t >= 1) this.tweens.delete(name);
@@ -372,6 +473,7 @@ export default class Scene {
     this.phase += dt * this.material.uniforms.uSpeed.value;
 
     this.updateHearts(dt);
+    this.updatePoke(dt);
 
     this.material.uniforms.uTime.value = this.time;
     this.material.uniforms.uPhase.value = this.phase;
@@ -381,8 +483,10 @@ export default class Scene {
   dispose() {
     this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.resize);
+    window.removeEventListener('pointerdown', this.onFirstClick);
     window.removeEventListener('keydown', this.onKeyDown);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    window.removeEventListener('pointermove', this.onPointerMove);
     this.mesh.geometry.dispose();
     this.material.dispose();
     this.renderer.dispose();

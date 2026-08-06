@@ -7,6 +7,32 @@
   <span class="brand__line">paneva</span>
 </a> -->
 
+<!-- The gooey threshold: pixels above a certain alpha go fully opaque, the rest
+     go fully transparent. Feeding two blurred copies of the title through it
+     together is what makes them melt into each other instead of cross-fading —
+     the blurred halos overlap, cross the threshold, and read as one blob. -->
+<svg class="filters" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="threshold">
+      <feColorMatrix
+        in="SourceGraphic"
+        type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 255 -140" />
+    </filter>
+  </defs>
+</svg>
+
+<!-- The visible section title, pinned to the shared title line so it stays put
+     while the word inside it changes. The real headings live in each section,
+     hidden from sight but not from screen readers, so this is decorative. -->
+<div class="morph" id="morph" aria-hidden="true">
+  <span class="morph__text"></span>
+  <span class="morph__text"></span>
+</div>
+
 <nav class="mainnav" aria-label="Primary">
   <a href="/#top">home</a>
   <a href="/#works">works</a>

@@ -1,6 +1,7 @@
 import './styles/main.scss';
 import Swup from 'swup';
 import Scene from './webgl/Scene.js';
+import MorphTitle from './morphTitle.js';
 
 // The WebGL scene is created once, on the persistent canvas (outside #swup), so
 // it keeps running across page navigations — swup only swaps #swup.
@@ -12,10 +13,26 @@ const scene = new Scene(canvas);
 // same canvas and context from different uniforms, alternating frames. That
 // shows up as a torn image — part of the screen a frame behind the rest.
 if (import.meta.hot) {
-  import.meta.hot.dispose(() => scene.dispose());
+  import.meta.hot.dispose(() => {
+    scene.dispose();
+    morphTitle.dispose(); // its rAF would otherwise outlive the module too
+  });
 }
 
 const navLinks = [...document.querySelectorAll('.mainnav a')];
+
+// The pinned title. It lives in the persistent shell alongside the canvas, so it
+// survives navigation and carries its current word across a page change.
+const morphTitle = new MorphTitle(document.getElementById('morph'));
+
+// What the pinned title reads in each view. The landing screen has no title —
+// morphing to an empty string melts the word away, which is the right exit.
+const VIEW_TITLES = {
+  top: '',
+  works: 'Works',
+  lab: 'Lab',
+  contact: 'Say hi',
+};
 
 // Every view change — entering a section, or opening a page — advances the
 // palette one step through this fixed queue. The very first view stays on
@@ -30,6 +47,11 @@ function goToView(key) {
     paletteIndex = (paletteIndex + 1) % PALETTE_QUEUE.length;
     scene.setPalette(PALETTE_QUEUE[paletteIndex]);
   }
+  // Every view change morphs the title from the word it is showing to this
+  // view's — whether the change came from a nav click or from scrolling into
+  // the section, since both land here. Views with no entry (a project page)
+  // leave the title empty; setupPage() hides it there anyway.
+  morphTitle.morphTo(VIEW_TITLES[key] ?? '');
   lastViewKey = key;
 }
 
@@ -90,6 +112,9 @@ function setupPage() {
 
   const main = document.querySelector('#swup');
   const page = main.dataset.page;
+
+  // A project page carries its own <h1>, so the pinned title stands down there.
+  morphTitle.setVisible(page === 'home');
 
   if (page === 'home') {
     // Back to the default field.

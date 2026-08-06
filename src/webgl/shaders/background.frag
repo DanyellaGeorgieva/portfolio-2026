@@ -43,6 +43,13 @@ uniform float uMix;
 // arriving at "say hi". HEART_COUNT must match Scene.js's HEART_COUNT.
 #define HEART_COUNT 5
 uniform vec3 uHearts[HEART_COUNT];
+
+// Pointer poke — the surface swells outward near the pointer, so a heart it is
+// over bulges under it and the bulge slides along as the pointer moves.
+uniform vec2 uPointer;     // in the same aspect-corrected uv space as the hearts
+uniform float uPoke;       // 0 = nothing, 1 = full; eases in with the pointer
+uniform float uPokeRadius; // how far from the pointer the swelling reaches
+uniform float uPokeAmount; // how far the surface is pushed out, in uv units
 uniform float uGlassBend; // how far the edge bends its lookup
 uniform float uGlassBevel; // depth over which the bend eases off
 uniform float uGlassAberration; // per-channel spread in the bend
@@ -141,19 +148,22 @@ vec3 assemble(vec3 cA, vec3 cB, vec3 cC, vec3 cD, vec3 cE,
   return col;
 }
 
-// Anchor the zoom at the left edge, vertically centred: whatever sits at
-// SCALE_ORIGIN stays put as uScale changes, and the field densifies away from
-// it. Scaling uv directly would instead pin the bottom-left corner, since
-// that's where uv is (0, 0). x is in aspect-corrected units, so the left edge
-// is still 0; y runs 0 (bottom) to 1 (top).
-const vec2 SCALE_ORIGIN = vec2(0.0, 0.5);
+// Anchor the zoom at the centre of the screen: whatever sits at the origin
+// stays put as uScale changes, and the field densifies outward from it, so a
+// scale change reads as a dolly rather than a slide. Scaling uv directly would
+// instead pin the bottom-left corner, since that's where uv is (0, 0).
+// x is in aspect-corrected units (0..aspect), so the horizontal centre is half
+// the aspect ratio, not 0.5; y runs 0 (bottom) to 1 (top).
+vec2 scaleOrigin() {
+  return vec2(0.5 * uResolution.x / uResolution.y, 0.5);
+}
 
 // The whole background as a function of position — everything except the grain,
 // which is per-pixel and must not be refracted with the field. Being able to ask
 // for the field at an *arbitrary* coordinate is what lets the glass panel bend
 // its lookup: refraction here is a real resample, not a displaced screenshot.
 vec3 fieldAt(in vec2 uv) {
-  vec2 p = (uv - SCALE_ORIGIN) * uScale;
+  vec2 p = (uv - scaleOrigin()) * uScale;
   float t = uPhase;
 
   float d = channelDist(p, t);
@@ -271,6 +281,16 @@ float heartsAt(in vec2 uv, out float size) {
       size = mix(uHearts[i].z, size, h);
     }
   }
+
+  // The poke. Subtracting from the distance field pushes the surface outward,
+  // and it can only move a surface that is already nearby: away from every heart
+  // the field stays far from zero, so nothing appears. That is what makes this
+  // incapable of drawing anything at the pointer itself.
+  // Falloff written the right way round: smoothstep's edges must go low → high,
+  // and reversing them to invert the ramp is undefined in GLSL.
+  float fall = 1.0 - smoothstep(0.0, uPokeRadius, distance(uv, uPointer));
+  d -= uPoke * uPokeAmount * fall;
+
   return d;
 }
 
