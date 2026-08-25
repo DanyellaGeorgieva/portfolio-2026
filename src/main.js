@@ -2,11 +2,20 @@ import './styles/main.scss';
 import Swup from 'swup';
 import Scene from './webgl/Scene.js';
 import MorphTitle from './morphTitle.js';
+import { paletteInk } from './webgl/palettes.js';
 
 // The WebGL scene is created once, on the persistent canvas (outside #swup), so
 // it keeps running across page navigations — swup only swaps #swup.
 const canvas = document.getElementById('webgl');
-const scene = new Scene(canvas);
+const scene = new Scene(canvas, {
+  // The page takes its colour from whichever palette is up, so the copy belongs
+  // to the field instead of sitting on it as flat black. Everything downstream
+  // reads --ink, so this one property carries the nav, the title, the tracklist
+  // rules and the body copy together.
+  onPalette: (name) => {
+    document.documentElement.style.setProperty('--ink', paletteInk(name));
+  },
+});
 
 // Vite replaces this module on edit without reloading the page, which would
 // leave the previous Scene's render loop running: two Scenes then draw to the
@@ -25,10 +34,10 @@ const navLinks = [...document.querySelectorAll('.mainnav a')];
 // survives navigation and carries its current word across a page change.
 const morphTitle = new MorphTitle(document.getElementById('morph'));
 
-// What the pinned title reads in each view. The landing screen has no title —
-// morphing to an empty string melts the word away, which is the right exit.
+// What the pinned title reads in each view. A view with no entry here (a project
+// page) morphs to an empty string, which melts the word away.
 const VIEW_TITLES = {
-  top: '',
+  top: 'Hello there',
   works: 'Works',
   lab: 'Lab',
   contact: 'Say hi',
@@ -36,8 +45,15 @@ const VIEW_TITLES = {
 
 // Every view change — entering a section, or opening a page — advances the
 // palette one step through this fixed queue. The very first view stays on
-// periwinkle; each change after that steps forward (wrapping).
-const PALETTE_QUEUE = ['periwinkle', 'lilac', 'peach', 'coralPink', 'lime', 'aquaMint'];
+// skyOrchid; each change after that steps forward (wrapping).
+const PALETTE_QUEUE = [
+  'skyOrchid',
+  'lavenderPeach',
+  'magentaGold',
+  'coralLime',
+  'goldAqua',
+  'limeViolet',
+];
 let paletteIndex = 0;
 let lastViewKey = null;
 
@@ -59,11 +75,13 @@ function goToView(key) {
 // so the right nav pill highlights.
 const PAGE_SECTION = { work: 'works', lab: 'lab' };
 
-// Opening a project pulls the background right back: uScale far above its 1.55
-// default packs the field into small, dense cells, and the morph speed drops to
-// a crawl, so a project page reads as still and distant behind the content.
+// Opening a project dives into the field: uScale well below its default blows
+// one or two channels up to fill the screen, and the morph slows to a crawl, so
+// a project page reads as being right up against the surface rather than looking
+// at it from across the room. The zoom is anchored at the centre of the screen
+// (see scaleOrigin in background.frag), so it plays as a push in, not a slide.
 // Scene's defaults come back on return to home.
-const PAGE_SCALE = 4.6; // vs 1.55 default
+const PAGE_SCALE = 0.9; // vs 3.6 default — a 4× magnification
 const PAGE_SPEED = 0.05; // vs 0.18 default — barely moving
 
 // Nav hrefs are "/#works" etc.; the section id is the part after the hash.
@@ -75,40 +93,51 @@ function setActiveNav(section) {
   navLinks.forEach((a) => a.classList.toggle('is-active', navTarget(a) === section));
 }
 
-// Home is one scroll of sections — watch them to highlight the active nav pill.
-let sectionObserver = null;
+// Home's sections are stacked in one place with only one shown, so nothing
+// scrolls and there is no scroll position to infer the current section from —
+// the nav is the only thing that changes it. Emptied on a project page.
+let homeSections = [];
+
+/**
+ * Put a section up and take the others down. Everything that used to hang off a
+ * section crossing the viewport centre hangs off this instead.
+ */
+function showSection(id) {
+  const target = homeSections.find((section) => section.id === id);
+  if (!target) return;
+
+  homeSections.forEach((section) => {
+    section.classList.toggle('is-active', section === target);
+  });
+
+  setActiveNav(id);
+  // Arriving at "say hi" sends up a drift of glass hearts, which then finish
+  // their climb over whatever section comes next. Compared against lastViewKey
+  // before goToView() updates it, so it takes leaving and coming back to
+  // release them again.
+  if (id === 'contact' && lastViewKey !== 'contact') {
+    scene.releaseHearts();
+  }
+  goToView(id); // stepping into a section advances the palette
+
+  // The hash follows the section that is up, so a reload or a copied URL lands
+  // back here. replaceState, not pushState: this is one page, and each section
+  // shouldn't become its own back-button step.
+  history.replaceState(null, '', `/#${id}`);
+}
 
 function setupHome(main) {
-  const sections = [...main.querySelectorAll('section[id]')];
-  sectionObserver = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        setActiveNav(entry.target.id);
-        // Arriving at "say hi" sends up a drift of glass hearts, which then
-        // finish their climb wherever you scroll next. Compared against
-        // lastViewKey before goToView() updates it, so scrolling around within
-        // the section doesn't re-release them.
-        if (entry.target.id === 'contact' && lastViewKey !== 'contact') {
-          scene.releaseHearts();
-        }
-        goToView(entry.target.id); // stepping into a section advances the palette
-      }
-    },
-    { rootMargin: '-45% 0px -45% 0px' }, // active as a section crosses the viewport centre
-  );
-  sections.forEach((s) => sectionObserver.observe(s));
+  homeSections = [...main.querySelectorAll('section[id]')];
 
-  // Arrived with a hash (e.g. from a project's "← works")? Jump there; else top.
-  const target = location.hash && main.querySelector(location.hash);
-  if (target) target.scrollIntoView();
-  else window.scrollTo(0, 0);
+  // Arrived with a hash (e.g. from a project's "← works")? Open that section;
+  // otherwise start on the first.
+  const fromHash = homeSections.find((s) => `#${s.id}` === location.hash);
+  showSection((fromHash ?? homeSections[0])?.id);
 }
 
 // Runs on first load and after every swup swap.
 function setupPage() {
-  sectionObserver?.disconnect();
-  sectionObserver = null;
+  homeSections = [];
 
   const main = document.querySelector('#swup');
   const page = main.dataset.page;
@@ -144,7 +173,6 @@ document.addEventListener('click', (event) => {
   const onHome = document.querySelector('#swup')?.dataset.page === 'home';
   if (section && onHome) {
     event.preventDefault();
-    document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
-    history.replaceState(null, '', `/#${section}`);
+    showSection(section); // it handles the hash too
   }
 });

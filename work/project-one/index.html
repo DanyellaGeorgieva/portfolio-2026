@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project One — Daniela Paneva</title>
-    <meta name="description" content="Project One — a project by Daniela Paneva." />
+    <title>Melba — Sofia Design Festival — Daniela Paneva</title>
+    <meta
+      name="description"
+      content="Melba, the fourth Sofia Design Festival — a physics-driven website where the navigation is a jar of produce. Front-end engineering by Daniela Paneva." />
   </head>
   <body>
     {{> chrome }}
@@ -12,21 +14,191 @@
     <main id="swup" class="view" data-page="work">
       <article class="page">
         <a class="back" href="/#works">← works</a>
-        <h1 class="page__title">Project One</h1>
-        <p class="page__lead">A one-line teaser for the first project.</p>
-        <p class="page__body">
-          Placeholder description for Project One. This is where the case study,
-          images, tech notes and links will live on its own page.
+
+        <p class="page__eyebrow">Sofia Design Festival · 2021</p>
+        <h1 class="page__title">Melba</h1>
+
+        <p class="page__lead">
+          Every August, households across Bulgaria boil fruit into compote and
+          pack vegetables into jars to keep the season through winter. The
+          fourth edition of Melba took that tradition as its identity: the
+          year’s best design, preserved and sealed.
         </p>
         <p class="page__body">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-          tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-          veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.
+          My job was to make the jars real — <strong
+            >a website you could pick up and shake</strong
+          >.
+        </p>
+
+        <dl class="page__meta">
+          <dt>Role</dt>
+          <dd>
+            Front-end engineering and interaction. Physics system, canvas
+            rendering, and the full site build in vanilla JavaScript.
+          </dd>
+
+          <dt>Concept &amp; identity</dt>
+          <dd>Studio Komplekt with Next DC</dd>
+
+          <!-- TODO: colleague's name — credited in the draft for the collision
+               geometry on some of the bodies. Left out rather than guessed.
+          <dt>Collision geometry</dt>
+          <dd>Some bodies by NAME</dd>
+          -->
+
+          <dt>Recognition</dt>
+          <dd>
+            Awwwards Honorable Mention · BG-Web Awards 2021, Best Event Website
+          </dd>
+        </dl>
+
+        <h2 class="page__heading">What it had to do</h2>
+        <p class="page__body">
+          The identity arrived as a set of SVG produce. Peaches, tomatoes,
+          carrots, broccoli, plums, popcorn. The section names were drawn as
+          objects too, broken into chunks that behaved like separate pieces:
+          RE&nbsp;/&nbsp;VIEW, SYMPO&nbsp;/&nbsp;SIUM, CALEN&nbsp;/&nbsp;DAR.
         </p>
         <p class="page__body">
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-          dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-          proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          None of it was decoration. The navigation <em>was</em> the produce. To
+          reach the symposium page you had to find SYMPO and SIUM floating among
+          the vegetables and click one. So the physics couldn’t be an ambient
+          background effect that looked good and did nothing — it had to stay
+          usable while remaining unpredictable.
+        </p>
+        <p class="page__body">
+          Built in vanilla JavaScript, no framework. Matter.js for the
+          simulation, rendered on its own canvas layer separate from the
+          document.
+        </p>
+
+        <h2 class="page__heading">The problem with produce</h2>
+        <p class="page__body">
+          Matter.js only simulates <strong>convex</strong> bodies. Anything with
+          a dent in it — the notch in a peach, the fronds on a carrot top, the
+          entire silhouette of broccoli — is concave, and the engine has to break
+          it into convex pieces before it can be simulated.
+        </p>
+        <p class="page__body">
+          That decomposition is where it fell apart. On the real artwork paths
+          the results were unstable.
+          <!-- TODO: name the actual failure here — bodies passing through each
+               other, jittering instead of settling, refusing to come to rest,
+               vertex counts exploding. Check the old source and the live site. -->
+          The behaviour is documented in the Matter.js community; it’s a known
+          limit of the approach, not something I could fix by tuning parameters.
+        </p>
+
+        <h2 class="page__heading">
+          Colliders and artwork are two different things
+        </h2>
+        <p class="page__body">So I stopped trying to simulate the artwork.</p>
+        <p class="page__body">
+          Every piece of produce got a second, simplified shape — invisible,
+          convex, built to behave correctly — and the art director’s real SVG was
+          drawn on top of it each frame, following its position and rotation. The
+          visitor sees a broccoli. The engine sees something much simpler.
+        </p>
+        <p class="page__body">
+          This is standard practice in games, where a character has a capsule
+          collider rather than a mesh of their eyelashes, but I got there by
+          reading forum threads and working out that the thing I was fighting
+          didn’t need to be fought — it needed to be separated. Collision
+          geometry and render geometry solve different problems and there was no
+          reason to make one shape do both.
+        </p>
+        <p class="page__body">
+          The cost is that it doesn’t scale for free. Every object needed its own
+          hand-made proxy hull, tuned until it settled and stacked convincingly.
+          <!-- TODO: how many hulls? "tens of shapes" is the memory — count them
+               in the source and put the real number in this sentence. -->
+          Late in the project, with the festival close and my due date closer, a
+          colleague took over part of that geometry work.
+          <!-- TODO: name them here, same person as the credit above. -->
+        </p>
+
+        <!-- TODO — "Numbers" section. Every line below is recoverable from the
+             live site and DevTools; nothing is rendered until the figures are
+             real. Uncomment once filled.
+        <h2 class="page__heading">Numbers</h2>
+        <ul class="page__list">
+          <li>Bodies simulated at once, peak: —</li>
+          <li>Frame rate on desktop, and whether it held: —</li>
+          <li>Total page weight: —</li>
+          <li>
+            What ran on mobile: the full simulation, a reduced body count, or a
+            separate static layout — the markup suggests dedicated mobile
+            navigation buttons.
+          </li>
+          <li>
+            Pinch-zoom is disabled site-wide, presumably to stop touch gestures
+            fighting the canvas.
+          </li>
+        </ul>
+        -->
+
+        <!-- TODO — "What I'd do differently". One honest paragraph; keep
+             whichever of these is actually true and delete the rest.
+        <h2 class="page__heading">What I’d do differently</h2>
+        <ul class="page__list">
+          <li>
+            Disabling pinch-zoom solved a gesture conflict and created an
+            accessibility problem. There was a better answer and I didn’t have
+            time to find it.
+          </li>
+          <li>
+            The proxy-hull pipeline was entirely manual. A build step generating
+            hulls from the source SVGs would have made the last month survivable.
+          </li>
+          <li>Whatever you find in the code that makes you wince.</li>
+        </ul>
+        -->
+
+        <h2 class="page__heading">Outcome</h2>
+        <p class="page__body">
+          The festival ran 11–21 November 2021 across four Sofia venues, with
+          Sofia Municipality, seven cultural institutes, and eleven media
+          partners behind it.
+        </p>
+        <p class="page__body">
+          The site took an Awwwards Honorable Mention in February 2022 and Best
+          Event Website at the BG-Web Awards. Jury scores ran highest on
+          creativity — nines and tens — and lowest on usability, which is a fair
+          reading of a site that asks you to find your navigation in a jar.
+        </p>
+        <!-- TODO: any traffic or ticket numbers the festival shared. -->
+
+        <dl class="page__meta">
+          <dt>Live site</dt>
+          <dd>
+            <a href="https://melba.bg/festival2021" target="_blank" rel="noopener"
+              >melba.bg/festival2021</a
+            >
+          </dd>
+
+          <dt>Agency case study</dt>
+          <dd>
+            <a
+              href="https://next-dc.com/case-study/melba-design-festival"
+              target="_blank"
+              rel="noopener"
+              >next-dc.com/case-study/melba-design-festival</a
+            >
+          </dd>
+
+          <dt>Awwwards</dt>
+          <dd>
+            <a
+              href="https://www.awwwards.com/sites/melba-sofia-design-festival"
+              target="_blank"
+              rel="noopener"
+              >awwwards.com/sites/melba-sofia-design-festival</a
+            >
+          </dd>
+        </dl>
+
+        <p class="page__note">
+          Built with Matter.js, the Canvas API, and vanilla JavaScript.
         </p>
       </article>
     </main>

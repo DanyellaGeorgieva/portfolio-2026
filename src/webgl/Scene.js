@@ -18,12 +18,12 @@ import { paletteColors, paletteNames, palettes } from './palettes.js';
 // "Motion feel — this matters most").
 const DEFAULTS = {
   speed: 0.18, // morph speed — how fast the cells reshape
-  scale: 1.55, // cell/channel density (low = big cells)
+  scale: 3.6, // cell/channel density (low = big cells)
   thick: 0.24, // channel (bright core) width
   glow: 4.2, // warm-glow spread beyond the core
   smoke: 0.26, // wispy turbulence in the glow
   grain: 0.12, // subtle film grain
-  palette: 'periwinkle',
+  palette: 'skyOrchid',
 };
 
 // Glass panel defaults.
@@ -47,10 +47,20 @@ const HEART_COUNT = 5;
 // height is this times its size. Used to park a new one just out of sight.
 const HEART_HALF_H = 0.552;
 
+// Half-width in the same local space — the edge the drift has to stop at, so a
+// heart turns back rather than sliding out of frame. Must match the shader's
+// HEART_HALF_W.
+const HEART_HALF_W = 0.604;
+
 // Floaters: all lengths in uv units, where 1.0 is the viewport height.
 const FLOAT = {
   size: [0.22, 0.38], // scale factor; heart height is ~1.1× this, in uv units
   rise: [0.07, 0.16], // upward speed per second — a drift, not a launch
+  // Sideways speed per second. Well under the rise, so the path leans without
+  // ever stopping being a climb. Signed outward from the middle of the screen at
+  // release, so the drift opens the group up instead of crossing them over each
+  // other — and slow enough that most hearts leave through the top, not the side.
+  drift: [0.012, 0.035],
   stagger: 0.3, // extra depth below the edge, so they don't enter in a row
   jitter: 0.7, // how far a heart may stray within its band, as a fraction of it
   swayAmp: [0.01, 0.05],
@@ -80,13 +90,10 @@ const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
 // click, but slow enough that neither value visibly steps.
 const TWEEN_FADE = 1.8; // seconds
 
-// On load the field sits pulled well back — small, dense cells — and stays there
-// until the first click, which eases it in to the page's normal scale. The
-// pattern blooms outward from the centre of the screen (where the shader anchors
-// the zoom), so the site lands on a deliberate gesture rather than on a timer.
-// Slower than a normal tween: this one is the arrival, not a reaction to a click.
-const INTRO_SCALE = 5.5; // vs 1.55 default
-const INTRO_FADE = 3.4; // seconds
+// Longest step any single frame may advance the scene by, in seconds. Roughly
+// three frames at 30fps: long enough that an ordinary hitch still plays through,
+// short enough that a pause of any length resumes rather than jumps.
+const MAX_STEP = 0.1;
 
 /**
  * Full-screen animated gooey gradient background rendered with a Three.js
@@ -94,8 +101,15 @@ const INTRO_FADE = 3.4; // seconds
  * uniforms, handles resize, swaps palettes, and runs the loop.
  */
 export default class Scene {
-  constructor(canvas) {
+  /**
+   * @param canvas the persistent canvas in the shell
+   * @param onPalette called with the palette name whenever it changes — including
+   *   the initial one and the number-key shortcuts, so anything outside the
+   *   shader that follows the palette (the page's ink) can never fall out of step
+   */
+  constructor(canvas, { onPalette } = {}) {
     this.canvas = canvas;
+    this.onPalette = onPalette;
 
     // Manual time source (rather than THREE.Clock) so we can pause on tab-hide
     // and resume without the shader time jumping forward by the hidden span.
@@ -131,8 +145,7 @@ export default class Scene {
         // Read by tick() to advance uPhase — the shader never sees it. Kept in
         // uniforms so the ?debug slider can drive it like any other knob.
         uSpeed: { value: DEFAULTS.speed },
-        // Starts pulled back; the intro tween kicked off below eases it in.
-        uScale: { value: INTRO_SCALE },
+        uScale: { value: DEFAULTS.scale },
         uThick: { value: DEFAULTS.thick },
         uGlow: { value: DEFAULTS.glow },
         uSmoke: { value: DEFAULTS.smoke },
@@ -169,12 +182,7 @@ export default class Scene {
     });
 
     this.paletteMix = null;
-    // The intro is still waiting on its click, and where it should land when it
-    // gets one. setScale() keeps scaleTarget current meanwhile, so a page that
-    // wants a different scale (a project page) lands on that instead.
-    this.introPending = true;
-    this.scaleTarget = DEFAULTS.scale;
-    this.tweens = new Map(); // uniform name → { from, to, start, duration }
+    this.tweens = new Map(); // uniform name → { from, to, start }
     // Floater state, one entry per floater slot.
     this.floaters = Array.from({ length: HEART_COUNT }, () => null);
     this.aspect = 1;
@@ -194,12 +202,8 @@ export default class Scene {
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
-    this.onFirstClick = this.onFirstClick.bind(this);
 
     window.addEventListener('resize', this.resize);
-    // pointerdown rather than click: it fires on touch too, and it lands the
-    // field on the press instead of waiting for the release.
-    window.addEventListener('pointerdown', this.onFirstClick);
     window.addEventListener('keydown', this.onKeyDown);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     // On window, not the canvas: the canvas sits at z-index -1 with the page
@@ -207,6 +211,10 @@ export default class Scene {
     window.addEventListener('pointermove', this.onPointerMove);
     this.resize();
     this.renderer.setAnimationLoop(this.tick);
+
+    // Announce the starting palette now the scene is built, so the page's ink
+    // matches the very first frame.
+    this.onPalette?.(this.paletteName);
 
     // Optional tweak panel behind ?debug (lazy-loaded, no cost otherwise).
     if (params.has('debug')) {
@@ -231,6 +239,7 @@ export default class Scene {
     if (this.paletteMix) this.commitPalette();
 
     this.paletteName = name;
+    this.onPalette?.(name);
     const [a, b, c, d, e] = paletteColors(name);
     u.uColorA2.value.copy(a);
     u.uColorB2.value.copy(b);
@@ -254,47 +263,26 @@ export default class Scene {
   }
 
   /**
-   * Ease a scalar uniform toward a new value over `duration` seconds. tick()
-   * advances it; a call mid-tween re-aims from wherever the value currently
-   * sits, so it never snaps.
+   * Ease a scalar uniform toward a new value. tick() advances it; a call
+   * mid-tween re-aims from wherever the value currently sits, so it never snaps.
    */
-  tweenTo(name, target, duration = TWEEN_FADE) {
+  tweenTo(name, target) {
     // Already there, or already heading there (setupPage() re-runs on every
-    // swup view, so the same target can arrive twice). Leaving the running
-    // tween alone is also what protects the slow intro from being restarted at
-    // the normal duration by setupPage()'s setScale() on first load.
+    // swup view, so the same target can arrive twice).
     const running = this.tweens.get(name);
     if (running?.to === target) return;
     const from = this.material.uniforms[name].value;
     if (!running && target === from) return;
 
-    this.tweens.set(name, { from, to: target, start: this.realTime, duration });
+    this.tweens.set(name, { from, to: target, start: this.realTime });
   }
 
   /**
    * Cell/channel density — a higher target packs the field into more, smaller
    * cells. No argument returns to the default.
-   *
-   * Before the intro click this only records where to land: the field has to
-   * stay pulled back until the click, and setupPage() asks for the page's scale
-   * as soon as the page loads.
    */
   setScale(target = DEFAULTS.scale) {
-    this.scaleTarget = target;
-    if (this.introPending) return;
     this.tweenTo('uScale', target);
-  }
-
-  /**
-   * The arrival. The first click anywhere eases the opening scale in to whatever
-   * the current page asked for, over the longer INTRO_FADE — after that the
-   * listener is gone and scale changes go back to being ordinary tweens.
-   */
-  onFirstClick() {
-    if (!this.introPending) return;
-    this.introPending = false;
-    window.removeEventListener('pointerdown', this.onFirstClick);
-    this.tweenTo('uScale', this.scaleTarget, INTRO_FADE);
   }
 
   /**
@@ -329,6 +317,8 @@ export default class Scene {
       this.floaters[slot] = {
         size,
         x,
+        // Outward from the centre line, so the group fans apart as it climbs.
+        drift: rand(FLOAT.drift) * (x < this.aspect / 2 ? -1 : 1),
         // Parked just below the edge — its own half-height clears it, whatever
         // its size — plus a little stagger so they arrive as a loose stream
         // rather than a row. Anything deeper is time spent climbing unseen.
@@ -389,6 +379,7 @@ export default class Scene {
 
       f.age += dt;
       f.y += f.rise * dt;
+      f.x += f.drift * dt; // the lean; sway still wobbles around it
 
       if (f.y > FLOAT.exit) {
         this.floaters[i] = null;
@@ -401,8 +392,28 @@ export default class Scene {
       const grow = Math.min(f.age / FLOAT.grow, 1);
       const shrink = 1 - Math.max(0, (f.y - FLOAT.fadeFrom) / (FLOAT.exit - FLOAT.fadeFrom));
       const sway = Math.sin(f.phase + f.age * f.swayFreq) * f.swayAmp;
+      const size = f.size * grow * Math.max(shrink, 0);
 
-      slots[i].set(f.x + sway, f.y, f.size * grow * Math.max(shrink, 0));
+      // Keep them in frame. A heart that reaches either edge turns its drift
+      // around rather than stopping there, so it wanders back across instead of
+      // pressing against the side for the rest of its climb. The bound is the
+      // heart's own half-width, which is why it uses the drawn size and not the
+      // slot's full size — a heart still swelling in may pass closer.
+      const halfW = HEART_HALF_W * size;
+      const limit = this.aspect - halfW;
+      if (f.x < halfW) {
+        f.x = halfW;
+        f.drift = Math.abs(f.drift);
+      } else if (f.x > limit) {
+        f.x = limit;
+        f.drift = -Math.abs(f.drift);
+      }
+
+      // The sway rides on top of the drift and can push past the bound on its
+      // own, so the drawn position is clamped too.
+      const x = Math.min(Math.max(f.x + sway, halfW), limit);
+
+      slots[i].set(x, f.y, size);
     }
   }
 
@@ -440,7 +451,12 @@ export default class Scene {
 
   tick() {
     const now = performance.now();
-    const dt = (now - this.lastTime) / 1000;
+    // Capped, because a frame gap is not always a frame gap: a backgrounded or
+    // occluded window can stop being served rAF without ever firing
+    // visibilitychange, and the first frame back then carries the entire pause.
+    // Uncapped, that one step teleports the floaters past their exit height and
+    // frees every slot, so the hearts vanish the moment you come back to the tab.
+    const dt = Math.min((now - this.lastTime) / 1000, MAX_STEP);
     this.lastTime = now;
     this.realTime += dt;
 
@@ -461,8 +477,8 @@ export default class Scene {
 
     // Uniform tweens — ease-out so values settle rather than arriving flat.
     // Runs before the phase step so a speed change takes effect this frame.
-    for (const [name, { from, to, start, duration }] of this.tweens) {
-      const t = Math.min((this.realTime - start) / duration, 1);
+    for (const [name, { from, to, start }] of this.tweens) {
+      const t = Math.min((this.realTime - start) / TWEEN_FADE, 1);
       const eased = 1 - Math.pow(1 - t, 3);
       this.material.uniforms[name].value = from + (to - from) * eased;
       if (t >= 1) this.tweens.delete(name);
@@ -483,7 +499,6 @@ export default class Scene {
   dispose() {
     this.renderer.setAnimationLoop(null);
     window.removeEventListener('resize', this.resize);
-    window.removeEventListener('pointerdown', this.onFirstClick);
     window.removeEventListener('keydown', this.onKeyDown);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     window.removeEventListener('pointermove', this.onPointerMove);

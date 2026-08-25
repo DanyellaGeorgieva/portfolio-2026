@@ -59,14 +59,6 @@ export default class MorphTitle {
     if (this.frame === null) this.frame = requestAnimationFrame(this.tick);
   }
 
-  /** Set the word with no transition — for the first paint. */
-  set(text) {
-    this.text = text;
-    this.from.textContent = '';
-    this.to.textContent = text;
-    this.settle();
-  }
-
   /** Whether the title is shown at all (home only — detail pages have their own). */
   setVisible(visible) {
     this.root.classList.toggle('is-hidden', !visible);
