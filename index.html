@@ -4,103 +4,84 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Daniela Paneva — Front-End Developer</title>
-    <meta name="description" content="Portfolio of Daniela Paneva, front-end developer specialising in WebGL and creative interfaces." />
+    <meta
+      name="description"
+      content="Portfolio of Daniela Paneva, front-end developer specialising in WebGL and creative interfaces." />
   </head>
   <body>
-    {{> chrome }}
+    {{> frame }}
 
     <!-- Only #swup is swapped between pages; everything above persists. -->
     <main id="swup" class="view" data-page="home">
-      <section class="section" id="top">
-        <div class="section-background"></div>
-        <h2 class="section__title">Hello there</h2>
+      <section class="section" id="works">
+        <ul class="projects">
+          <li class="project">
+            <a class="project__link" href="/work/project-one/">
+              <div class="project__head">
+                <h3 class="project__title">MELBA DESIGN FESTIVAL</h3>
+                <!-- <span class="project__year">2021</span> -->
+              </div>
+              <p class="project__blurb">
+                A custom 2D physics sandbox built to preserve and showcase the
+                best of Bulgarian design.
+              </p>
+            </a>
+          </li>
+          <li class="project">
+            <a class="project__link" href="/work/project-two/">
+              <div class="project__head">
+                <h3 class="project__title">IN THE SKIRTS OF VITOSHA</h3>
+                <!-- <span class="project__year">2026</span> -->
+              </div>
+              <p class="project__blurb">
+                A landscape-oriented mobile teaser crafted to reveal the hidden
+                visual layers of the 2026 European Design Festival.
+              </p>
+            </a>
+          </li>
+          <li class="project">
+            <a class="project__link" href="/work/project-three/">
+              <div class="project__head">
+                <h3 class="project__title">NEXT-DC AGENCY SITE</h3>
+                <!-- <span class="project__year">2023</span> -->
+              </div>
+              <p class="project__blurb">
+                A high-contrast digital presence built to guide global
+                businesses through dynamic cultural currents.
+              </p>
+            </a>
+          </li>
+        </ul>
+      </section>
 
-        <!-- Three tiers, largest first: who I am, what I do, where I am now. -->
-        <p class="section__lead">
-          I’m <strong>Danyella</strong>, a creative front-end developer based in
-          Sofia, Bulgaria.
+      <section class="section" id="about">
+        <p class="section__body">
+          I'm Daniela Paneva—an interactive front-end developer based in Sofia,
+          Bulgaria. I build fluid digital spaces that live at the intersection
+          of motion, logic, and visual art.
         </p>
         <p class="section__body">
-          My focus is building amazing web experiences — the kind that make you
-          say: “Oh, wow!”.
+          Driven by a deep fascination with creative coding and WebGL, I treat
+          the browser window as an interactive canvas rather than a static grid.
+          I focus on engineering lightweight, highly responsive user experiences
+          where every layout transition and micro-interaction feels deliberate,
+          heavy, and natural.
         </p>
-        <p class="section__meta">
-          <span class="section__label">Currently</span>
-          <strong>Next DC</strong> — guiding businesses through cultural
-          currents.
+        <p class="section__body">
+          This portfolio itself operates as a dynamic visual
+          homage to the liquid, psychedelic visualizers of Red Hot Chili
+          Peppers' album, "Return of the Dream Canteen"—translating continuous
+          analog organic morphing into real-time WebGL shader code.
         </p>
-      </section>
-
-      <section class="section" id="works">
-        <div class="section-background"></div>
-        <h2 class="section__title">Works</h2>
-        <p class="section__intro">
-          A selection of things I've designed and built — mostly creative
-          front-end, WebGL, and interfaces that try to feel a little alive.
-          Placeholder copy for now; each project links to its own page.
+        <p class="section__body">
+          [ TECHNICAL
+          PLATFORM ] Vanilla JavaScript / WebGL / Three.js / CSS Architecture /
+          Creative Layout Strategy
         </p>
-        <ul class="cards">
-          <li class="card">
-            <a class="card__link" href="/work/project-one/">
-              <h3 class="card__title">Melba Festival’s interactive website</h3>
-              <p class="card__blurb">
-                “Less website, more interactive madness – built back when AI was
-                not a thing”
-              </p>
-              <time class="card__year" datetime="2021">2021</time>
-            </a>
-          </li>
-          <li class="card">
-            <a class="card__link" href="/work/project-two/">
-              <h3 class="card__title">EDA’s mobile website teaser</h3>
-              <p class="card__blurb">
-                “An interactive mobile promo for European Design Awards”
-              </p>
-              <time class="card__year" datetime="2024">2024</time>
-            </a>
-          </li>
-          <li class="card">
-            <a class="card__link" href="/work/project-three/">
-              <h3 class="card__title">Next-DC’s website</h3>
-              <p class="card__blurb">
-                “The agency’s killer new-ish web presence”
-              </p>
-              <time class="card__year" datetime="2025">2025</time>
-            </a>
-          </li>
-        </ul>
-      </section>
-
-      <section class="section" id="lab">
-        <div class="section-background"></div>
-        <h2 class="section__title">Lab</h2>
-        <p class="section__intro">
-          Unfinished experiments and sketches — shader studies, interaction toys,
-          and half-baked ideas I poke at on weekends. Rough by design.
-          Placeholder copy for now; each sketch links to its own page.
-        </p>
-        <ul class="cards">
-          <li class="card">
-            <a class="card__link" href="/lab/experiment-one/">
-              <h3 class="card__title">Experiment One</h3>
-              <p class="card__blurb">“A shader / interaction sketch”</p>
-              <time class="card__year" datetime="2025">2025</time>
-            </a>
-          </li>
-          <li class="card">
-            <a class="card__link" href="/lab/experiment-two/">
-              <h3 class="card__title">Experiment Two</h3>
-              <p class="card__blurb">“Another half-finished idea”</p>
-              <time class="card__year" datetime="2024">2024</time>
-            </a>
-          </li>
-        </ul>
       </section>
 
       <section class="section" id="contact">
-        <div class="section-background"></div>
-        <h2 class="section__title">Say hi</h2>
-        <p class="section__intro">
+        <p class="section__body">
           Always up for a chat about creative front-end and WebGL.
         </p>
         <div class="contact">

@@ -3,28 +3,173 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project Three — Daniela Paneva</title>
-    <meta name="description" content="Project Three — a project by Daniela Paneva." />
+    <title>Next DC — Daniela Paneva</title>
+    <meta
+      name="description"
+      content="Next DC — the agency’s own site, built as lead front-end developer. Video work grid, site-wide theming, and a masked reveal system." />
   </head>
   <body>
-    {{> chrome }}
+    {{> frame }}
 
     <main id="swup" class="view" data-page="work">
       <article class="page">
         <a class="back" href="/#works">← works</a>
-        <h1 class="page__title">Project Three</h1>
-        <p class="page__lead">A one-line teaser for the third project.</p>
-        <p class="page__body">Placeholder description for Project Three.</p>
-        <p class="page__body">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-          tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-          veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.
+
+        <p class="page__eyebrow">Agency site · 2025</p>
+        <h1 class="page__title">NEXT-DC AGENCY SITE</h1>
+
+        <p class="page__lead">
+          Next DC is an independent agency working out of Sofia, London and
+          Amsterdam, with PUMA, Twitter, BMW, Carlsberg, WWF and Jack Daniel’s on
+          the client list. This is their own site — which meant the brief was the
+          hardest kind: it had to demonstrate the standard the studio sells, with
+          no client to blame for compromises.
         </p>
+
+        <!-- TODO: how long the build ran, and for how much of it you were the
+             only front-end developer. Draft sentence, once you have both:
+             "I built it over X, as the only front-end developer for Y."
+        <p class="page__body">I built it over X, as the only front-end developer for Y.</p>
+        -->
+
+        <!-- The standing head: Role, Concept & identity, Recognition — same
+             rows, same order as Melba. -->
+        <dl class="page__meta">
+          <dt>Role</dt>
+          <dd>
+            Lead front-end developer. Every page except Team, which a colleague
+            completed after I went on leave.
+          </dd>
+
+          <!-- Was "Design & art direction". Renamed to match Melba's row, which
+               credits the same kind of work under the site-wide label. -->
+          <dt>Concept &amp; identity</dt>
+          <dd>Next DC</dd>
+
+          <!-- TODO: any award or recognition — or delete this row for good. The
+               draft's Outcome section asks the same question: new business,
+               press, awards, anything the studio tracked.
+          <dt>Recognition</dt>
+          <dd>—</dd>
+          -->
+        </dl>
+
+        <!-- ====================================================================
+             PICK YOUR SPINE — then delete the other two.
+
+             A case study needs one technical idea, not a feature list. Melba's
+             was "colliders and artwork are different problems." All three below
+             are true about this build, so I've rendered all three rather than
+             choosing for you. Keep whichever is most true, write it properly
+             with the numbers, and cut the other two down to one sentence each —
+             or delete them outright.
+             ==================================================================== -->
+
+        <h2 class="page__heading">A work grid made of video</h2>
         <p class="page__body">
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
-          dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-          proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+          The case study grid loads video per tile, mixing <code>.webp</code> and
+          <code>.mp4</code>. That’s the classic agency-site trap: the thing that
+          sells the studio is also the thing that destroys load performance, and
+          every agency site is judged on speed by exactly the people who would
+          hire the agency.
         </p>
+        <!-- TODO: how many tiles, what the total weight was, and what you did —
+             lazy loading, poster frames, IntersectionObserver, decode budgets,
+             pausing offscreen video, different sources by connection or
+             viewport. This is where the numbers go. -->
+
+        <h2 class="page__heading">Theming across a whole site</h2>
+        <p class="page__body">
+          There’s a theme switcher. Doing that properly across an entire site —
+          every surface, every state, media that was authored for one background
+          appearing on another — is much harder than it looks, and it’s the same
+          instinct that later became the palette-per-section system on my own
+          portfolio.
+        </p>
+        <!-- TODO: how the tokens were structured, what broke when you flipped
+             it, what had to be authored twice, whether it persisted across
+             pages. -->
+
+        <h2 class="page__heading">The reveal system</h2>
+        <p class="page__body">
+          Every headline exists twice in the DOM — one copy clipped, one visible —
+          driving a masked line-by-line reveal on load and on scroll. Applied
+          consistently across every page, in a way that had to survive arbitrary
+          CMS copy at any length, in two scripts.
+        </p>
+        <!-- TODO: how lines were split, what happened with Cyrillic and Latin at
+             different lengths, how it behaved under prefers-reduced-motion,
+             whether it ever caused layout shift. -->
+
+        <h2 class="page__heading">The rest of the build</h2>
+        <ul class="page__list">
+          <li>
+            A custom CMS rather than a site builder, so the templates had to hold
+            up against content nobody had written yet.
+            <!-- TODO: what that constrained. -->
+          </li>
+          <li>
+            A percentage loader.
+            <!-- TODO: what it was actually waiting on — and whether it was
+                 honest or decorative. Either answer is interesting. -->
+          </li>
+          <!-- TODO: bilingual? multi-office content? the feed and goodies
+               sections? Add them here.
+          <li>—</li>
+          -->
+        </ul>
+
+        <!-- TODO — "Numbers" section. All recoverable from the live site with
+             DevTools; nothing renders until the figures are real.
+        <h2 class="page__heading">Numbers</h2>
+        <ul class="page__list">
+          <li>Lighthouse or Core Web Vitals, particularly LCP on the work grid: —</li>
+          <li>Total page weight, home and case study: —</li>
+          <li>Number of templates / pages built: —</li>
+          <li>Mobile: —</li>
+        </ul>
+        -->
+
+        <!-- TODO — "What I'd do differently". One honest paragraph. The
+             strongest version is about the thing you shipped knowing it wasn't
+             right, and why. Candidates: the loader, the video budget, anything
+             you'd have refactored with two more weeks.
+        <h2 class="page__heading">What I’d do differently</h2>
+        <p class="page__body">—</p>
+        -->
+
+        <h2 class="page__heading">Outcome</h2>
+        <!-- TODO: what it did for the agency — new business, press, awards,
+             anything the studio tracked. Goes above the handover paragraph. -->
+        <p class="page__body">
+          I handed the project over one section short of finished and went on
+          maternity leave. A colleague completed the Team page.
+          <!-- TODO: which month. -->
+        </p>
+
+        <dl class="page__meta">
+          <dt>Live site</dt>
+          <dd>
+            <a href="https://next-dc.com" target="_blank" rel="noopener"
+              >next-dc.com</a
+            >
+          </dd>
+        </dl>
+
+        <!-- TODO: the stack, to match Melba's colophon line.
+        <p class="page__note">Built with —.</p>
+        -->
+
+        <!-- The real exit. Someone who has read this far has finished the story,
+             so this is where the way out belongs — and where the next one gets
+             its chance. The pinned "← all works" is only the escape hatch. -->
+        <nav class="page__exit" aria-label="More work">
+          <a class="page__exit-back" href="/#works">← all works</a>
+          <a class="page__exit-next" href="/work/project-one/">
+            <span class="page__exit-label">Next project</span>
+            <span class="page__exit-title">Melba</span>
+          </a>
+        </nav>
       </article>
     </main>
 

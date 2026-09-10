@@ -30,7 +30,7 @@ export default defineConfig({
   plugins: [
     // Lets you `import` .glsl/.vert/.frag files as strings, with #include support.
     glsl(),
-    // Shared HTML partials (the persistent shell) via {{> chrome }}.
+    // Shared HTML partials (the persistent shell) via {{> frame }}.
     handlebars({ partialDirectory: resolve(root, 'src/partials') }),
   ],
   server: {

@@ -9,14 +9,14 @@
       content="Melba, the fourth Sofia Design Festival — a physics-driven website where the navigation is a jar of produce. Front-end engineering by Daniela Paneva." />
   </head>
   <body>
-    {{> chrome }}
+    {{> frame }}
 
     <main id="swup" class="view" data-page="work">
       <article class="page">
         <a class="back" href="/#works">← works</a>
 
         <p class="page__eyebrow">Sofia Design Festival · 2021</p>
-        <h1 class="page__title">Melba</h1>
+        <h1 class="page__title">MELBA DESIGN FESTIVAL</h1>
 
         <p class="page__lead">
           Every August, households across Bulgaria boil fruit into compote and
@@ -30,6 +30,10 @@
           >.
         </p>
 
+        <!-- The standing head every case study carries: Role, Concept &
+             identity, Recognition, in that order, set between the opening copy
+             and the first heading. A row with nothing true to put in it stays
+             commented out rather than shipping an em dash. -->
         <dl class="page__meta">
           <dt>Role</dt>
           <dd>
@@ -200,6 +204,17 @@
         <p class="page__note">
           Built with Matter.js, the Canvas API, and vanilla JavaScript.
         </p>
+
+        <!-- The real exit. Someone who has read this far has finished the story,
+             so this is where the way out belongs — and where the next one gets
+             its chance. The pinned "← all works" is only the escape hatch. -->
+        <nav class="page__exit" aria-label="More work">
+          <a class="page__exit-back" href="/#works">← all works</a>
+          <a class="page__exit-next" href="/work/project-two/">
+            <span class="page__exit-label">Next project</span>
+            <span class="page__exit-title">In the Skirts of Vitosha</span>
+          </a>
+        </nav>
       </article>
     </main>
 

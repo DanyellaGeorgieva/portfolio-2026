@@ -1,0 +1,18 @@
+<!-- Persistent shell, shared by every page. swup swaps only #swup, so the canvas
+     (and its live WebGL context) survives navigation. -->
+<canvas id="webgl"></canvas>
+
+<header class="site-header">
+  <a class="site-header__brand" href="/">Daniela Paneva</a>
+
+  <nav class="main-nav" aria-label="Primary">
+    <a href="/#works">work</a>
+    <a href="/#about">about</a>
+    <a href="/#contact">contact</a>
+  </nav>
+</header>
+
+<!-- Palette picker — filled by main.js from paletteNames, so the order on screen
+     is the palette sequence itself. Lives in the shell rather than in the page
+     so it survives a swup swap; hidden on detail pages by the rule above. -->
+<div class="picker" id="picker" hidden></div>

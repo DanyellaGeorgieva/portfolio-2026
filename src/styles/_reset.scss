@@ -1,29 +1,80 @@
+// A small reset. Not a full normalise — just the browser defaults this site
+// kept tripping over, which until now every component had to remember to undo
+// for itself. Anything a component genuinely wants back, it asks for.
+
+// Border-box everywhere. The site ran on the browser's content-box until this
+// file existed, so one rule opts back out: .page sizes a column at 44% and
+// budgets its padding *outside* that, and switching it would narrow the case
+// study by 48px. That opt-out is declared on .page itself, next to the width it
+// protects, rather than being carved out here.
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+// The default margins on headings, paragraphs and lists are the ones that
+// actually bite: they collapse into each other, they are set in em so they
+// change size with the type, and every text component was zeroing them by hand.
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd,
+ul,
+ol {
   margin: 0;
+}
+
+// Only the padding goes. list-style stays alone: .page__list wants its bullets
+// and puts the indent back itself, while .projects turns the markers off where
+// it doesn't want them.
+ul,
+ol {
   padding: 0;
 }
 
-html,
-body {
-  height: 100%;
+html {
+  // Stops iOS inflating type in landscape, which would break every measure set
+  // in ch on this site.
+  -webkit-text-size-adjust: 100%;
 }
 
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
+// Media as blocks: the inline default reserves room under them for a text
+// baseline that isn't there, which reads as an unexplained few pixels.
 img,
-canvas {
+picture,
+video,
+canvas,
+svg {
   display: block;
   max-width: 100%;
 }
 
-a {
+// Form controls don't inherit type by default — the picker was already asking
+// for this by hand.
+button,
+input,
+select,
+textarea {
+  font: inherit;
   color: inherit;
-  text-decoration: none;
+}
+
+// Long words and URLs break instead of pushing a column wider than its measure.
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
 }

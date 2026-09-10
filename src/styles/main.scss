@@ -1,6 +1,18 @@
+@use "reset";
+
 @font-face {
-  font-family: "Hanken Grotesk";
-  src: url("../assets/fonts/HankenGrotesk-VariableFont_wght.ttf")
+  font-family: "Cabinet Grotesk";
+  src:
+    url("../assets/fonts/CabinetGrotesk-Variable.woff2") format("woff2"),
+    format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src:
+    url("../assets/fonts/Satoshi-Variable.woff2") format("woff2"),
     format("truetype");
   font-weight: 100 900;
   font-display: swap;
@@ -8,19 +20,14 @@
 
 body {
   margin: 0;
-  font-family: "Hanken Grotesk";
-  // Everything inherits from here, so the whole page changes colour with the
-  // palette off this one declaration.
+  font-family: "Satoshi";
   color: var(--ink);
-  // Travels with the palette rather than snapping to it. Shorter than the
-  // shader's own 3.6s sweep, so the text has settled while the field is still
-  // moving — matching it exactly makes the copy feel like it is lagging.
   transition: color 1.2s ease;
 }
 
 // Links follow the ink like everything else. Without this they fall back to the
 // browser's blue: the rules that used to set each one explicitly are gone, and
-// _reset.scss — which carries this — still isn't imported anywhere.
+// there is no reset stylesheet to carry it.
 a {
   color: inherit;
 }
@@ -33,58 +40,160 @@ a {
   z-index: -1;
 }
 
-// Nav — one row across the top-left. Links are underlined and set apart by
-// small circles that sit in the gaps between them; the section you are in is the
-// one whose underline drops away.
-$dot: 6px; // separator dot
-$gap: 36px; // space between links — the separator centres in it
+// The persistent shell — the nav and the palette picker — belongs to home. A
+// detail page carries its own title and its own "← works" link back out, so the
+// shell stands down and leaves it the whole screen.
+//
+// Keyed off #swup's data-page, which ships in the HTML, rather than a class set
+// from JS: main.js is a deferred module that pulls in three and swup, so a JS
+// toggle would let this paint first and then vanish. swup swaps #swup itself,
+// so this stays right across navigations too.
+body:has(#swup:not([data-page="home"])) {
+  .site-header,
+  .picker {
+    display: none;
+  }
+}
 
-.mainnav {
+// --- Palette picker ---------------------------------------------------------
+// An index, not a set of swatches: the field behind it is already the colour, so
+// coloured chips would compete with the thing they control. Bottom left, on the
+// same edge as the name in the site-header above it.
+.picker {
   position: fixed;
-  bottom: 36px;
-  transform: translateX(-50%);
-  left: 50%;
+  left: var(--content-left);
+  bottom: 28px;
+  z-index: 10;
+
+  // main.js hides this with the `hidden` attribute whenever a section is up.
+  // Spelled out because `[hidden] { display: none }` comes from the UA
+  // stylesheet, and any author `display` on .picker — like the one in the
+  // stand-down rule above — outranks it whatever the specificity.
+  &[hidden] {
+    display: none;
+  }
+}
+
+.picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.35rem;
+}
+
+// Positioning context for the label, which hangs above this number.
+.picker__item {
+  position: relative;
+}
+
+.picker__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit; // follows --ink like everything else
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
+  font-variant-numeric: tabular-nums; // 01–06 all set to one width
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.25s ease;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    outline: none;
+  }
+
+  // The one playing.
+  &[aria-pressed="true"] {
+    opacity: 1;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+}
+
+// Out of the flow and absolutely placed, so revealing it moves nothing — a row
+// that reflowed on hover would shuffle the numbers out from under the pointer.
+.picker__label {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.55rem);
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+// Keyboard gets the same reveal as the pointer.
+.picker__item:hover .picker__label,
+.picker__link:focus-visible + .picker__label {
+  opacity: 0.7;
+  transform: none;
+}
+
+// The site-header — the name on the left, the nav on the right, across the top of
+// the screen. Fixed rather than in the flow: home doesn't scroll, and it has to
+// clear the pinned title, which is fixed at 72px underneath it.
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
   display: flex;
-  gap: $gap;
+  justify-content: space-between;
+  font-size: 20px;
+  padding: 24px;
+}
+
+// Set to match the nav rather than to outrank it: the name is a label, not a
+// logo, and the two ends of the bar should read as one line.
+.site-header__brand {
+    font-weight: 800;
+    font-size: 1.1rem;
+    font-family: "Cabinet Grotesk";
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.main-nav {
+  display: flex;
+  gap: 24px;
 
   a {
-    position: relative;
-    font-size: 20px;
     font-weight: 800;
+    font-size: 1.1rem;
+    font-family: "Cabinet Grotesk";
     text-transform: uppercase;
     text-decoration: none;
 
-    &:not(:last-child)::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      right: calc(#{$gap} / -2 - #{$dot} / 2);
-      background: currentColor; // follows the link's ink
-      width: $dot;
-      height: $dot;
-      border-radius: 50%;
-      transform: translateY(-50%);
-    }
-
     &.is-active {
-      opacity: 1;
-      text-decoration: none;
+      font-weight: 900;
     }
   }
 }
+
+/* app grid removed — layout restored to original styles */
 
 :root {
   --content-left: 36px;
   --title-size: 48px;
   --title-gap: 24px; // breathing room between the title and the copy below
 
-  // The section panel's geometry. The pinned title is built from these too, so
-  // it lands on the same left edge as the copy underneath it — change the panel
-  // here and the title follows instead of drifting out of alignment.
-  // Widened from 40% so the copy can actually reach its measure: at 40% the
-  // panel was 576px, which caps body text at ~58ch however high its max-width
-  // is set. The panel is what binds, so the measure has to be budgeted here.
+  // A case study's column. Home is full width now, so this is .page's geometry
+  // alone. Widened from 40% so the copy can actually reach its measure: at 40%
+  // the column was 576px, which caps body text at ~58ch however high its
+  // max-width is set. The column is what binds, so the measure is budgeted here.
   --panel-width: 44%;
   --panel-pad: 24px;
 
@@ -92,82 +201,44 @@ $gap: 36px; // space between links — the separator centres in it
   // its place returning to the next line.
   --measure: 65ch;
 
+  // --- Type scale ---
+  // One ramp. Everything that sets a font-size on running copy picks a step off
+  // this list rather than naming its own value: a rule that sets its own size
+  // lands between two steps and reads as an accident, which is exactly how the
+  // home sections used to open.
+  //
+  // Each step clamps: the columns are proportions of the viewport, so a fixed px
+  // size means the measure changes with the window while the type doesn't. The
+  // min is the phone size, the max is where growth stops being readable.
+  --fs-deck: clamp(1.25rem, 1.6vw, 1.5rem);
+  --fs-body: clamp(1rem, 1.25vw, 1.15rem);
+
   // Rewritten by main.js on every palette change; see inks in palettes.js. The
   // value here is skyOrchid's, so the first paint is already right — without it
   // the page would flash black before the scene comes up.
-  --ink: #251551;
+  --ink: #180e34;
 
   // The tracklist rules, at a fraction of the ink so they travel with it.
   --rule: color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
-// Given the panel's own box and centred the same way, so its left edge sits
-// exactly where the panel's content starts. Both boxes are content-box, so the
-// panel's padding is outside its 40% and the two left edges land together —
-// which is why this carries no padding of its own.
-.morph {
-  position: fixed;
-  top: 72px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-  height: var(--title-size);
-  width: var(--panel-width);
-  filter: url(#threshold) blur(0.6px);
-
-  &.is-hidden {
-    display: none;
-  }
-}
-
-.morph__text {
-  position: absolute;
-  top: 0;
-  left: 0;
-  white-space: nowrap;
-  font-size: var(--title-size);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-// The SVG only carries the filter definition — it must stay in the document
-// (display: none would take the filter with it) but occupy nothing.
-.filters {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
-
-// Page sections — left-aligned column, starting below the pinned title. The
-// panel carries no surface of its own: it is drawn by .section-background below,
-// so the effects on it can't reach the copy.
+// Home sections run the full width of the screen, gutters at --content-left so
+// the copy starts on the same edge as the name in the masthead and ends on the
+// same edge as the nav. They paint nothing — the copy sits straight on the
+// shader.
 .section {
-  position: relative; // containing block for the surface layer
   min-height: 50vh;
-  width: var(--panel-width);
-  padding-top: 180px;
-  padding-bottom: 100px;
-  padding-left: var(--panel-pad);
-  padding-right: var(--panel-pad);
-  margin: 36px auto;
+  padding: 180px var(--content-left) 100px;
 }
 
-// The panel's surface, as its own layer.
-//
-// This exists because filter and mix-blend-mode apply to an element *and
-// everything inside it* — put either on .section and the copy gets blurred and
-// blended along with the white. As a sibling behind the text, the surface can
-// take any treatment and the text stays untouched on top of it.
-.section-background {
-  position: absolute;
-  inset: 0;
-  // Behind its siblings. .section paints no background, so there is nothing
-  // between this and the shader.
-  z-index: -1;
-  // border-radius: 24px;
-  // background: rgba(255, 255, 255, 0.9);
+// Home is exactly one viewport and nothing in it moves, so the document must
+// not scroll either. .view's own overflow isn't enough — the wheel still reaches
+// the document and nudges it a few pixels, then rubber-bands back. A detail page
+// is long-form and is left alone.
+body:has(#swup[data-page="home"]) {
+  height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 // --- Home doesn't scroll ----------------------------------------------------
@@ -179,16 +250,15 @@ $gap: 36px; // space between links — the separator centres in it
   height: 100vh;
   overflow: hidden;
 
+  // Stacked in one place, all four edges pinned, so they occupy the same screen
+  // and only one is shown at a time.
   .section {
     position: absolute;
     top: 0;
-    // Pinned to both edges with a definite width, which makes the panel's own
-    // `margin: 36px auto` centre it. Deliberately not translateX(-50%): a
-    // transform creates a stacking context, and a stacking context is a blending
-    // isolation group — .section-background's mix-blend-mode would then blend
-    // against the section's own empty backdrop and never reach the shader.
     left: 0;
     right: 0;
+    width: 44%;
+    margin: 0 auto;
     // visibility rather than display: it keeps the hidden sections out of the
     // tab order (so their links can't be focused underneath the one on top)
     // without collapsing their layout, which display: none would.
@@ -201,97 +271,56 @@ $gap: 36px; // space between links — the separator centres in it
 }
 
 // --- Typography -------------------------------------------------------------
-// The section headings stay in the markup for document structure and search,
-// but the visible title is the pinned .morph element, so they are hidden from
-// sight only — not from screen readers.
-.section__title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 .page__title {
   margin: 0 0 var(--title-gap);
   font-size: var(--title-size);
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
   line-height: 1;
 }
 
-.section__intro,
+// The deck under a case study's title. It used to share a rule with the home
+// sections' opening paragraphs, which meant the two couldn't be tuned
+// independently — retuning the home copy moved every case study with it. The
+// home sections run on .section__body now, so this is the deck alone.
 .page__lead {
   margin: 0 0 24px;
   // Was 40vw — a viewport measure, so the line length grew with the window
   // instead of staying at a constant number of characters.
   max-width: var(--measure);
-  font-size: 24px;
+  font-size: var(--fs-deck);
   font-weight: 400;
+  // Was unset, so this inherited the browser's default — about 1.2 at the old
+  // flat 24px, the tightest running text on the site. A deck is read as
+  // sentences, so it gets sentence leading.
+  line-height: 1.45;
 }
 
 // --- Copy hierarchy ---------------------------------------------------------
-// Three tiers rather than three identical paragraphs, so the eye has somewhere
-// to land and an order to read in. The step between them is deliberately large —
-// a gentle 24 → 20 → 18 would read as an accident rather than a decision. With
-// the pinned title at 56px the whole scale runs 56 → 34 → 18 → 13.
+// One size for running copy, so a paragraph is never set at whatever it was
+// written at. With a case study's own title at --title-size and its deck at
+// --fs-deck, the scale runs 48 → 24 → 18.
+//
+// Home runs on one voice now: every section is .section__body, and the tiering
+// is done by the column a paragraph sits in rather than by its size. The lead
+// tier that used to open #about is gone.
 //
 // Measures are in ch so a line breaks at a readable length rather than at
-// whatever the panel happens to be wide.
-.section__lead {
-  margin: 0 0 28px;
-  // Same measure as everything else, though at this size the panel binds long
-  // before 65ch does — 65ch of 34px type would need a panel about 1100px wide.
-  max-width: var(--measure);
-  font-size: clamp(1.6rem, 2.4vw, 2.15rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  text-wrap: balance; // avoids a long line followed by one orphaned word
-}
-
+// whatever the column happens to be wide.
 .section__body {
   margin: 0 0 32px;
   max-width: var(--measure);
-  font-size: clamp(1rem, 1.25vw, 1.15rem);
+  font-size: var(--fs-body);
   line-height: 1.55;
   opacity: 0.85;
 }
 
-// The quietest tier — a footnote carrying a standing fact rather than part of
-// the argument above it.
-.section__meta {
-  margin: 0;
-  max-width: var(--measure);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  opacity: 0.65;
-}
-
-// Only the label is uppercase and letterspaced. Setting the whole footnote that
-// way made it three lines of letterspaced capitals, which is tiring to read —
-// the treatment says "label", so it should sit on something label-length and let
-// the sentence under it stay a sentence.
-.section__label {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.75;
-}
-
 // The one or two words in each tier worth catching first — her name, and where
 // she works. Weight rather than colour: the ink is palette-driven and every
-// stop in a palette is too light to read on the panel.
-.section__lead strong,
-.section__body strong,
-.section__meta strong {
+// stop in a palette is too light to read against the field.
+.section__body strong {
   font-weight: 800;
+  font-family: "Cabinet Grotesk";
 }
 
 .page__body {
@@ -302,96 +331,86 @@ $gap: 36px; // space between links — the separator centres in it
   line-height: 1.7;
 }
 
-// The frosted wash on a tracklist row under the pointer.
-$frost: rgba(255, 255, 255, 0.32);
+// The track number's column, in one place so the title's number and the blurb's
+// indent can't drift apart.
+//
+// It needs a fixed width because Cabinet Grotesk has no tabular figures — asking
+// for font-variant-numeric: tabular-nums changes nothing, measured. "01." sets
+// 28.54px against "05." at 36.67px, so without this the titles start up to 8px
+// apart down the list and the gap after each number reads differently. 2.4rem
+// clears the widest of 00.–09.; the number is set flush right inside it, so its
+// full stop lands on one edge and the gap to the title is the same every row.
+$track-width: 2.4rem;
+$track-gap: 0.6rem;
 
-// --- Card list (works / lab) ------------------------------------------------
-// Set as a record's tracklist: a numbered row per project, ruled off underneath,
-// with the year where a runtime would sit. The numbers come from a CSS counter
-// rather than the markup — they are a function of the list's order, so putting
-// them in the HTML would just be something else to renumber by hand.
-.cards {
+.projects {
   list-style: none;
-  margin: 0;
   padding: 0;
   width: 100%;
-  max-width: 48rem; // the rules need an end to run to, well past the copy above
   counter-reset: track;
-  border-top: 1px solid var(--rule); // closes the block at the top of the first row
-  transition: border-color 1.2s ease;
 }
 
-.card {
-  border-bottom: 1px solid var(--rule);
-  transition: border-color 1.2s ease;
-}
-
-.card__link {
-  display: grid;
-  // title | year, with the teaser on a second row under the title
-  grid-template-columns: 1fr auto;
-  align-items: baseline;
-  column-gap: 1rem;
-  row-gap: 0.3rem;
-  padding: 0.85rem 0;
-  text-decoration: none;
-  transition:
-    background-color 0.35s ease,
-    backdrop-filter 0.35s ease;
-
-  // Hover frosts the row: a wash of white over a blurred copy of whatever the
-  // shader is doing behind it. backdrop-filter blurs the backdrop rather than
-  // the row's own text, so the copy stays sharp on top of it.
-  &:hover,
-  &:focus-visible {
-    background-color: $frost;
+.project {
+  margin-bottom: 3rem;
+  &:last-child {
+    margin-bottom: 0;
   }
 }
 
-.card__title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+.project__link {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+  }
+}
+
+.project__head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.project__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: "Cabinet Grotesk";
   text-transform: uppercase;
 
-  // The track number reads as the first word of the title — same size, weight
-  // and colour — rather than as a separate column beside it. It still comes from
-  // the counter, so the list renumbers itself when a project moves.
   &::before {
     counter-increment: track;
     content: counter(track, decimal-leading-zero) ".";
-    margin-right: 0.6rem;
-    font-variant-numeric: tabular-nums; // keeps 01–09 and 10+ on one edge
+    // A column of its own rather than just a margin: see $track-width above for
+    // why the font can't hold the numbers to one width by itself.
+    display: inline-block;
+    width: $track-width;
+    text-align: right;
+    margin-right: $track-gap;
+    font-weight: 400;
+    opacity: 0.7;
   }
 }
 
-// The teaser hangs under the title, on the same left edge now that the number
-// sits inside the title rather than in a column of its own.
-.card__blurb {
-  grid-column: 1;
-  grid-row: 2;
-  margin: 0;
+// The teaser hangs under the title's *text*, clear of the track number, so the
+// two read as one block with the number standing outside it.
+//
+// padding rather than a text-indent or a matching ::before: both of those only
+// move the first line, and this copy wraps. The value is the number's own
+// footprint: the number's column plus its gap, taken from the same two values
+// the number itself uses, so the two cannot fall out of step.
+.project__blurb {
+  padding-left: $track-width + $track-gap;
   font-size: 1rem;
-  font-style: italic;
-  line-height: 1.4;
+  opacity: 0.7;
+  width: 90%;
+}
+
+.project__year {
+  font-size: 0.95rem;
   opacity: 0.7;
 }
-
-.card__year {
-  // Held at the right edge, spanning both rows and centred against them like the
-  // number. Without the explicit placement it auto-flows after the teaser, which
-  // spans the full width, and drops to a row of its own.
-  grid-column: 2;
-  grid-row: 1 / -1;
-  align-self: center;
-  justify-self: end;
-  font-size: 0.95rem;
-  font-style: italic;
-  opacity: 0.65;
-  font-variant-numeric: tabular-nums;
-}
-
 
 // --- Say hi -----------------------------------------------------------------
 // The address is the whole section, so it is set at card-title weight rather
@@ -406,7 +425,7 @@ $frost: rgba(255, 255, 255, 0.32);
 .contact__email {
   font-size: clamp(1.35rem, 3vw, 2.4rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: "Cabinet Grotesk";
   line-height: 1.1;
   text-decoration: none;
   // A rule that draws itself in from the left on hover. Painted as a background
@@ -433,19 +452,131 @@ $frost: rgba(255, 255, 255, 0.32);
 // down to a slow close-up (PAGE_SCALE / PAGE_SPEED in main.js) to read as calm
 // behind it.
 .page {
-  box-sizing: border-box;
+  // Opts out of the reset's border-box: this column's padding is budgeted
+  // *outside* its 44%, so under border-box the copy would lose 48px of measure.
+  box-sizing: content-box;
   min-height: 100vh;
+  // A centred column, narrower than home on purpose — a case study is long-form
+  // and reads at a measure, where home is a screen you take in at once. This is
+  // also what binds that measure: --measure is the ceiling, this is the wall.
+  width: var(--panel-width);
+  margin-inline: auto;
   // Top padding clears the nav, which now runs across the top of this column
   // rather than down the side of it.
-  padding: 8rem 3rem 4rem var(--content-left);
+  padding: 8rem var(--panel-pad) 4rem;
 }
 
+// The escape hatch, not the exit. A case study opens on the story, so this is
+// out of the flow and invisible on load; it slides in when you scroll UP, the
+// gesture that means you have stopped reading and started looking for a way
+// somewhere. Scrolling down puts it away again. The real exit is .page__exit at
+// the end, where someone who has finished actually wants it.
 .back {
-  display: inline-block;
-  margin-bottom: 2rem;
-  font-weight: 700;
+  position: fixed;
+  top: 1.5rem;
+  left: var(--content-left);
+  z-index: 10;
+  // It floats over running copy and over a field that is always moving, so it
+  // carries its own ground. Without this it reads as a stray line of the case
+  // study rather than as a control, and half the time it is illegible.
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(10px);
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
   text-decoration: none;
-  opacity: 0.8;
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  pointer-events: none;
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease,
+    background-color 0.3s ease;
+
+  &.is-visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  // Keyboard users tab to it before any scrolling has happened, so focus has to
+  // bring it in too — otherwise focus lands on something that isn't there.
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    background-color: rgba(255, 255, 255, 0.62);
+  }
+}
+
+// --- End of a case study ---------------------------------------------------
+// Two moves, weighted: the way back out is small and quiet, the next project is
+// the one with pull. Someone at the bottom of Melba is warm — the useful thing
+// to offer them is another case study, not the index.
+.page__exit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem 2rem;
+  margin: 5rem 0 0;
+  padding-top: 1.25rem;
+  max-width: var(--measure);
+  border-top: 1px solid var(--rule);
+  transition: border-color 1.2s ease;
+}
+
+.page__exit-back {
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
+.page__exit-next {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  text-align: right;
+  text-decoration: none;
+}
+
+.page__exit-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+// Same underline-grow as .contact__email, anchored right so it opens from the
+// edge the text is set against.
+.page__exit-title {
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
+  line-height: 1.15;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 100% 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.page__exit-next:hover .page__exit-title,
+.page__exit-next:focus-visible .page__exit-title {
+  background-size: 100% 2px;
 }
 
 // --- Case study ------------------------------------------------------------
@@ -459,8 +590,8 @@ $frost: rgba(255, 255, 255, 0.32);
 .page__eyebrow {
   margin: 0 0 0.75rem;
   font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 800;
+  font-family: "Cabinet Grotesk";
   text-transform: uppercase;
   opacity: 0.7;
 }
@@ -483,8 +614,8 @@ $frost: rgba(255, 255, 255, 0.32);
     // of its sentence rather than sitting above it.
     padding-top: 0.25em;
     font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    font-weight: 800;
+    font-family: "Cabinet Grotesk";
     text-transform: uppercase;
     opacity: 0.7;
   }
@@ -502,7 +633,7 @@ $frost: rgba(255, 255, 255, 0.32);
   max-width: var(--measure);
   font-size: clamp(1.35rem, 2vw, 1.7rem);
   font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: "Cabinet Grotesk";
   line-height: 1.25;
   text-wrap: balance;
 }
@@ -525,13 +656,23 @@ $frost: rgba(255, 255, 255, 0.32);
   margin: 3rem 0 0;
   max-width: var(--measure);
   font-size: 0.95rem;
-  font-style: italic;
   opacity: 0.6;
 }
 
 .page__body strong,
 .page__list strong {
   font-weight: 800;
+  font-family: "Cabinet Grotesk";
+}
+
+// File extensions and API names set inline. No box or tint behind them — the
+// ground is a live shader, so any fill would be a hole punched in it. A slightly
+// smaller monospace at a lower opacity is enough to read as "this is a literal".
+.page__body code,
+.page__list code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+  opacity: 0.8;
 }
 
 // Links inside running copy need to be findable without a colour to spend —
@@ -548,24 +689,5 @@ $frost: rgba(255, 255, 255, 0.32);
   &:focus-visible {
     opacity: 1;
     text-decoration-thickness: 2px;
-  }
-}
-
-// Credit — pinned bottom-right on every page. It sat bottom-left until the
-// content moved into that column; a fixed block and a scrolling column can't
-// share an edge, so it moved to the side the copy's max-width never reaches.
-.credit {
-  position: fixed;
-  right: var(--content-left);
-  bottom: 2rem;
-  z-index: 10;
-  margin: 0;
-  max-width: 20rem;
-  font-size: 0.95rem;
-  text-align: right;
-  opacity: 0.72;
-
-  em {
-    font-style: italic;
   }
 }

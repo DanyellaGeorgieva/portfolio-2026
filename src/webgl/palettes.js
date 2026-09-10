@@ -57,7 +57,7 @@ export const paletteNames = Object.keys(palettes);
  * translucent white panel, against AAA's 7:1, with the yellows and greens
  * naturally landing lowest.
  */
-export const inks = {
+const inks = {
   skyOrchid: "#251551", // deep violet
   lavenderPeach: "#4b1551", // deep orchid
   magentaGold: "#512715", // burnt umber
