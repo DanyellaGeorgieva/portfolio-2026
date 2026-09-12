@@ -1,15 +1,6 @@
 @use "reset";
 
 @font-face {
-  font-family: "Cabinet Grotesk";
-  src:
-    url("../assets/fonts/CabinetGrotesk-Variable.woff2") format("woff2"),
-    format("truetype");
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-@font-face {
   font-family: "Satoshi";
   src:
     url("../assets/fonts/Satoshi-Variable.woff2") format("woff2"),
@@ -18,8 +9,73 @@
   font-display: swap;
 }
 
+// =============================================================================
+// TEXT COLOUR — one per palette, yours to set
+// =============================================================================
+// The field cycles through six palettes; each one can have its own text colour.
+// Fill in a hex per palette here and nothing else needs touching — the nav, the
+// body copy, the project titles and the case studies all take their colour
+// from --ink.
+//
+// How it reaches the page: main.js puts the live palette's *name* on <html> as
+// data-palette, and the loop below turns each name into a rule. JS never
+// handles a colour value, so this map is the only place text colour is decided.
+//
+// Adding a palette to palettes.js? Add a line here and it is done.
+//
+// The one constraint worth knowing. The copy sits straight on the field, whose
+// backgrounds are all near-white (#EFF7FA – #FBF1F4), so anything genuinely
+// dark is comfortable — #180e34 measures 16.4:1 at worst. A mid-tone starts to
+// struggle: by about 45% lightness you are at the 4.5:1 AA floor on the palest
+// palette.
+//
+// These all start on one colour so nothing moves until you choose. For
+// reference, the per-palette inks the site used to derive automatically were
+// #251551, #4b1551, #512715, #514f15, #205115 and #155143 in this order — each
+// that palette's glow hue at about 20% lightness.
+$inks: (
+  // Each ink is a deep relative of one of its own palette's hues — its blue, its
+  // magenta, its lime, its aqua, its violet. Hues that go muddy when darkened
+  // (the golds and limes) take a neighbouring hue instead, which is why
+  // coralLime is a forest green and not an olive.
+  //
+  // Three of them land as tinted near-blacks rather than obvious colours, and
+  // that is the field's doing rather than a choice: skyOrchid, lavenderPeach and
+  // limeViolet each contain a violet channel at only 23–25% luminance, and dark
+  // text crossing one of those is tight whatever hue it is. They are darkened
+  // just far enough to clear AA there, which leaves them as navy-black,
+  // plum-black and violet-black. The other three had no such constraint and
+  // stayed properly coloured.
+  //
+  // Every one clears 4.6:1 against the brightest part of its own palette and
+  // 7.9–16.5:1 against its background. Re-measure if you change them: the
+  // binding number is the *worst* stop, not the background.
+  skyOrchid: #0b1834,
+  // navy-black    ← its sky blue
+  lavenderPeach: #2b0c30,
+  // plum-black    ← its magenta
+  magentaGold: #5e1733,
+  // oxblood       ← its magenta, not its amber
+  coralLime: #184c29,
+  // forest green  ← its lime
+  goldAqua: #0e5360,
+  // deep teal     ← its aqua
+  limeViolet: #291452 // violet-black  ← its violet
+);
+
+// :root[data-palette] rather than plain [data-palette]. Both select the same
+// element, but a bare attribute selector has the same specificity as the :root
+// rule that holds the fallback — so whichever came later in the file won, and
+// since the fallback is declared further down it won every time and all six
+// palettes rendered identically. Adding :root makes these rules specific enough
+// to win regardless of where either sits.
+@each $name, $ink in $inks {
+  :root[data-palette="#{$name}"] {
+    --ink: #{$ink};
+  }
+}
+
 body {
-  margin: 0;
   font-family: "Satoshi";
   color: var(--ink);
   transition: color 1.2s ease;
@@ -48,11 +104,22 @@ a {
 // from JS: main.js is a deferred module that pulls in three and swup, so a JS
 // toggle would let this paint first and then vanish. swup swaps #swup itself,
 // so this stays right across navigations too.
-body:has(#swup:not([data-page="home"])) {
+body:has(#swup[data-page="detail"]) {
   .site-header,
   .picker {
     display: none;
   }
+}
+
+// Holds the SVG filter definitions from frame.html. It must stay in the
+// document — display: none would take the <defs> with it — but occupy nothing
+// and catch nothing.
+.filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 // --- Palette picker ---------------------------------------------------------
@@ -95,7 +162,6 @@ body:has(#swup:not([data-page="home"])) {
   font: inherit;
   font-size: 0.75rem;
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   font-variant-numeric: tabular-nums; // 01–06 all set to one width
   cursor: pointer;
   opacity: 0.5;
@@ -125,7 +191,6 @@ body:has(#swup:not([data-page="home"])) {
   white-space: nowrap;
   font-size: 0.7rem;
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   text-transform: uppercase;
   opacity: 0;
   transform: translateY(4px);
@@ -152,35 +217,75 @@ body:has(#swup:not([data-page="home"])) {
   z-index: 10;
   display: flex;
   justify-content: space-between;
-  font-size: 20px;
+  font-size: 1.1rem;
+  text-transform: uppercase;
   padding: 24px;
 }
 
 // Set to match the nav rather than to outrank it: the name is a label, not a
 // logo, and the two ends of the bar should read as one line.
-.site-header__brand {
-    font-weight: 800;
-    font-size: 1.1rem;
-    font-family: "Cabinet Grotesk";
-    text-transform: uppercase;
-    text-decoration: none;
+// Every link in the bar shares one treatment, including the active state. The
+// name is one of the four destinations now that home is a real page, so it
+// should say when you are on it — landing on / used to leave nothing lit at
+// all, which is the one view with no indication of where you are.
+.site-header a {
+  font-weight: 800;
+  text-decoration: none;
+  transition: 0.2s all ease;
+
+  &.is-active {
+    font-weight: 900;
+  }
+
+  display: inline-block;
+  text-align: center;
+
+  &::after {
+    content: attr(data-label);
+    display: block;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    font-weight: 900;
+    pointer-events: none;
+  }
+
+  &:hover {
+    font-weight: 900;
+  }
 }
 
+// Pointing at one link quiets the rest.
+//
+// :has(a:hover) rather than .site-header:hover, because the bar runs the full
+// width of the screen with a wide gap between the name and the nav — on a plain
+// :hover the whole set would dim whenever the pointer crossed that empty middle,
+// with nothing lit to explain why. This fires only when a link is genuinely
+// under the pointer.
+//
+// One rule, with the hovered link excluded by :not(), rather than a dim rule
+// plus a rule putting the hovered one back. That pairing does not work here:
+// :has() carries the specificity of its own argument, so `:has(a:hover) a`
+// scores (0,2,2) against (0,2,1) for `a:hover` and wins — every link dims,
+// including the one under the pointer. Excluding it up front sidesteps the
+// competition entirely.
+//
+// Focus is included so the same thing happens for anyone moving through the bar
+// by keyboard, who otherwise gets no equivalent of the effect at all.
+.site-header:has(a:hover) a:not(:hover),
+.site-header:has(a:focus-visible) a:not(:focus-visible) {
+  // color: var(--ink-quiet);
+  opacity: 0.6;
+}
+
+// The name deliberately stays outside <nav>: a navigation landmark is the list
+// of a site's sections, and the site's own name is not one of them — a screen
+// reader announcing "navigation, Daniela Paneva, work, about, contact" reads as
+// though the name were a fourth section. It sits beside the nav and shares its
+// styling instead, which is the part that was actually missing.
 .main-nav {
   display: flex;
   gap: 24px;
-
-  a {
-    font-weight: 800;
-    font-size: 1.1rem;
-    font-family: "Cabinet Grotesk";
-    text-transform: uppercase;
-    text-decoration: none;
-
-    &.is-active {
-      font-weight: 900;
-    }
-  }
 }
 
 /* app grid removed — layout restored to original styles */
@@ -210,64 +315,92 @@ body:has(#swup:not([data-page="home"])) {
   // Each step clamps: the columns are proportions of the viewport, so a fixed px
   // size means the measure changes with the window while the type doesn't. The
   // min is the phone size, the max is where growth stops being readable.
+  --fs-lead: clamp(1.375rem, 2.1vw, 1.875rem);
   --fs-deck: clamp(1.25rem, 1.6vw, 1.5rem);
   --fs-body: clamp(1rem, 1.25vw, 1.15rem);
+  --fs-meta: clamp(0.8rem, 0.9vw, 0.9rem);
 
-  // Rewritten by main.js on every palette change; see inks in palettes.js. The
-  // value here is skyOrchid's, so the first paint is already right — without it
-  // the page would flash black before the scene comes up.
+  // The text colour before JS has run, and the fallback for any palette not
+  // listed in $inks below. Set to the same value as skyOrchid's so the first
+  // paint is already right — without it the page flashes black before the
+  // scene comes up.
   --ink: #180e34;
 
-  // The tracklist rules, at a fraction of the ink so they travel with it.
-  --rule: color-mix(in srgb, var(--ink) 35%, transparent);
+  // The quiet state of the ink, for text being stood down — the header links
+  // you are not pointing at.
+  //
+  // Mixed toward white rather than toward transparent, and that is the point of
+  // deriving it rather than using opacity: opacity lets the field show *through*
+  // the letterforms, so a moving gradient reads inside the glyphs and the word
+  // shimmers against a busy backdrop. A lighter ink stays opaque — the glyphs
+  // hold their shape and only their weight of colour drops.
+  //
+  // in oklab because the six inks are very different hues, and sRGB mixing
+  // lightens them by visibly different amounts; oklab moves them all by the same
+  // perceived step, so the quiet state feels equally quiet on every palette.
+  //
+  // 75% is the dial — lower is fainter. It follows --ink automatically, so each
+  // palette gets its own quiet tone with nothing else to maintain.
+  --ink-quiet: color-mix(in oklab, var(--ink) 75%, white);
+
+  // The quiet state of the ink, for text that is being stood down — the header
+  // links you are not pointing at.
+  //
+  // Mixed toward white rather than toward transparent, and that is the whole
+  // point of doing it this way: opacity lets the field show *through* the
+  // letterforms, so a moving gradient reads inside the glyphs and the word
+  // shimmers. A lighter ink stays opaque, so the glyphs hold their own shape
+  // and only their weight of colour drops.
+  //
+  // in oklab, because the six inks are very different hues and sRGB mixing
+  // lightens them by visibly different amounts — oklab moves them all by the
+  // same perceived step.
+  //
+  // 45% is the dial: lower is quieter.
+  // --ink-quiet: color-mix(in oklab, var(--ink) 75%, white);
 }
 
-// Home sections run the full width of the screen, gutters at --content-left so
-// the copy starts on the same edge as the name in the masthead and ends on the
-// same edge as the nav. They paint nothing — the copy sits straight on the
-// shader.
 .section {
   min-height: 50vh;
-  padding: 180px var(--content-left) 100px;
+  width: 42%;
+  margin: 0 auto;
+  padding-top: 14rem;
 }
 
-// Home is exactly one viewport and nothing in it moves, so the document must
-// not scroll either. .view's own overflow isn't enough — the wheel still reaches
-// the document and nudges it a few pixels, then rubber-bands back. A detail page
-// is long-form and is left alone.
-body:has(#swup[data-page="home"]) {
-  height: 100vh;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-// --- Home doesn't scroll ----------------------------------------------------
-// The sections are stacked in one place and only the one the nav points at is
-// shown, so the document is exactly one viewport tall and there is nothing to
-// scroll. Scoped to home — a project page is long-form and still scrolls.
-.view[data-page="home"] {
+// A top-level page fills the screen and normally has nothing to scroll — but
+// min-height, not height, and no overflow lock.
+//
+// There used to be a hard lock here. It existed because all four sections lived
+// in one document, stacked absolutely, and a wheel gesture drove which one was
+// up; without the lock the document nudged underneath the gesture. Each view is
+// its own page now, nothing is stacked, and the gesture is gone — so the lock
+// has no job left, and keeping it would mean copy that overflows a short window
+// could not be reached at all.
+.view[data-page="top"] {
   position: relative;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+}
 
-  // Stacked in one place, all four edges pinned, so they occupy the same screen
-  // and only one is shown at a time.
-  .section {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 44%;
-    margin: 0 auto;
-    // visibility rather than display: it keeps the hidden sections out of the
-    // tab order (so their links can't be focused underneath the one on top)
-    // without collapsing their layout, which display: none would.
-    visibility: hidden;
-  }
-
-  .section.is-active {
-    visibility: visible;
-  }
+// Stop the elastic bounce on the pages that have nothing to scroll.
+//
+// These pages hold one screen of content, and measured, they overflow by
+// exactly zero in both axes — forcing scrollTo(0, 500) leaves scrollY at 0. The
+// movement is the platform's overscroll rubber-banding, which happens at a
+// scroll boundary whether or not there is anything beyond it.
+//
+// On <html>, not <body>: overscroll-behavior propagates to the viewport from
+// the root element only. Set on body it does nothing here.
+//
+// And overscroll-behavior rather than the overflow:hidden lock this page used
+// to carry. That lock stopped the bounce by making the page unscrollable
+// outright — which also meant that on a short window, copy that overflowed
+// could not be reached at all. This kills the bounce and leaves real scrolling
+// working if the content ever needs it.
+//
+// Scoped to the top-level pages: a case study genuinely scrolls, and the bounce
+// at the end of a long read is the behaviour people expect.
+html:has(#swup[data-page="top"]) {
+  overscroll-behavior-y: none;
 }
 
 // --- Typography -------------------------------------------------------------
@@ -275,7 +408,6 @@ body:has(#swup[data-page="home"]) {
   margin: 0 0 var(--title-gap);
   font-size: var(--title-size);
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   line-height: 1;
 }
 
@@ -296,31 +428,86 @@ body:has(#swup[data-page="home"]) {
   line-height: 1.45;
 }
 
-// --- Copy hierarchy ---------------------------------------------------------
-// One size for running copy, so a paragraph is never set at whatever it was
-// written at. With a case study's own title at --title-size and its deck at
-// --fs-deck, the scale runs 48 → 24 → 18.
+// --- Section copy: three tiers ----------------------------------------------
+// The statement, the story, the facts. Each step is deliberately a long way
+// from the next — a gentle 22 → 19 → 17 would read as an accident rather than a
+// decision, and the reader would have to work out the order for themselves.
 //
-// Home runs on one voice now: every section is .section__body, and the tiering
-// is done by the column a paragraph sits in rather than by its size. The lead
-// tier that used to open #about is gone.
-//
-// Measures are in ch so a line breaks at a readable length rather than at
-// whatever the column happens to be wide.
-.section__body {
-  margin: 0 0 32px;
-  max-width: var(--measure);
-  font-size: var(--fs-body);
-  line-height: 1.55;
-  opacity: 0.85;
+// The tiers change face as well as size, which is the part that does most of
+// the work: Cabinet Grotesk is the display face used by the titles, Satoshi is
+// the reading face. So the lead belongs visibly to the same family as the work
+// titles, and the paragraphs under it read as prose rather than as a smaller
+// heading.
+
+// The opening statement. Display face, tight, and held to a short measure — it
+// is a thing to be taken in at a glance, not read across.
+.section__lead {
+  margin: 0 0 1.75rem;
+  // Short enough that the line breaks land where the sense does, rather than
+  // wherever the column happens to run out.
+  max-width: 34ch;
+  font-family: "Cabinet Grotesk", system-ui, sans-serif;
+  font-size: var(--fs-lead);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  // Evens the line lengths instead of leaving one word stranded on the last
+  // line, which at this size is very visible.
+  text-wrap: balance;
 }
 
-// The one or two words in each tier worth catching first — her name, and where
-// she works. Weight rather than colour: the ink is palette-driven and every
-// stop in a palette is too light to read against the field.
+// Running prose. The reading face, a full measure, and leading generous enough
+// to hold the eye across a long line over a moving field.
+.section__body {
+  margin: 0 0 1.25rem;
+  max-width: var(--measure);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+// The quietest tier — standing facts rather than part of the argument. Set at
+// the quiet ink so it recedes without going transparent over the field.
+.section__meta {
+  margin: 2.5rem 0 0;
+  max-width: var(--measure);
+  font-size: var(--fs-meta);
+  line-height: 1.6;
+  color: var(--ink-quiet);
+}
+
+// Its label. A block of its own rather than a run-in: set inline, a value long
+// enough to wrap puts its second line under the label, and the eye loses which
+// words are the label and which are the answer.
+//
+// Bracketed by CSS rather than typed into the markup, so it matches the picker's
+// [ 01 ] and the two halves cannot drift apart.
+.section__label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-family: "Cabinet Grotesk", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  // Back to full strength: the label is the one part of this tier that should
+  // catch the eye, and it is short enough to carry the contrast.
+  color: var(--ink);
+
+  &::before {
+    content: "[ ";
+  }
+
+  &::after {
+    content: " ]";
+  }
+}
+
+// The one or two words in a tier worth catching first — her name, and where she
+// works. Weight rather than colour: the ink is palette-driven and every stop in
+// a palette is too light to read against the field.
+.section__lead strong,
 .section__body strong {
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
 }
 
 .page__body {
@@ -361,55 +548,87 @@ $track-gap: 0.6rem;
   display: flex;
   flex-direction: column;
   text-decoration: none;
+  transition: all 0.2s ease;
+   &:hover {
+    transform: scale(1.01);
+    transition: all 0.35s ease;
+   }
+}
 
-  &:hover,
-  &:focus-visible {
-  }
+// Pointing at one project stands the others down — the same gesture the header
+// makes, and the same 0.6, so the two lists behave identically rather than each
+// having its own idea of "quiet".
+//
+// Written as one rule with :not() rather than as a dim rule plus a bright
+// override: :has() takes its specificity from its argument, so
+// `.projects:has(…:hover) .project__link` outweighs `.project__link:hover` and
+// the row under the cursor dims along with the rest.
+//
+// Focus is included so the same thing happens for anyone moving through the
+// list by keyboard, who otherwise gets no equivalent of the effect at all.
+.projects:has(.project__link:hover) .project__link:not(:hover),
+.projects:has(.project__link:focus-visible) .project__link:not(:focus-visible) {
+  opacity: 0.7;
 }
 
 .project__head {
   width: 100%;
   display: flex;
-  justify-content: space-between;
-}
-
-.project__title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  font-family: "Cabinet Grotesk";
-  text-transform: uppercase;
+  align-items: baseline;
 
   &::before {
     counter-increment: track;
     content: counter(track, decimal-leading-zero) ".";
-    // A column of its own rather than just a margin: see $track-width above for
-    // why the font can't hold the numbers to one width by itself.
-    display: inline-block;
-    width: $track-width;
-    text-align: right;
-    margin-right: $track-gap;
+    font-size: 2rem;
     font-weight: 400;
-    opacity: 0.7;
+    width: 50px;
+    min-width: 50px;
+    text-align: right;
+    margin-right: 8px;
+  }
+
+  span {
+    margin-right: 0;
   }
 }
 
-// The teaser hangs under the title's *text*, clear of the track number, so the
-// two read as one block with the number standing outside it.
-//
-// padding rather than a text-indent or a matching ::before: both of those only
-// move the first line, and this copy wraps. The value is the number's own
-// footprint: the number's column plus its gap, taken from the same two values
-// the number itself uses, so the two cannot fall out of step.
-.project__blurb {
-  padding-left: $track-width + $track-gap;
-  font-size: 1rem;
-  opacity: 0.7;
-  width: 90%;
+.project__title {
+  font-size: 2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+
 }
 
-.project__year {
-  font-size: 0.95rem;
-  opacity: 0.7;
+// The way in, shown only once you are pointing at the row it belongs to. Three
+// of these standing there permanently would be three instructions for one
+// gesture; hidden, the list reads as titles and the eye turns up exactly when
+// it is about to be true.
+//
+// Faded rather than display:none — it holds its space either way, so nothing in
+// the row shifts as it arrives.
+.project__view {
+  margin-left: auto;
+  align-self: center;
+  // Sized against the row's own type rather than in px, so it keeps its
+  // proportion to the title at every viewport width.
+  width: 3em;
+  height: auto;
+  // The artwork is drawn entirely in currentColor, so it takes the palette's
+  // ink along with the title beside it and needs no colour of its own.
+  color: inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.project__link:hover .project__view,
+.project__link:focus-visible .project__view {
+  opacity: 1;
+}
+
+.project__blurb {
+  padding-left: 58px;
+  font-size: 1.2rem;
+  width: 80%;
 }
 
 // --- Say hi -----------------------------------------------------------------
@@ -425,7 +644,6 @@ $track-gap: 0.6rem;
 .contact__email {
   font-size: clamp(1.35rem, 3vw, 2.4rem);
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   line-height: 1.1;
   text-decoration: none;
   // A rule that draws itself in from the left on hover. Painted as a background
@@ -485,7 +703,6 @@ $track-gap: 0.6rem;
   backdrop-filter: blur(10px);
   font-size: 0.9rem;
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   text-decoration: none;
   opacity: 0;
   transform: translateY(-0.5rem);
@@ -525,14 +742,18 @@ $track-gap: 0.6rem;
   margin: 5rem 0 0;
   padding-top: 1.25rem;
   max-width: var(--measure);
-  border-top: 1px solid var(--rule);
+  // No colour named: a border with none falls back to currentColor, so this
+  // line is simply the text colour and follows --ink with nothing in between.
+  border-top: 1px solid;
+  // currentColor does not animate on its own — the border tracks `color`, but
+  // only if border-color is listed as transitionable. Without this the divider
+  // snaps to the new palette while the copy above it crossfades.
   transition: border-color 1.2s ease;
 }
 
 .page__exit-back {
   font-size: 0.95rem;
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   text-decoration: none;
   opacity: 0.7;
   transition: opacity 0.3s ease;
@@ -555,7 +776,6 @@ $track-gap: 0.6rem;
 .page__exit-label {
   font-size: 0.7rem;
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   text-transform: uppercase;
   opacity: 0.7;
 }
@@ -565,7 +785,6 @@ $track-gap: 0.6rem;
 .page__exit-title {
   font-size: clamp(1.25rem, 2vw, 1.6rem);
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   line-height: 1.15;
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
@@ -591,7 +810,6 @@ $track-gap: 0.6rem;
   margin: 0 0 0.75rem;
   font-size: 0.75rem;
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   text-transform: uppercase;
   opacity: 0.7;
 }
@@ -615,7 +833,6 @@ $track-gap: 0.6rem;
     padding-top: 0.25em;
     font-size: 0.7rem;
     font-weight: 800;
-    font-family: "Cabinet Grotesk";
     text-transform: uppercase;
     opacity: 0.7;
   }
@@ -633,7 +850,6 @@ $track-gap: 0.6rem;
   max-width: var(--measure);
   font-size: clamp(1.35rem, 2vw, 1.7rem);
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
   line-height: 1.25;
   text-wrap: balance;
 }
@@ -662,7 +878,6 @@ $track-gap: 0.6rem;
 .page__body strong,
 .page__list strong {
   font-weight: 800;
-  font-family: "Cabinet Grotesk";
 }
 
 // File extensions and API names set inline. No box or tint behind them — the
@@ -670,7 +885,6 @@ $track-gap: 0.6rem;
 // smaller monospace at a lower opacity is enough to read as "this is a literal".
 .page__body code,
 .page__list code {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.9em;
   opacity: 0.8;
 }

@@ -44,33 +44,6 @@ export const palettes = {
 
 export const paletteNames = Object.keys(palettes);
 
-/**
- * Text ink per palette — each one is that palette's glow hue held at ~20%
- * lightness, so the copy reads as belonging to the field rather than sitting on
- * top of it as flat black. Kept separate from the stops above because these
- * never reach the shader: main.js writes the active one to the --ink custom
- * property and the whole page takes its colour from there.
- *
- * They are deliberately much darker than anything in the palette itself. The
- * stops are all light and saturated — #F4F055 on the panel would be invisible —
- * so these are derived rather than sampled. Every one clears 8:1 against the
- * translucent white panel, against AAA's 7:1, with the yellows and greens
- * naturally landing lowest.
- */
-const inks = {
-  skyOrchid: "#251551", // deep violet
-  lavenderPeach: "#4b1551", // deep orchid
-  magentaGold: "#512715", // burnt umber
-  coralLime: "#514f15", // dark olive
-  goldAqua: "#205115", // deep green
-  limeViolet: "#155143", // deep teal
-};
-
-/** The ink for a palette, falling back to the default palette's. */
-export function paletteInk(name) {
-  return inks[name] ?? inks.skyOrchid;
-}
-
 /** '#rrggbb' → Vector3 of raw sRGB components in the 0..1 range. */
 function hexToVec3(hex) {
   const int = parseInt(hex.replace("#", ""), 16);

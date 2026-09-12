@@ -1,0 +1,167 @@
+// GooeyStage — layout only. Nothing here knows about the filter; the component
+// attaches that to .goo-stage__surface. Nothing in the component knows about
+// these rules either: it writes --blob-x / --blob-y / --blob-scale and stops.
+//
+// That split is the point. Changing how an item is laid out — switching from
+// absolute placement to a grid, say — is an edit to this file alone, with no JS
+// to follow.
+
+@use "reset";
+
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("../assets/fonts/CabinetGrotesk-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --goo-ink: #140b2e;
+  --goo-paper: #f4f1ea;
+}
+
+.goo-stage {
+  // Type size, against the same basis the blur is measured from — see measure()
+  // in gooeyStage.js. Tying both to the stage's short side is what keeps the
+  // merge distance proportional: if the type grew with the viewport while the
+  // blur grew with the stage, elements would weld at one size and drift apart
+  // at another.
+  //
+  // Declared *here*, not on :root, and that is not a style preference. A calc()
+  // inside a custom property is resolved where it is declared. --goo-unit is
+  // written by the component onto this element, so a --goo-text declared at
+  // :root cannot see it: it silently resolves against the fallback and every
+  // stage renders at one fixed size regardless of its box.
+  --goo-text: calc(var(--goo-unit, 600px) * 0.14);
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  // A containing block for the absolutely-positioned items, and the box the
+  // ResizeObserver watches.
+  container-type: size;
+}
+
+// Holds the filter definition. It must stay in the document — display: none
+// would take the <defs> with it — but must occupy nothing.
+.goo-stage__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+// The filtered layer.
+//
+// `filter` applies to an element and every descendant, with no way to opt a
+// child out. So the surface exists purely to bound what the goo reaches:
+// anything appended to .goo-stage rather than to this is unaffected. Captions,
+// controls and legends go outside it.
+//
+// Worth knowing before nesting anything here: a non-none `filter` creates a
+// stacking context *and* a containing block for fixed-position descendants, so
+// a `position: fixed` child inside this layer will be positioned against the
+// surface rather than the viewport.
+.goo-stage__surface {
+  position: absolute;
+  inset: 0;
+}
+
+// One text element.
+//
+// Position comes entirely from the three variables. Percentages of the stage
+// box, resolved by the browser — so a resize repositions everything with no JS
+// involved at all, and the observer is left to handle only the things that are
+// genuinely measured in pixels.
+.goo-item {
+  position: absolute;
+  left: calc(var(--blob-x, 0.5) * 100%);
+  top: calc(var(--blob-y, 0.5) * 100%);
+
+  // The -50% pair centres the element on its coordinate, so --blob-x/y name the
+  // middle of the text rather than its top left corner. That is the more useful
+  // anchor when the thing being positioned is a word whose width changes with
+  // its content.
+  transform: translate(-50%, -50%) scale(var(--blob-scale, 1));
+  transform-origin: center;
+
+  margin: 0;
+  font-family: "Cabinet Grotesk", system-ui, sans-serif;
+  font-size: var(--goo-text);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--goo-ink);
+
+  // transform is the cheap thing to move and the only thing that should move:
+  // it does not invalidate the filter, so the region is not recomputed while an
+  // item travels. Animating the blur or the colour matrix instead would force a
+  // full filter re-render every frame.
+  transition: transform 600ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+// --- Reduced motion ----------------------------------------------------------
+// Plain static text: no filter, no transitions. The content is unchanged —
+// only its treatment is.
+//
+// Strictly the filter is not motion, and prefers-reduced-transparency would be
+// the more precise signal for it; that query is not widely supported yet, and
+// reduced-motion is the clearest available proxy for "less of this, please".
+.goo-stage--plain .goo-item {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goo-item {
+    transition: none;
+  }
+}
+
+// --- Demo furniture ----------------------------------------------------------
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: var(--goo-ink);
+  background: var(--goo-paper);
+}
+
+.demo {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100vh;
+}
+
+.demo__stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 80% at 20% 20%, #ffe8a3 0%, transparent 60%),
+    radial-gradient(60% 80% at 80% 70%, #ffc9de 0%, transparent 60%),
+    var(--goo-paper);
+}
+
+.demo__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid rgb(0 0 0 / 0.12);
+  font-size: 0.85rem;
+}
+
+.demo__controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.demo__readout {
+  margin-left: 1rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}

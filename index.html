@@ -6,91 +6,17 @@
     <title>Daniela Paneva — Front-End Developer</title>
     <meta
       name="description"
-      content="Portfolio of Daniela Paneva, front-end developer specialising in WebGL and creative interfaces." />
+      content="Portfolio of Daniela Paneva, an interactive front-end developer in Sofia, Bulgaria, working in WebGL and creative interfaces." />
   </head>
   <body>
     {{> frame }}
 
-    <!-- Only #swup is swapped between pages; everything above persists. -->
-    <main id="swup" class="view" data-page="home">
-      <section class="section" id="works">
-        <ul class="projects">
-          <li class="project">
-            <a class="project__link" href="/work/project-one/">
-              <div class="project__head">
-                <h3 class="project__title">MELBA DESIGN FESTIVAL</h3>
-                <!-- <span class="project__year">2021</span> -->
-              </div>
-              <p class="project__blurb">
-                A custom 2D physics sandbox built to preserve and showcase the
-                best of Bulgarian design.
-              </p>
-            </a>
-          </li>
-          <li class="project">
-            <a class="project__link" href="/work/project-two/">
-              <div class="project__head">
-                <h3 class="project__title">IN THE SKIRTS OF VITOSHA</h3>
-                <!-- <span class="project__year">2026</span> -->
-              </div>
-              <p class="project__blurb">
-                A landscape-oriented mobile teaser crafted to reveal the hidden
-                visual layers of the 2026 European Design Festival.
-              </p>
-            </a>
-          </li>
-          <li class="project">
-            <a class="project__link" href="/work/project-three/">
-              <div class="project__head">
-                <h3 class="project__title">NEXT-DC AGENCY SITE</h3>
-                <!-- <span class="project__year">2023</span> -->
-              </div>
-              <p class="project__blurb">
-                A high-contrast digital presence built to guide global
-                businesses through dynamic cultural currents.
-              </p>
-            </a>
-          </li>
-        </ul>
-      </section>
+    <!-- The front door: the shell and the field, nothing else. Every other view
+         is its own page now, so this one holds no content of its own.
 
-      <section class="section" id="about">
-        <p class="section__body">
-          I'm Daniela Paneva—an interactive front-end developer based in Sofia,
-          Bulgaria. I build fluid digital spaces that live at the intersection
-          of motion, logic, and visual art.
-        </p>
-        <p class="section__body">
-          Driven by a deep fascination with creative coding and WebGL, I treat
-          the browser window as an interactive canvas rather than a static grid.
-          I focus on engineering lightweight, highly responsive user experiences
-          where every layout transition and micro-interaction feels deliberate,
-          heavy, and natural.
-        </p>
-        <p class="section__body">
-          This portfolio itself operates as a dynamic visual
-          homage to the liquid, psychedelic visualizers of Red Hot Chili
-          Peppers' album, "Return of the Dream Canteen"—translating continuous
-          analog organic morphing into real-time WebGL shader code.
-        </p>
-        <p class="section__body">
-          [ TECHNICAL
-          PLATFORM ] Vanilla JavaScript / WebGL / Three.js / CSS Açrchitecture /
-          Creative Layout Strategy
-        </p>
-      </section>
-
-      <section class="section" id="contact">
-        <p class="section__body">
-          Always up for a chat about creative front-end and WebGL.
-        </p>
-        <div class="contact">
-          <a class="contact__email" href="mailto:danyellageorgieva@gmail.com">
-            danyellageorgieva@gmail.com
-          </a>
-        </div>
-      </section>
-    </main>
+         Only #swup is swapped between pages; the canvas above it persists, which
+         is what keeps the shader running across a navigation. -->
+    <main id="swup" class="view" data-page="top" data-view="home"></main>
 
     <script type="module" src="/src/main.js"></script>
   </body>

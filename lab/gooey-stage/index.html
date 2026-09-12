@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gooey stage — lab</title>
+  </head>
+  <body>
+    <!-- No shared shell partial is pulled in here: this page has no header, no
+         shader and no router, so the component can be judged on its own and
+         nothing on it can reach the site. -->
+    <div class="demo">
+      <!-- The stage owns nothing but its box. Every element inside it is built
+           from the config in main.js — there is no per-blob markup here, which
+           is the whole point: adding one is adding a config entry. -->
+      <div class="demo__stage" id="stage"></div>
+
+      <div class="demo__controls">
+        <label>
+          spread
+          <input type="range" id="spread" min="0" max="100" value="50" />
+        </label>
+        <label>
+          blur
+          <input type="range" id="blur" min="2" max="30" value="11" />
+        </label>
+        <label>
+          slope
+          <input type="range" id="slope" min="4" max="40" value="19" />
+        </label>
+        <label>
+          intercept
+          <input type="range" id="intercept" min="-20" max="0" value="-9" />
+        </label>
+        <label>
+          <input type="checkbox" id="drift" />
+          drift
+        </label>
+        <label>
+          <input type="checkbox" id="filterOn" checked />
+          filter
+        </label>
+        <p class="demo__readout" id="fps"></p>
+        <p class="demo__readout" id="readout"></p>
+      </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
