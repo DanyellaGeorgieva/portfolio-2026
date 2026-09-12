@@ -27,12 +27,17 @@
 //
 //   0 … 0.5   indistinguishable from unfiltered text
 //   0.8       terminals just beginning to round
-//   1.2       rounded, letters starting to touch  ← "a little"
+//   1.2       rounded, letters starting to touch
+//   1.6       counters tightening, the joins spreading  ← here
 //   2.24      full melt: M/E welded, G closing up
+//
+// The top of that ladder is the ceiling rather than a far-off extreme: past
+// about 2 the letters stop being letters, and a row you are *not* pointing at
+// still has to be readable — it is being stood down, not taken away.
 //
 // Held as a fraction of the title's own font size, the way the reveal holds
 // its own start blur, so the look survives a change to the type scale.
-const QUIET_RATIO = 0.0375; // 1.2px at 32px
+const QUIET_RATIO = 0.05; // 1.6px at 32px
 
 // The resting value is a real 0, and the ladder above is why that is safe: the
 // ramp behind the blur does not chew strokes this thick, so a title sitting at

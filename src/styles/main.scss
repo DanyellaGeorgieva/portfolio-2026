@@ -611,7 +611,7 @@ $track-gap: 0.6rem;
   align-self: center;
   // Sized against the row's own type rather than in px, so it keeps its
   // proportion to the title at every viewport width.
-  width: 3em;
+  width: 3.5em;
   height: auto;
   // The artwork is drawn entirely in currentColor, so it takes the palette's
   // ink along with the title beside it and needs no colour of its own.

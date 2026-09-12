@@ -47,13 +47,39 @@ if (import.meta.hot) {
   });
 }
 
-// The eye in the projects list blinks on a loop for as long as the page is
-// open — a small repeating movement that never settles, which is what this
-// preference is about. SMIL has no CSS switch, so it is paused here instead.
-// Paused at time zero, which is the open eye: the icon stays, it just stops.
-if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  document.querySelector('.filter-defs')?.pauseAnimations();
-}
+// --- The blinking eye -------------------------------------------------------
+const eyeDefs = document.querySelector('.filter-defs');
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// A small repeating movement that never settles is what this preference is
+// about. SMIL has no CSS switch, so it is paused here instead — at time zero,
+// which is the open eye: the icon stays, it just stops.
+if (reducedMotion) eyeDefs?.pauseAnimations();
+
+// When the blink starts inside the symbol's own timeline, and how long after
+// arriving on a row the first one should land. Long enough to register as the
+// eye having been open, short enough that nobody has to wait for it.
+const BLINK_AT = 2.3;
+const BLINK_LEAD = 0.55;
+
+// The eye is only on screen while a row is hovered, but its animation runs
+// whether anyone is looking or not. Left alone, what you get on arriving at a
+// row is a random point in a 3.2s loop that only does anything for 0.9s of it —
+// so hovering briefly is a coin flip on whether you see a blink at all, and
+// across a few tries it reads as an eye that never blinks.
+//
+// Seeking the shared timeline on arrival makes it deterministic: the eye turns
+// up open, and blinks BLINK_LEAD later, every time. One timeline serves all
+// three rows because only one eye is ever visible.
+let blinkRow = null;
+document.addEventListener('pointerover', (event) => {
+  const row = event.target.closest?.('.project__link') ?? null;
+  // pointerover fires again for every element inside the row; only a change of
+  // row is an arrival.
+  if (row === blinkRow) return;
+  blinkRow = row;
+  if (row && !reducedMotion) eyeDefs?.setCurrentTime(BLINK_AT - BLINK_LEAD);
+});
 
 // --- Palette picker ---------------------------------------------------------
 // Six numbered stops, in the sequence palettes.js authors — the same order the

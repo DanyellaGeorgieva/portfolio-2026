@@ -56,11 +56,27 @@
        halves then trace that same arc, so the closed state is one stroke drawn
        twice rather than a shape that has to be authored separately.
 
-       It sits open for the great majority of the cycle and blinks in about a
+       It sits open for the great majority of the cycle and closes in about a
        seventh of a second, because that is what a blink is: the timing does the
-       work of making it read as an eye rather than as a shape changing. -->
-  <symbol id="icon-eye" viewBox="0.55 1.9 22.89 17.9">
-    <g fill="none" stroke="currentColor" stroke-width="1.6"
+       work of making it read as an eye rather than as a shape changing.
+
+       The cycle is short — 3.2s, of which 2.3s is the wait. It has to be: the
+       loop is free-running rather than started on hover, so what anyone
+       actually sees is a random point in it, and the length of the cycle is
+       really the length of the wait before they see a blink at all. -->
+  <symbol id="icon-eye" viewBox="0 0 21.9 18.2">
+    <!-- Stroke weight is measured off the reference rather than picked: there,
+         a stroke is about a nineteenth of the eye's width. It matters more than
+         it looks, because it sets whether a short lash reads as a capsule or as
+         a blob — at 1.6 these lashes were wider than they were long once the
+         caps were counted. -->
+    <!-- The art is laid out around an eye centred at (12, 14); this shifts that
+         layout onto a zero-origin viewBox. It has to be zero-origin: <use>
+         resolves its viewport at (0, 0), so a viewBox starting anywhere else
+         renders the symbol offset by exactly that origin and clips whatever
+         falls outside — which showed up as the top lashes being sliced off. -->
+    <g transform="translate(-1.05 -3.05)"
+       fill="none" stroke="currentColor" stroke-width="1.2"
        stroke-linecap="round" stroke-linejoin="round">
 
       <!-- Lashes, sitting on the lid's own normals rather than radiating from a
@@ -70,42 +86,123 @@
            square to it, the outer pair ends up lower and splayed wider than the
            middle — which is the eye's own shape reading back out of them.
 
+           Short enough that the round caps are most of each one: measured off
+           the reference, a lash is about a sixth of the eye's width and the
+           round ends are what give it its shape, so it reads as a stroke of a
+           brush rather than as a line.
+
            They belong to the open eye, so they go with the iris when the lid
            comes down. -->
-      <g>
-        <line x1="4.01" y1="10.08" x2="1.35" y2="6.57" />
-        <line x1="7.91" y1="7.87" x2="6.35" y2="3.76" />
-        <line x1="12.00" y1="7.10" x2="12.00" y2="2.70" />
-        <line x1="16.09" y1="7.87" x2="17.65" y2="3.76" />
-        <line x1="19.99" y1="10.08" x2="22.65" y2="6.57" />
-        <animate attributeName="opacity"
-                 values="1; 1; 0; 1; 1" keyTimes="0; 0.88; 0.915; 0.95; 1"
-                 dur="4.2s" repeatCount="indefinite" />
+      <!-- pathLength="1" makes the dash pattern length-independent, so one
+           inherited stroke-dashoffset retracts all five identically. -->
+      <g stroke-dasharray="1 1">
+        <line x1="3.68" y1="9.64" x2="2.35" y2="7.89" pathLength="1" />
+        <line x1="7.71" y1="7.36" x2="6.93" y2="5.30" pathLength="1" />
+        <line x1="12.00" y1="6.55" x2="12.00" y2="4.35" pathLength="1" />
+        <line x1="16.29" y1="7.36" x2="17.07" y2="5.30" pathLength="1" />
+        <line x1="20.32" y1="9.64" x2="21.65" y2="7.89" pathLength="1" />
+        <animate attributeName="stroke-dashoffset"
+                 values="0;
+                                 0;
+                                 -1;
+                                 -1;
+                                 -1;
+                                 -1;
+                                 -1;
+                                 -1;
+                                 -1;
+                                 -1;
+                                 0;
+                                 0"
+                 keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
+                 dur="3.2s" repeatCount="indefinite" />
       </g>
 
-      <!-- Iris as a ring with a solid pupil, rather than the reference's filled
-           disc: with one colour a filled iris would be a blob, and the ring is
-           what still reads as an eye once the mauve is gone. The taller opening
-           gives it room to grow with the rest. -->
+      <!-- Iris as one solid disc. The reference separates iris from pupil with
+           colour, which a monochrome drawing cannot do — so rather than spend
+           two rings on a distinction that has nothing left to carry it, this is
+           a single filled circle.
+
+           Sized against the opening rather than copied across: at 3.5 it leaves
+           a little under a unit of clearance inside the lid, so it reads as
+           filling the eye without touching it. -->
       <g>
-        <circle cx="12" cy="14" r="3.2" stroke-width="1.3" />
-        <circle cx="12" cy="14" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="14" r="3.5" fill="currentColor" stroke="none" />
         <animate attributeName="opacity"
-                 values="1; 1; 0; 1; 1" keyTimes="0; 0.88; 0.915; 0.95; 1"
-                 dur="4.2s" repeatCount="indefinite" />
+                 values="1;
+                                 1;
+                                 1;
+                                 0;
+                                 0;
+                                 0;
+                                 0;
+                                 0;
+                                 0;
+                                 0;
+                                 1;
+                                 1"
+                 keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
+                 dur="3.2s" repeatCount="indefinite" />
       </g>
 
-      <!-- The lid. 19 wide by 10 tall, where it was 19 by 7 — rounder, without
-           going so round that it stops reading as an eye. -->
-      <path d="M2.5 14 Q12 4 21.5 14 Q12 24 2.5 14">
+      <!-- The lid, as two separate arcs rather than one path that turns the
+           corner. A single path joins at the corners, and a join between two
+           curves meeting at a shallow angle draws out to a point however the
+           linejoin is set. Two arcs each end in a round cap instead, so the
+           corners are the blunt rounded tips the reference has — and the closed
+           eye gets the same rounded ends, because it is these two arcs lying on
+           top of each other.
+
+           19 wide by 10 tall, where it was 19 by 7: rounder, without going so
+           round that it stops reading as an eye.
+
+           Both arcs animate, and they have to. The upper one comes down onto
+           the lower one to close the eye — but the spring that follows is the
+           closed arch moving, and a closed arch is these two curves lying on
+           top of each other. If only one of them sprang they would separate and
+           the single line would split into two.
+
+           The spring is a damped oscillation of the control point about its
+           rest at 24: past it to 25.9, back through to 23.0, then 24.6, 23.8
+           and home, with each swing smaller and quicker than the last. The
+           swings are one set of numbers scaled together, so the decay keeps its
+           shape whatever the throw is set to. Written
+           out as keyframes rather than reached for as an easing function,
+           because SMIL has no spring and the overshoot needs to be in the
+           values themselves. -->
+      <path d="M2.5 14 Q12 24 21.5 14">
         <animate attributeName="d"
-                 values="M2.5 14 Q12 4 21.5 14 Q12 24 2.5 14;
-                         M2.5 14 Q12 4 21.5 14 Q12 24 2.5 14;
-                         M2.5 14 Q12 24 21.5 14 Q12 24 2.5 14;
-                         M2.5 14 Q12 4 21.5 14 Q12 24 2.5 14;
-                         M2.5 14 Q12 4 21.5 14 Q12 24 2.5 14"
-                 keyTimes="0; 0.88; 0.915; 0.95; 1"
-                 dur="4.2s" repeatCount="indefinite" />
+                 values="M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 25.9 21.5 14;
+                                 M2.5 14 Q12 23.0 21.5 14;
+                                 M2.5 14 Q12 24.6 21.5 14;
+                                 M2.5 14 Q12 23.8 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14"
+                 keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
+                 dur="3.2s" repeatCount="indefinite" />
+      </path>
+      <path d="M2.5 14 Q12 4 21.5 14">
+        <animate attributeName="d"
+                 values="M2.5 14 Q12 4 21.5 14;
+                                 M2.5 14 Q12 4 21.5 14;
+                                 M2.5 14 Q12 4 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 25.9 21.5 14;
+                                 M2.5 14 Q12 23.0 21.5 14;
+                                 M2.5 14 Q12 24.6 21.5 14;
+                                 M2.5 14 Q12 23.8 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 24 21.5 14;
+                                 M2.5 14 Q12 4 21.5 14;
+                                 M2.5 14 Q12 4 21.5 14"
+                 keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
+                 dur="3.2s" repeatCount="indefinite" />
       </path>
     </g>
   </symbol>
