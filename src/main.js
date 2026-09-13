@@ -2,7 +2,7 @@ import './styles/main.scss';
 import Swup from 'swup';
 import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
-import QuietGoo from './quietGoo.js';
+import QuietGoo, { PROJECT_GOO, NAV_GOO } from './quietGoo.js';
 import { paletteNames } from './webgl/palettes.js';
 
 // Declared before the scene because Scene calls onPalette from its own
@@ -44,6 +44,7 @@ if (import.meta.hot) {
     swup?.destroy();
     gooeyText?.destroy();
     quietGoo?.destroy();
+    navGoo?.destroy();
   });
 }
 
@@ -59,6 +60,10 @@ if (reducedMotion) eyeDefs?.pauseAnimations();
 // When the blink starts inside the symbol's own timeline, and how long after
 // arriving on a row the first one should land. Long enough to register as the
 // eye having been open, short enough that nobody has to wait for it.
+// Everywhere an eye can appear. Both are hover-revealed, so both want the
+// blink to land a known moment after arriving rather than wherever the
+// free-running loop happens to be.
+const BLINKS_ON = '.project__link, .site-header a';
 const BLINK_AT = 2.3;
 const BLINK_LEAD = 0.55;
 
@@ -71,9 +76,11 @@ const BLINK_LEAD = 0.55;
 // Seeking the shared timeline on arrival makes it deterministic: the eye turns
 // up open, and blinks BLINK_LEAD later, every time. One timeline serves all
 // three rows because only one eye is ever visible.
+const navGoo = new QuietGoo(document, NAV_GOO);
+
 let blinkRow = null;
 document.addEventListener('pointerover', (event) => {
-  const row = event.target.closest?.('.project__link') ?? null;
+  const row = event.target.closest?.(BLINKS_ON) ?? null;
   // pointerover fires again for every element inside the row; only a change of
   // row is an arrival.
   if (row === blinkRow) return;
@@ -277,7 +284,7 @@ function setupPage() {
 
   // Pointing at one project thickens the others. It no-ops on any page without
   // a projects list, so it is built unconditionally rather than gated on view.
-  quietGoo = new QuietGoo(main);
+  quietGoo = new QuietGoo(main, PROJECT_GOO);
 
   // Arriving at contact sends up a drift of glass hearts.
   if (view === 'contact') scene.releaseHearts();

@@ -253,6 +253,53 @@ body:has(#swup[data-page="detail"]) {
   &:hover {
     font-weight: 900;
   }
+
+  // The eye is laid over the name rather than next to it, so the swap happens
+  // in place and the bar does not move. The ::after above already reserves the
+  // bold width, so nothing shifts on hover either.
+  position: relative;
+}
+
+// --- Nav hover: the name gives way to an eye ---------------------------------
+// A crossfade alone reads as two things dissolving into each other. Scaling
+// them against one another — the name shrinking away, the eye growing in —
+// reads as one thing being replaced by another, which is what it is.
+.site-header__label {
+  display: block;
+  transition:
+    opacity 0.2s ease,
+    scale 0.2s ease;
+}
+
+.site-header__eye {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  // Height rather than width: the links are different lengths, and matching
+  // them on height is what keeps the eye the same size above every one.
+  height: 1.6em;
+  width: auto;
+  opacity: 0;
+  scale: 0.9;
+  // It sits over the link it belongs to; the link keeps the pointer.
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    scale 0.2s ease;
+}
+
+.site-header a:hover,
+.site-header a:focus-visible {
+  .site-header__label {
+    opacity: 0;
+    scale: 0.92;
+  }
+
+  .site-header__eye {
+    opacity: 1;
+    scale: 1;
+  }
 }
 
 // Pointing at one link quiets the rest.
@@ -527,8 +574,11 @@ html:has(#swup[data-page="top"]) {
 // apart down the list and the gap after each number reads differently. 2.4rem
 // clears the widest of 00.–09.; the number is set flush right inside it, so its
 // full stop lands on one edge and the gap to the title is the same every row.
-$track-width: 2.4rem;
-$track-gap: 0.6rem;
+// The column the track number sits in, and the gap after it. Used by the
+// counter, by the eye that replaces it, and by the blurb that lines up under
+// the title — so the four cannot drift apart.
+$track-width: 50px;
+$track-gap: 16px;
 
 .projects {
   list-style: none;
@@ -575,20 +625,19 @@ $track-gap: 0.6rem;
   width: 100%;
   display: flex;
   align-items: baseline;
+  // Positioning context for the eye, which is laid over the number below.
+  position: relative;
 
   &::before {
     counter-increment: track;
     content: counter(track, decimal-leading-zero) ".";
     font-size: 2rem;
     font-weight: 400;
-    width: 50px;
-    min-width: 50px;
+    width: $track-width;
+    min-width: $track-width;
     text-align: right;
-    margin-right: 8px;
-  }
-
-  span {
-    margin-right: 0;
+    margin-right: $track-gap;
+    transition: opacity 0.2s ease;
   }
 }
 
@@ -599,25 +648,35 @@ $track-gap: 0.6rem;
 
 }
 
-// The way in, shown only once you are pointing at the row it belongs to. Three
-// of these standing there permanently would be three instructions for one
-// gesture; hidden, the list reads as titles and the eye turns up exactly when
-// it is about to be true.
+// The way in, shown only once you are pointing at the row it belongs to — and
+// shown where the number was, the same swap the header makes. Three eyes
+// standing there permanently would be three instructions for one gesture.
 //
-// Faded rather than display:none — it holds its space either way, so nothing in
-// the row shifts as it arrives.
+// Out of the flow entirely and laid over the counter's column, so the number
+// and the eye occupy one place rather than two and the title never moves.
 .project__view {
-  margin-left: auto;
-  align-self: center;
-  // Sized against the row's own type rather than in px, so it keeps its
-  // proportion to the title at every viewport width.
-  width: 3.5em;
-  height: auto;
+  position: absolute;
+  top: 50%;
+  // Right edge flush with the counter's, so the eye sits exactly where the
+  // right-aligned number does rather than centred on a column it underfills.
+  right: calc(100% - #{$track-width});
+  translate: 0 -50%;
+  // Sized by height against the number beside it: the artwork keeps its own
+  // aspect ratio, so the width follows.
+  height: 2.1rem;
+  width: auto;
   // The artwork is drawn entirely in currentColor, so it takes the palette's
   // ink along with the title beside it and needs no colour of its own.
   color: inherit;
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+// The number gives way to the eye. Both fade rather than one being removed:
+// they are in the same place, so a cut would read as a flicker.
+.project__link:hover .project__head::before,
+.project__link:focus-visible .project__head::before {
+  opacity: 0;
 }
 
 .project__link:hover .project__view,
@@ -626,7 +685,7 @@ $track-gap: 0.6rem;
 }
 
 .project__blurb {
-  padding-left: 58px;
+  padding-left: $track-width + $track-gap;
   font-size: 1.2rem;
   width: 80%;
 }

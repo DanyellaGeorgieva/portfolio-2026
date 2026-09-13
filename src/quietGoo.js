@@ -35,9 +35,24 @@
 // about 2 the letters stop being letters, and a row you are *not* pointing at
 // still has to be readable — it is being stood down, not taken away.
 //
-// Held as a fraction of the title's own font size, the way the reveal holds
+// Held as a fraction of the element's own font size, the way the reveal holds
 // its own start blur, so the look survives a change to the type scale.
-const QUIET_RATIO = 0.05; // 1.6px at 32px
+//
+// It is a fraction per list rather than one for the site, because the ratio is
+// NOT size-invariant — which is worth knowing before reusing this. Laddered
+// again at nav size (17.6px, same weight and case):
+//
+//   0.88   barely rounded        ← what the projects' 0.05 gives at this size
+//   1.1    clearly gooey, legible
+//   1.32   NTA beginning to merge
+//   1.6    letters merging badly
+//   2.0    illegible
+//
+// 1.6px is comfortable on a 32px title and destroys a 17.6px link. The blur
+// scales with the type, but the gaps between letters do not scale with it —
+// tracking and hinting keep them proportionally tighter as the type gets
+// smaller, so small text welds sooner and wants a bigger fraction to reach the
+// same look without closing up.
 
 // The resting value is a real 0, and the ladder above is why that is safe: the
 // ramp behind the blur does not chew strokes this thick, so a title sitting at
@@ -53,12 +68,45 @@ const TEMPLATE_ID = 'goo-title';
 const ease = (t) => 1 - (1 - t) ** 3;
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
+/**
+ * The two lists that do this. Same behaviour, different furniture — which is
+ * the whole reason this takes a config rather than naming .projects inside:
+ * the header and the work list were going to drift apart the moment one of
+ * them needed a fix.
+ *
+ *   list  the container whose hover state decides who is quiet
+ *   item  the things that can be hovered inside it
+ *   text  what actually thickens, within an item
+ *   name  prefix for the cloned filters, so two instances cannot collide
+ */
+export const PROJECT_GOO = {
+  list: '.projects',
+  item: '.project__link',
+  text: '.project__title',
+  name: 'goo-quiet-project',
+  ratio: 0.05, // 1.6px at 32px
+};
+
+export const NAV_GOO = {
+  list: '.site-header',
+  item: 'a',
+  // The label, not the link: the link also holds an eye, and a filter on the
+  // link would thicken that too.
+  text: '.site-header__label',
+  name: 'goo-quiet-nav',
+  ratio: 0.0625, // 1.1px at 17.6px
+};
+
 export default class QuietGoo {
-  /** @param {ParentNode} root  the view to find a projects list inside */
-  constructor(root) {
+  /**
+   * @param {ParentNode} root    where to look for the list
+   * @param {object}     config  one of the two above
+   */
+  constructor(root, config) {
     this.frame = null;
     this.items = [];
-    this.list = root?.querySelector('.projects') ?? null;
+    this.config = config;
+    this.list = root?.querySelector(config.list) ?? null;
 
     const template = document.querySelector(`#${TEMPLATE_ID}`);
     // Continuous blur changes across a list of headings is exactly what this
@@ -68,8 +116,8 @@ export default class QuietGoo {
 
     const defs = template.parentNode;
 
-    this.items = [...this.list.querySelectorAll('.project__link')].map((link, i) => {
-      const el = link.querySelector('.project__title');
+    this.items = [...this.list.querySelectorAll(config.item)].map((link, i) => {
+      const el = link.querySelector(config.text);
       if (!el) return null;
 
       // One filter per title rather than one shared: the hovered row has to sit
@@ -77,7 +125,7 @@ export default class QuietGoo {
       // stdDeviation. Three filters is also what lets the hovered row ease back
       // down instead of snapping when the cursor moves to another row.
       const clone = template.cloneNode(true);
-      clone.id = `goo-quiet-${i}`;
+      clone.id = `${config.name}-${i}`;
       defs.append(clone);
 
       const size = parseFloat(getComputedStyle(el).fontSize) || 16;
@@ -86,7 +134,7 @@ export default class QuietGoo {
         el,
         blur: clone.querySelector('feGaussianBlur'),
         id: clone.id,
-        quiet: size * QUIET_RATIO,
+        quiet: size * config.ratio,
         value: RESTING,
         from: RESTING,
         to: RESTING,
@@ -117,7 +165,8 @@ export default class QuietGoo {
 
   sync = () => {
     this.pending = null;
-    const live = this.list.querySelector('.project__link:hover, .project__link:focus-visible');
+    const { item } = this.config;
+    const live = this.list.querySelector(`${item}:hover, ${item}:focus-visible`);
     const now = performance.now();
     let changed = false;
 

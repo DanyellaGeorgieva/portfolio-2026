@@ -208,13 +208,20 @@
   </symbol>
 </svg>
 
+<!-- Each link carries its name and an eye. The name stays in the DOM while it
+     is hidden — faded, never removed — so the link keeps its accessible name
+     and the eye stays aria-hidden decoration on top of it. -->
 <header class="site-header">
-  <a href="/">Dani Paneva</a>
+  <a href="/"><span class="site-header__label">Dani Paneva</span>
+    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
 
   <nav class="main-nav" aria-label="Primary">
-    <a href="/work/">work</a>
-    <a href="/about/">about</a>
-    <a href="/contact/">contact</a>
+    <a href="/work/"><span class="site-header__label">work</span>
+    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <a href="/about/"><span class="site-header__label">about</span>
+    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <a href="/contact/"><span class="site-header__label">contact</span>
+    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
   </nav>
 </header>
 
