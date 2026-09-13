@@ -121,6 +121,16 @@ export default class Scene {
     // No antialias: the scene is a single full-screen quad with no polygon
     // edges, so MSAA buys nothing here and only adds fill-rate cost.
     this.renderer = new WebGLRenderer({ canvas, antialias: false });
+    // Set once, here, and never again. This is a fill-rate-bound full-screen
+    // shader: every physical pixel runs the whole fragment program each frame,
+    // so cost scales with pixelRatio². The gradient is soft with no hard edges,
+    // so rendering at DPR 1 (instead of the display's native 2 on HiDPI) is ~4×
+    // cheaper and near-indistinguishable. Bump toward 1.5 if it looks too soft.
+    //
+    // Not in applyResize, where it used to sit: three's setPixelRatio re-runs
+    // setSize with the dimensions it already had, so calling it before the real
+    // setSize allocated the buffer twice per resize — once at the stale size.
+    this.renderer.setPixelRatio(1);
     // Output raw shader values so the sampled palette hex renders faithfully
     // (no extra linear→sRGB encoding on top of the already-sRGB ramp).
     this.renderer.outputColorSpace = LinearSRGBColorSpace;
@@ -181,6 +191,12 @@ export default class Scene {
       },
     });
 
+    // Last size actually given to the renderer, and the pending coalesced
+    // resize. Both start null so the first applyResize() always runs.
+    this.width = null;
+    this.height = null;
+    this.resizePending = null;
+
     this.paletteMix = null;
     this.tweens = new Map(); // uniform name → { from, to, start }
     // Floater state, one entry per floater slot.
@@ -198,6 +214,7 @@ export default class Scene {
     this.scene.add(this.mesh);
 
     this.resize = this.resize.bind(this);
+    this.applyResize = this.applyResize.bind(this);
     this.tick = this.tick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
     this.onVisibilityChange = this.onVisibilityChange.bind(this);
@@ -209,7 +226,7 @@ export default class Scene {
     // On window, not the canvas: the canvas sits at z-index -1 with the page
     // content above it, so it never sees a pointer event itself.
     window.addEventListener('pointermove', this.onPointerMove);
-    this.resize();
+    this.applyResize(); // synchronously: there is no previous frame to keep
     this.renderer.setAnimationLoop(this.tick);
 
     // Announce the starting palette now the scene is built, so the page's ink
@@ -425,17 +442,55 @@ export default class Scene {
     }
   }
 
+  /**
+   * A resize event only *schedules* the work; applyResize does it.
+   *
+   * Resizing a WebGL drawing buffer throws its contents away — assigning
+   * canvas.width reallocates it whatever value you assign — so between the
+   * resize and the next render there is a canvas with nothing in it, and
+   * whatever the compositor does in that gap is what reaches the screen.
+   * Rectangles of stale or blank canvas are that gap being composited.
+   *
+   * The gap is normally one frame. It is unbounded whenever nothing is
+   * rendering, and there are two ordinary ways to be in that state:
+   *
+   *   • the tab is hidden — onVisibilityChange stops the loop outright
+   *   • the window is occluded or minimised — Chrome stops serving rAF without
+   *     firing visibilitychange at all, so the loop is "running" and never called
+   *
+   * Deferring to rAF closes both, because rAF is exactly what is not being
+   * serviced in either: the buffer is not touched until we are about to draw
+   * into it, so it is never left empty. It also coalesces a drag-resize — dozens
+   * of events per frame — into one reallocation per frame.
+   */
   resize() {
+    if (this.resizePending) return;
+    this.resizePending = requestAnimationFrame(this.applyResize);
+  }
+
+  applyResize() {
+    this.resizePending = null;
     const { innerWidth: w, innerHeight: h } = window;
-    // This is a fill-rate-bound full-screen shader: every physical pixel runs
-    // the whole fragment program each frame, so cost scales with pixelRatio².
-    // The gradient is soft with no hard edges, so rendering at DPR 1 (instead of
-    // the display's native 2 on HiDPI) is ~4× cheaper and near-indistinguishable.
-    // Bump toward 1.5 if it looks too soft on a fast GPU.
-    this.renderer.setPixelRatio(1);
-    this.renderer.setSize(w, h);
+
+    // A resize event is not proof of a resize: they fire during a window drag,
+    // on a monitor change, and when browser UI shows or hides, often with the
+    // CSS size unchanged. Since the reallocation happens whatever the value,
+    // acting on one of those would throw a good frame away for nothing.
+    if (w === this.width && h === this.height) return;
+    this.width = w;
+    this.height = h;
+
+    // updateStyle false: the stylesheet already sizes the canvas at 100%/100% of
+    // a fixed, inset-0 box. Letting three write inline pixel sizes instead means
+    // that in any moment the two disagree the canvas stops covering the
+    // viewport; left to CSS, a disagreement only scales the image for a frame.
+    this.renderer.setSize(w, h, false);
     this.material.uniforms.uResolution.value.set(w, h);
     this.aspect = w / h; // uv.x spans 0..aspect — the floaters' horizontal range
+
+    // Fill the new buffer in the same frame it was allocated, so there is no
+    // moment in which an empty one can reach the screen.
+    this.renderer.render(this.scene, this.camera);
   }
 
   /** Stop rendering entirely while the tab is backgrounded; resume on return. */
@@ -445,6 +500,10 @@ export default class Scene {
     } else {
       // Discard the hidden span so animation continues from where it paused.
       this.lastTime = performance.now();
+      // Draw before resuming rather than waiting for the loop's first frame:
+      // coming back is exactly when a stale buffer would be composited, and
+      // setAnimationLoop only schedules — it does not draw.
+      this.renderer.render(this.scene, this.camera);
       this.renderer.setAnimationLoop(this.tick);
     }
   }
@@ -498,6 +557,7 @@ export default class Scene {
 
   dispose() {
     this.renderer.setAnimationLoop(null);
+    cancelAnimationFrame(this.resizePending);
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
