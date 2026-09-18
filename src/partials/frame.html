@@ -206,6 +206,65 @@
       </path>
     </g>
   </symbol>
+
+  <!-- The eye that does not blink.
+       ===================================================================
+       A sibling of #icon-eye rather than a variant of it, because the blink
+       cannot be switched off per instance. SMIL animations belong to the
+       timeline of the <svg> ROOT that hosts them, and a <use> clone runs on the
+       timeline of the root holding the SYMBOL — measured: seeking .filter-defs
+       to 2.55s closes every eye on the page, while seeking the case-study eye's
+       own root does nothing. So the only ways to stop one instance blinking are
+       to stop them all, or to give that instance geometry with no <animate> in
+       it. This is the second.
+       
+       The geometry is the open state of #icon-eye, copied exactly: same
+       viewBox, same translate, same stroke, the same five lash coordinates and
+       the same two lid arcs at their resting control points. If the drawing up
+       there is ever retuned, retune it here too — these are one eye in two
+       states, and nothing in the build checks that they still agree. -->
+  <symbol id="icon-eye-still" viewBox="0 0 21.9 18.2">
+    <g transform="translate(-1.05 -3.05)"
+       fill="none" stroke="currentColor" stroke-width="1.2"
+       stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3.68" y1="9.64" x2="2.35" y2="7.89" />
+      <line x1="7.71" y1="7.36" x2="6.93" y2="5.30" />
+      <line x1="12.00" y1="6.55" x2="12.00" y2="4.35" />
+      <line x1="16.29" y1="7.36" x2="17.07" y2="5.30" />
+      <line x1="20.32" y1="9.64" x2="21.65" y2="7.89" />
+
+      <!-- Offset by three custom properties rather than by anything written
+           here, because custom properties inherit THROUGH a <use> shadow tree
+           and nothing else can reach inside one. The x and y are viewBox units.
+           
+           The third one is the transition's duration, and it has to be a
+           variable because the iris needs both behaviours. Rolling with the
+           scroll must be instant — every scroll event already carries a fresh
+           position, so an ease there only puts the iris behind the page. Swinging
+           back to the text when the scrolling stops wants the opposite. So JS
+           sets this to 0s while rolling and to a real duration to settle, and
+           the same transform serves both. -->
+      <circle cx="12" cy="14" r="3.5" fill="currentColor" stroke="none"
+              style="transform: translate(var(--iris-x, 0px), var(--iris-y, 0px));
+                     transition: transform var(--iris-ease, 0s) ease-out" />
+
+      <path d="M2.5 14 Q12 24 21.5 14" />
+      <path d="M2.5 14 Q12 4 21.5 14" />
+    </g>
+  </symbol>
+</svg>
+
+<!-- The case-study eye. The same drawing as the one in a work row and in the
+     nav, at a size where the blink is the point rather than a detail: one
+     <symbol>, three very different jobs.
+
+     In the shell, not in each case study, for two reasons. It holds one position
+     on screen and never moves, so rebuilding it on every swup swap would only
+     give it a chance to flicker; and the blink is a free-running SMIL loop, so
+     a fresh element would restart the cycle mid-navigation. Hidden on top-level
+     pages by the stylesheet. -->
+<svg class="page__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false">
+  <use href="#icon-eye-still" />
 </svg>
 
 <!-- Each link carries its name and an eye. The name stays in the DOM while it

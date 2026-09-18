@@ -55,7 +55,17 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 // A small repeating movement that never settles is what this preference is
 // about. SMIL has no CSS switch, so it is paused here instead — at time zero,
 // which is the open eye: the icon stays, it just stops.
-if (reducedMotion) eyeDefs?.pauseAnimations();
+//
+// Every <svg> that hosts an eye, not just the one holding the <symbol>: a SMIL
+// timeline belongs to an SVG root, and <use> deep-clones the animations into
+// the root doing the referencing. The case-study eye is a root of its own and
+// is on screen continuously, so it is the one where an unpaused blink would
+// matter most.
+if (reducedMotion) {
+  document
+    .querySelectorAll('.filter-defs, .site-header__eye, .project__view')
+    .forEach((svg) => svg.pauseAnimations());
+}
 
 // When the blink starts inside the symbol's own timeline, and how long after
 // arriving on a row the first one should land. Long enough to register as the
@@ -87,6 +97,94 @@ document.addEventListener('pointerover', (event) => {
   blinkRow = row;
   if (row && !reducedMotion) eyeDefs?.setCurrentTime(BLINK_AT - BLINK_LEAD);
 });
+
+// --- The case-study eye ------------------------------------------------------
+// It does not blink — it is drawn from #icon-eye-still, which has no <animate>
+// in it — so the iris is the only thing that moves, and it does two things:
+// it rolls while the page is scrolling, and it looks right at the text when the
+// scrolling stops.
+//
+// How far the iris may travel from the centre of the eye, in the symbol's own
+// viewBox units. The opening is about 19 wide and 10 tall and the iris has a
+// radius of 3.5, which leaves roughly one and a half units of clearance inside
+// the lid: past these the disc crosses the lid's stroke and the eye stops
+// reading as an eye. Asymmetric for the same reason the opening is — which also
+// means the "circle" the iris rolls in is really that same ellipse, so the path
+// stays inside the lid all the way round.
+const IRIS_REACH_X = 2.4;
+const IRIS_REACH_Y = 1.1;
+
+// Scroll distance for one full turn of the iris. Driven by scroll POSITION
+// rather than by a timer, so the roll is tied to the page moving: it turns at
+// whatever speed you scroll, stops dead when you do, and runs backwards when
+// you scroll back up. A timer would keep spinning after the page had stopped.
+const SCROLL_PER_TURN = 600;
+
+// Quiet long enough to count as having stopped, and how long the iris then
+// takes to swing to the text. The ease is handed to the shadow tree as a custom
+// property — see the iris in frame.html — because it has to be OFF while
+// rolling: a transition there would put the iris behind the scroll rather than
+// on it, which is the same lag that made pointer-following feel broken.
+const IRIS_SETTLE_AFTER = 180;
+const IRIS_SETTLE_EASE = '0.55s';
+
+// How long after the copy has finished landing the eye opens. The reveal's own
+// length is not a constant — it depends on how many elements are above the fold
+// — so this hangs off GooeyText's completion callback rather than off a total
+// worked out here, which would drift the moment the copy changed.
+const EYE_CUE_DELAY = 300;
+let eyeCue = null;
+
+const pageEye = document.querySelector('.page__eye');
+
+function setIris(x, y) {
+  pageEye?.style.setProperty('--iris-x', `${x.toFixed(3)}px`);
+  pageEye?.style.setProperty('--iris-y', `${y.toFixed(3)}px`);
+}
+
+// Where the current roll started, in scroll pixels — null while the eye is at
+// rest. The angle is measured from HERE rather than from the top of the
+// document, which is what lets a new roll begin where the iris already is.
+// Measured absolutely, stopping at 225px and scrolling again would snap the
+// iris from the resting right back round to 135 degrees before carrying on.
+let rollOrigin = null;
+
+/**
+ * Look right, at the text. This is the eye's resting state and also angle 0 of
+ * every roll — so settling is a swing along the same ellipse rather than a jump
+ * off it, and the next roll picks up from exactly where this leaves off.
+ */
+function restIris() {
+  rollOrigin = null;
+  pageEye?.style.setProperty('--iris-ease', IRIS_SETTLE_EASE);
+  setIris(IRIS_REACH_X, 0);
+}
+
+if (pageEye && !reducedMotion) {
+  let settle = null;
+  // Passive: this only ever writes style, so it must never be allowed to hold
+  // up the scroll itself.
+  window.addEventListener(
+    'scroll',
+    () => {
+      clearTimeout(settle);
+      // First event of a new gesture: anchor the roll here. The delta is then
+      // zero on this frame, so the iris starts the turn from the resting
+      // position it is already in — no jump to catch up with.
+      if (rollOrigin === null) rollOrigin = window.scrollY;
+
+      pageEye.style.setProperty('--iris-ease', '0s');
+      const angle = ((window.scrollY - rollOrigin) / SCROLL_PER_TURN) * Math.PI * 2;
+      setIris(Math.cos(angle) * IRIS_REACH_X, Math.sin(angle) * IRIS_REACH_Y);
+      settle = setTimeout(restIris, IRIS_SETTLE_AFTER);
+    },
+    { passive: true },
+  );
+}
+
+// At rest from the start: a case study opens at scrollTop 0, which is angle 0,
+// which is this — so the eye is already looking at the text when it fades in.
+restIris();
 
 // --- Palette picker ---------------------------------------------------------
 // Six numbered stops, in the sequence palettes.js authors — the same order the
@@ -151,7 +249,7 @@ navLinks.forEach((a) => {
  *
  * Matched on the URL rather than on any state this file keeps, because after
  * the move to real pages the URL *is* the state — there is nothing else to get
- * out of step with. A project page lights "work" too: /work/project-one/ starts
+ * out of step with. A project page lights "work" too: /work/melba/ starts
  * with /work/, so a case study reads as being inside that section.
  *
  * The name is matched exactly and never by prefix, because every path starts
@@ -276,8 +374,20 @@ function setupPage() {
   // a heading and a paragraph without any of them needing its own settings.
   // Elements below the fold are skipped, which is what keeps a long case study
   // from costing more than a short section.
+  // The eye waits for the copy. It is in the shell, so it survives the swap and
+  // has to be put back to hidden on every arrival — otherwise it would already
+  // be open on the next case study, having been revealed on the last one.
+  clearTimeout(eyeCue);
+  pageEye?.classList.remove('is-visible');
+  restIris();
+
   gooeyText = new GooeyText(main);
-  gooeyText.play();
+  gooeyText.play(() => {
+    // A beat after the last line lands, not with it: arriving together would
+    // make the eye part of the page's entrance, and the point is that it opens
+    // on a page already there.
+    eyeCue = setTimeout(() => pageEye?.classList.add('is-visible'), EYE_CUE_DELAY);
+  });
   // Tuning handle, dev only: __goo.reset() parks the copy at the start of the
   // reveal so the blurred state can be looked at; __goo.play() runs it again.
   if (import.meta.env.DEV) window.__goo = gooeyText;
@@ -292,7 +402,9 @@ function setupPage() {
 
 // swup keeps the canvas alive by only ever replacing #swup. No await-animations.
 const swup = new Swup({ containers: ['#swup'], animationSelector: false });
-swup.hooks.on('page:view', () => setupPage());
+swup.hooks.on('page:view', () => {
+  setupPage();
+});
 if (import.meta.env.DEV) window.__swup = swup;
 setupPage(); // initial page
 

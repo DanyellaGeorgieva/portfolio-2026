@@ -40,8 +40,10 @@ uniform float uMix;
 
 // Glass hearts, in the same aspect-corrected uv space as everything else:
 // .xy = centre, .z = size (0 = empty slot). Filled by the floaters released on
-// arriving at "say hi". HEART_COUNT must match Scene.js's HEART_COUNT.
-#define HEART_COUNT 5
+// arriving at "say hi". HEART_COUNT is injected by Scene.js through the
+// material's `defines`, so the slot count has exactly one definition: the two
+// used to be declared separately with only a comment asking them to agree, and a
+// mismatch would have silently truncated the array.
 uniform vec3 uHearts[HEART_COUNT];
 
 // Pointer poke — the surface swells outward near the pointer, so a heart it is
@@ -91,7 +93,56 @@ float fbm(in vec2 p) {
 }
 
 // --- 3D value noise (drives the morphing channel network) -----------
+// Lattice hash.
+//
+// The floor() on the first line looks like a no-op and mathematically IS one —
+// noise3 only ever calls this with integer lattice coordinates, and
+// floor(n + 0.5) == n for those. It is here as an optimisation barrier, and it
+// is the fix for the hard-edged rectangles that plagued this background.
+//
+// The fault: fract() keeps only the low bits of its argument, and the product on
+// the last line reaches ~2.5e5, where a float32 ULP is 0.03. That makes this
+// function a chaotic amplifier — a one-ULP difference in an intermediate can
+// move the result by anything up to 1.0 when it happens to straddle an integer.
+//
+// And intermediates DID differ, because the compiler is free to contract
+// `p * 0.3183099 + 0.1` into a single fused multiply-add, which rounds once
+// instead of twice. noise3 inlines this function eight times, the compiler made
+// that choice independently for each copy, and so the SAME lattice point came
+// back with different values depending on which corner of which cell asked for
+// it. Measured on ANGLE-Metal, at the p.x = 0 plane:
+//
+//   reached as floor(p.x)+1, from the cell on the left    0.766097
+//   reached as floor(p.x),   from the cell on the right   0.766107
+//   written as the literal 0.0                            0.766116
+//
+// Two neighbouring cells disagreeing about the corner they SHARE is a
+// discontinuity, and a shared corner plane is an exact vertical or horizontal
+// line — so it draws a straight, axis-aligned, hard-edged tear. Usually the
+// disagreement is ~1e-5 and invisible; when it straddles an integer inside
+// fract() it is full-scale and unmissable.
+//
+// Why it looked like a compositor bug for so long, and was not:
+//   • scaleOrigin() puts p = 0 at the centre of the screen, so the p.x = 0 and
+//     p.y = 0 planes land exactly on the MIDLINES — which is where the edges
+//     appeared, and why they moved with the window when tiles would not
+//   • it is a function of uPhase alone, so it happens at the same moment of the
+//     animation every time, and at the slow PAGE_SPEED it sits there for seconds
+//   • the tear covers only the stretch of the plane where the wrap condition
+//     holds — a segment, not a full-height line, which reads as a rectangle
+//
+// Measured over a 300-phase sweep at uScale 3.6, worst adjacent-pixel jump in
+// the rendered field (grain off; healthy frames read under 5):
+//
+//   without the floor()   tears in 5 of 300 frames, worst 44.3 at x = 896,
+//                         running 166 rows down the midline
+//   with it               0 of 300, worst 5.0, and at every healthy phase the
+//                         output is identical to before — same peak, same pixel
+//
+// So this costs one floor() per hash and changes nothing that was correct.
+// Do not "simplify" it away.
 float hash3(vec3 p) {
+  p = floor(p + 0.5);
   p = fract(p * 0.3183099 + 0.1);
   p *= 17.0;
   return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
@@ -177,11 +228,32 @@ vec3 fieldAt(in vec2 uv) {
   float core = 1.0 - smoothstep(uThick * 0.3, uThick, d);                   // tightest
 
   // Background colored gradient, slowly varying across space (static).
-  float bgT = clamp(0.5 + 0.5 * fbm(p * 0.5 + 4.0), 0.0, 1.0);
+  //
+  // Only computed when it can actually show. paletteColors() currently hands the
+  // same colour to both background slots for every palette, and assemble()'s
+  // mix(cA, cB, bgT) is independent of bgT when cA == cB — so the five-octave
+  // fbm behind this was running for nothing: 0.43ms a frame (6% of the field
+  // pass) for a framebuffer that is bit-identical whether it runs at five
+  // octaves, two, or not at all. Testing the stops rather than deleting the code
+  // means the gradient comes back by itself the moment palettes.js splits the
+  // background into two tones. Both palettes are checked because a transition
+  // assembles the target's colours too. The condition is on uniforms, so it is
+  // the same for every pixel in the draw.
+  float bgT = 0.5;
+  if (uColorA != uColorB || uColorA2 != uColorB2) {
+    bgT = clamp(0.5 + 0.5 * fbm(p * 0.5 + 4.0), 0.0, 1.0);
+  }
 
   // Assemble the current and target palettes for this pixel...
   vec3 colFrom = assemble(uColorA, uColorB, uColorC, uColorD, uColorE,
                           bgT, glow, glowMid, core);
+  // Idle is the common case: with uMix at 0 the front below sits at -EDGE, so
+  // `reveal` is 1 for every pixel (d is never negative) and the result is colFrom
+  // exactly. Returning it here skips a second full colour assembly on every pixel
+  // of every frame in which no palette transition is running — which is most of
+  // them.
+  if (uMix <= 0.0) return colFrom;
+
   vec3 colTo = assemble(uColorA2, uColorB2, uColorC2, uColorD2, uColorE2,
                         bgT, glow, glowMid, core);
 
@@ -383,7 +455,15 @@ void main() {
 
   // Film grain — animated per frame (non-diagonal offset) so it shimmers. Sits
   // on top of the glass, like grain on the lens rather than behind it.
-  float g = grainHash(gl_FragCoord.xy + fract(uTime) * vec2(137.0, 291.0)) - 0.5;
+  //
+  // Two incommensurate rates rather than one fract(uTime). A single fract wraps
+  // every second, which made the offset — and so the entire grain pattern —
+  // identical at t and t + 1: a one-second loop in what is supposed to be white
+  // noise. These two wrap at ~1.37s and ~2.39s, so the pair does not realign on
+  // any timescale anyone will sit through.
+  vec2 grainOffset = vec2(fract(uTime * 0.7321), fract(uTime * 0.4177))
+                     * vec2(137.0, 291.0);
+  float g = grainHash(gl_FragCoord.xy + grainOffset) - 0.5;
   color += g * uGrain;
 
   gl_FragColor = vec4(color, 1.0);

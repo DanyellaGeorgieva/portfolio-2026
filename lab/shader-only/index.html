@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shader only — seam isolation</title>
+  </head>
+  <body>
+    <!-- The field and nothing else. No swup, no SVG goo filters, no text, no
+         header, no palette picker, no hover work — and the canvas is an ordinary
+         in-flow element rather than a fixed one at z-index -1.
+
+         This exists to split the bug in half. If the seams appear here too, then
+         nothing about the page causes them and the fault is in the canvas or
+         below it. If they never appear here but do on the real pages, it is
+         something the page does on top of the canvas, and the list of suspects
+         is short. -->
+    <canvas id="webgl"></canvas>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

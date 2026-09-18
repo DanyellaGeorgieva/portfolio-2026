@@ -8,7 +8,7 @@ import { readdirSync, statSync } from 'node:fs';
 const root = dirname(fileURLToPath(import.meta.url));
 
 // Multi-page app: every index.html in the tree is its own real page (clean
-// folder URLs like /work/project-one/). Discover them all so the build knows
+// folder URLs like /work/melba/). Discover them all so the build knows
 // each entry point — adding a page = adding a folder with an index.html.
 function htmlEntries(dir, out = {}) {
   for (const name of readdirSync(dir)) {

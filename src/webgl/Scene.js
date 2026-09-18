@@ -5,9 +5,11 @@ import {
   PlaneGeometry,
   Scene as ThreeScene,
   ShaderMaterial,
+  NearestFilter,
   Vector2,
   Vector3,
   WebGLRenderer,
+  WebGLRenderTarget,
 } from 'three';
 
 import vertexShader from './shaders/background.vert';
@@ -121,6 +123,33 @@ export default class Scene {
     // No antialias: the scene is a single full-screen quad with no polygon
     // edges, so MSAA buys nothing here and only adds fill-rate cost.
     this.renderer = new WebGLRenderer({ canvas, antialias: false });
+
+    // --- Why there is no syncFrame() here any more -------------------------
+    // There used to be a syncFrame() calling gl.finish() every frame, on the
+    // theory that the seam is the compositor presenting a frame whose draw has
+    // not finished. That theory still stands. The remedy never did: gl.finish()
+    // DOES NOT BLOCK in Chrome's WebGL. Measured here, with ~114ms of field
+    // renders deliberately queued up first:
+    //
+    //   gl.finish()   returned in   0.0ms   <- did not wait at all
+    //   gl.flush()    returned in   0.2ms   <- non-blocking by spec
+    //   readPixels()  returned in 147.9ms   <- genuinely waits
+    //
+    // So syncMode:'finish' — the default, and the thing that was supposed to be
+    // the fix — was a no-op. That is the whole reason the seam watcher appeared
+    // to cure the bug while the fix did nothing: the watcher calls readPixels,
+    // and readPixels was the only one of the two that was ever a sync. Chrome's
+    // command buffer treats finish as an ordering hint, not a stall.
+    //
+    // syncMode:'pixel' (readPixels) does suppress the artefact, but it stalls
+    // the main thread for 50-150ms a frame, so it is a diagnostic, not an
+    // option. It is worth keeping in mind as the one lever known to work.
+    //
+    // What this does NOT yet explain is the seam itself. The field pass costs
+    // ~6.2ms at 1792x878 on this machine, plus ~0.3ms for the copy — inside a
+    // 16.7ms budget, so the WebGL draw alone is not obviously missing the
+    // deadline. The next thing to measure is the compositing on the real pages
+    // (the SVG goo filters over a z-index -1 canvas), not the shader.
     // Set once, here, and never again. This is a fill-rate-bound full-screen
     // shader: every physical pixel runs the whole fragment program each frame,
     // so cost scales with pixelRatio². The gradient is soft with no hard edges,
@@ -130,7 +159,12 @@ export default class Scene {
     // Not in applyResize, where it used to sit: three's setPixelRatio re-runs
     // setSize with the dimensions it already had, so calling it before the real
     // setSize allocated the buffer twice per resize — once at the stale size.
-    this.renderer.setPixelRatio(1);
+    // Starts at 1 and is set for real in applyResize, which knows the device
+    // ratio. Only ever assigned when it actually changes: three's
+    // setPixelRatio re-runs setSize with the dimensions it already has, so
+    // calling it unconditionally before the real setSize would allocate the
+    // buffer twice on every resize — once at the stale size.
+    this.pixelRatio = 0;
     // Output raw shader values so the sampled palette hex renders faithfully
     // (no extra linear→sRGB encoding on top of the already-sRGB ramp).
     this.renderer.outputColorSpace = LinearSRGBColorSpace;
@@ -140,6 +174,9 @@ export default class Scene {
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     const params = new URLSearchParams(window.location.search);
+    // Canvas resolution override — see applyResize for what this is testing.
+    const dpr = Number(params.get('dpr'));
+    this.ratioOverride = dpr > 0 ? Math.min(dpr, 2) : null;
     const requested = params.get('palette');
     this.paletteName =
       requested && palettes[requested] ? requested : DEFAULTS.palette;
@@ -148,6 +185,11 @@ export default class Scene {
     this.material = new ShaderMaterial({
       vertexShader,
       fragmentShader,
+      // The shader sizes its uHearts array from this, rather than carrying its
+      // own #define that a comment asked to be kept in step. A mismatch used to
+      // be silent: the array would size to the shader's number and the extra
+      // slots written from here would go nowhere.
+      defines: { HEART_COUNT },
       uniforms: {
         uTime: { value: 0 },
         uPhase: { value: 0 },
@@ -213,6 +255,36 @@ export default class Scene {
     this.mesh = new Mesh(new PlaneGeometry(2, 2), this.material);
     this.scene.add(this.mesh);
 
+    // --- Draw off-screen, then copy ----------------------------------------
+    // The field is no longer drawn into the buffer that gets presented. It is
+    // drawn into a texture of our own, and what reaches the screen is a copy.
+    //
+    // Why: the evidence says frames were reaching the screen before their draw
+    // had finished, and the unfinished parts showed the previous frame — hard
+    // rectangles that clear on the next good frame. The expensive, slow draw was
+    // the one racing the compositor.
+    //
+    // Now that draw has no deadline: it renders into the target, and nothing can
+    // show it until it is done. What races the compositor instead is a
+    // full-screen texture copy — one sample per pixel, no noise, no loops, no
+    // branches — which finishes in a fraction of a frame.
+    //
+    // It is also the version of "keep the broken frame off the screen" that
+    // works. The seam cannot be moved out of view, because it sits at a fraction
+    // of the canvas and moves with it; but an unfinished frame can be stopped
+    // from being the thing that gets shown.
+    this.target = null; // built in applyResize, which knows the size
+    this.copyScene = new ThreeScene();
+    this.copyMaterial = new ShaderMaterial({
+      vertexShader,
+      fragmentShader:
+        'varying vec2 vUv;\n' +
+        'uniform sampler2D uTex;\n' +
+        'void main() { gl_FragColor = texture2D(uTex, vUv); }\n',
+      uniforms: { uTex: { value: null } },
+    });
+    this.copyScene.add(new Mesh(new PlaneGeometry(2, 2), this.copyMaterial));
+
     this.resize = this.resize.bind(this);
     this.applyResize = this.applyResize.bind(this);
     this.tick = this.tick.bind(this);
@@ -227,6 +299,60 @@ export default class Scene {
     // content above it, so it never sees a pointer event itself.
     window.addEventListener('pointermove', this.onPointerMove);
     this.applyResize(); // synchronously: there is no previous frame to keep
+
+    // Dev only: watches the drawing buffer for the seam artefact, so the next
+    // sighting tells us whether it is in what we drew or only in what was shown.
+    if (import.meta.env.DEV) {
+      import('./seamWatch.js').then(({ default: SeamWatch }) => {
+        this.seamWatch = new SeamWatch(this.renderer, this.material);
+        window.__seams = () => this.seamWatch.hits;
+        // Turn the watcher off/on at runtime.
+        //
+        // This matters beyond convenience: readPixels forces a GPU sync — it
+        // blocks until rendering has actually finished — so the act of watching
+        // can suppress a race. If the seams stop while it is on and come back
+        // when it is off, the fault is a synchronisation one, which is a finding
+        // rather than an inconvenience.
+        window.__seamWatch = (on = true) => {
+          this.seamWatchOff = !on;
+          return on ? 'watching (readPixels forces a GPU sync)' : 'OFF - no readPixels, no sync';
+        };
+        // Force a check right now, for verifying the watcher is alive.
+        window.__seamCheck = () => {
+          this.drawFrame();
+          this.seamWatch.check();
+          return this.seamWatch.hits.length ? 'SEAM FOUND — see __seams()' : 'buffer clean';
+        };
+        window.__seamStatus = () => ({
+          checksRun: this.seamWatch.checks,
+          hits: this.seamWatch.hits.length,
+        });
+        window.__seamImage = (i = 0) => {
+          const hit = this.seamWatch.hits[i];
+          if (!hit?.image) return 'no image for that hit';
+          const img = new Image();
+          img.src = hit.image;
+          img.style.cssText =
+            'position:fixed;inset:0;width:100vw;height:100vh;z-index:99999;object-fit:fill';
+          img.onclick = () => img.remove();
+          document.body.append(img);
+          return 'click to dismiss';
+        };
+        // eslint-disable-next-line no-console
+        console.info('[seam] watching the drawing buffer. __seamStatus() for a count.');
+      });
+    }
+
+    // Flip the canvas resolution without reloading. __dpr(2) doubles the
+    // frame's cost and makes the rectangles appear reliably — it is the only
+    // known way to summon them on demand, so it stays as a test lever.
+    window.__dpr = (n) => {
+      this.ratioOverride = n > 0 ? Math.min(n, 2) : null;
+      this.width = null; // force applyResize to act
+      this.applyResize();
+      return `canvas ${this.canvas.width}x${this.canvas.height} at ratio ${this.pixelRatio}`;
+    };
+
     this.renderer.setAnimationLoop(this.tick);
 
     // Announce the starting palette now the scene is built, so the page's ink
@@ -471,6 +597,29 @@ export default class Scene {
   applyResize() {
     this.resizePending = null;
     const { innerWidth: w, innerHeight: h } = window;
+    // --- Canvas resolution -------------------------------------------------
+    // DPR 1, not the display's native 2. This is a fill-rate-bound full-screen
+    // shader, so cost scales with ratio², and the gradient is soft enough that
+    // half resolution is near-indistinguishable.
+    //
+    // It is also, measured, what keeps the artefact away. Raising the canvas to
+    // the device ratio was tried: it removes the compositor's rescale of the
+    // layer, which looked like the cause, but it takes the frame from ~6.5ms to
+    // ~12.5ms (the copy has to fill four times the pixels) and the hard-edged
+    // rectangles then appear RELIABLY, on a page where they otherwise do not.
+    // Tested both ways on /work/, ten transitions each: rectangles at ratio 2,
+    // none at ratio 1.
+    //
+    // So the artefact tracks how long the frame takes, not how the layer is
+    // scaled. __dpr(2) is kept below because it is the one switch known to
+    // reproduce it on demand — useful for checking whether any future change
+    // has pushed the frame back over whatever the real budget is.
+    const ratio = this.ratioOverride ?? 1;
+    if (ratio !== this.pixelRatio) {
+      this.pixelRatio = ratio;
+      this.renderer.setPixelRatio(ratio);
+      this.width = null; // force the size below to be applied at the new ratio
+    }
 
     // A resize event is not proof of a resize: they fire during a window drag,
     // on a monitor change, and when browser UI shows or hides, often with the
@@ -485,12 +634,40 @@ export default class Scene {
     // that in any moment the two disagree the canvas stops covering the
     // viewport; left to CSS, a disagreement only scales the image for a frame.
     this.renderer.setSize(w, h, false);
+    // The target is at CSS resolution, the canvas at the device ratio, so the
+    // copy magnifies. Linear rather than nearest: nearest would turn the
+    // upscale into visible 2×2 blocks, and the field has no hard edges for
+    // linear to soften.
+    this.target?.dispose();
+    // The target matches the canvas exactly at ratio 1, so the copy is 1:1 and
+    // nearest keeps it an exact copy rather than a resample. (At ratio 2 it
+    // magnifies, and linear would be wanted — but ratio 2 is a test mode.)
+    this.target = new WebGLRenderTarget(w, h, {
+      minFilter: NearestFilter,
+      magFilter: NearestFilter,
+      depthBuffer: false,
+      stencilBuffer: false,
+    });
+    this.copyMaterial.uniforms.uTex.value = this.target.texture;
     this.material.uniforms.uResolution.value.set(w, h);
     this.aspect = w / h; // uv.x spans 0..aspect — the floaters' horizontal range
 
     // Fill the new buffer in the same frame it was allocated, so there is no
     // moment in which an empty one can reach the screen.
+    this.drawFrame();
+  }
+
+  /**
+   * The field into our own texture, where nothing can show it half-drawn, then
+   * the cheap copy into the buffer that is actually presented. Every draw goes
+   * through here — the loop, a resize, and coming back from a hidden tab — so
+   * none of them can quietly bypass the target.
+   */
+  drawFrame() {
+    this.renderer.setRenderTarget(this.target);
     this.renderer.render(this.scene, this.camera);
+    this.renderer.setRenderTarget(null);
+    this.renderer.render(this.copyScene, this.camera);
   }
 
   /** Stop rendering entirely while the tab is backgrounded; resume on return. */
@@ -503,7 +680,12 @@ export default class Scene {
       // Draw before resuming rather than waiting for the loop's first frame:
       // coming back is exactly when a stale buffer would be composited, and
       // setAnimationLoop only schedules — it does not draw.
-      this.renderer.render(this.scene, this.camera);
+      //
+      // Through the render target, like every other draw. This used to render
+      // the field directly at the canvas, which put the one expensive draw of
+      // the whole scene into the presented buffer at precisely the moment the
+      // off-screen target exists to protect it.
+      this.drawFrame();
       this.renderer.setAnimationLoop(this.tick);
     }
   }
@@ -552,7 +734,9 @@ export default class Scene {
 
     this.material.uniforms.uTime.value = this.time;
     this.material.uniforms.uPhase.value = this.phase;
-    this.renderer.render(this.scene, this.camera);
+    this.drawFrame();
+    if (!this.seamWatchOff) this.seamWatch?.tick(); // right after the draw: the
+    // buffer is only readable before it has been presented
   }
 
   dispose() {
@@ -564,6 +748,11 @@ export default class Scene {
     window.removeEventListener('pointermove', this.onPointerMove);
     this.mesh.geometry.dispose();
     this.material.dispose();
+    this.target?.dispose();
+    // The copy quad's geometry too — it is a second PlaneGeometry, and disposing
+    // only its material left the buffers on the GPU.
+    this.copyScene.traverse((o) => o.geometry?.dispose());
+    this.copyMaterial.dispose();
     this.renderer.dispose();
   }
 }

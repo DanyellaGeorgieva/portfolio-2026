@@ -79,7 +79,7 @@ const START_RATIO = 0.35;
 // of page, at the narrow end of every clamp:
 //
 //   goo    .page__title 48 · .project__title 32 · .section__lead 22 ·
-//          .page__heading 21.6 · .page__lead 20
+//          .page__heading 21.6 · .section__label 21.6 · .page__lead 20
 //   fade   .project__blurb 19.2 · .section__body 18.4 · .page__body 16.8 ·
 //          .page__meta 15.2 · .section__meta 14.4 · .page__eyebrow 12
 //
@@ -173,9 +173,25 @@ export default class GooeyText {
     });
   }
 
-  /** Melt it in. Safe to call again — a running reveal restarts. */
-  play() {
-    if (!this.items.length) return;
+  /**
+   * Melt it in. Safe to call again — a running reveal restarts.
+   *
+   * @param onDone called once the last element has landed. Also called
+   *   immediately when there is nothing to reveal — a page with no copy above
+   *   the fold, or prefers-reduced-motion, where the constructor collects no
+   *   items at all. "The reveal has finished" is true in both cases, and a
+   *   caller waiting on it should not be left hanging by the quiet path.
+   */
+  play(onDone) {
+    // Held on the instance rather than closed over, so a restart replaces it:
+    // reset() cancels the running frame, so the old tick can never fire a
+    // callback that has since been superseded.
+    this.onDone = onDone;
+
+    if (!this.items.length) {
+      onDone?.();
+      return;
+    }
     this.reset();
 
     const started = performance.now();
@@ -209,7 +225,12 @@ export default class GooeyText {
         else el.style.opacity = ease(t).toFixed(3);
       });
 
-      this.frame = running ? requestAnimationFrame(tick) : null;
+      if (running) {
+        this.frame = requestAnimationFrame(tick);
+        return;
+      }
+      this.frame = null;
+      this.onDone?.();
     };
 
     this.frame = requestAnimationFrame(tick);
@@ -218,6 +239,7 @@ export default class GooeyText {
   destroy() {
     cancelAnimationFrame(this.frame);
     this.frame = null;
+    this.onDone = null;
     this.items.forEach(({ el, blur }) => {
       blur?.closest('filter')?.remove();
       el.style.filter = '';

@@ -363,6 +363,9 @@ body:has(#swup[data-page="detail"]) {
   // size means the measure changes with the window while the type doesn't. The
   // min is the phone size, the max is where growth stops being readable.
   --fs-lead: clamp(1.375rem, 2.1vw, 1.875rem);
+  // Section headings, and the address on the contact page — the one thing on
+  // that page you are meant to act on is a heading in every sense.
+  --fs-heading: clamp(1.35rem, 2vw, 1.7rem);
   --fs-deck: clamp(1.25rem, 1.6vw, 1.5rem);
   --fs-body: clamp(1rem, 1.25vw, 1.15rem);
   --fs-meta: clamp(0.8rem, 0.9vw, 0.9rem);
@@ -411,7 +414,7 @@ body:has(#swup[data-page="detail"]) {
   min-height: 50vh;
   width: 42%;
   margin: 0 auto;
-  padding-top: 14rem;
+  padding-top: 12rem;
 }
 
 // A top-level page fills the screen and normally has nothing to scroll — but
@@ -503,6 +506,18 @@ html:has(#swup[data-page="top"]) {
   text-wrap: balance;
 }
 
+.contact__lead {
+  // The intro on the contact page should read like ordinary prose rather than a
+  // display headline, so it sits in the same voice as the rest of the site copy.
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0;
+}
+
 // Running prose. The reading face, a full measure, and leading generous enough
 // to hold the eye across a long line over a moving field.
 .section__body {
@@ -523,31 +538,9 @@ html:has(#swup[data-page="top"]) {
   color: var(--ink-quiet);
 }
 
-// Its label. A block of its own rather than a run-in: set inline, a value long
-// enough to wrap puts its second line under the label, and the eye loses which
-// words are the label and which are the answer.
-//
-// Bracketed by CSS rather than typed into the markup, so it matches the picker's
-// [ 01 ] and the two halves cannot drift apart.
-.section__label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-family: "Cabinet Grotesk", system-ui, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  // Back to full strength: the label is the one part of this tier that should
-  // catch the eye, and it is short enough to carry the contrast.
-  color: var(--ink);
-
-  &::before {
-    content: "[ ";
-  }
-
-  &::after {
-    content: " ]";
-  }
-}
+// .section__label is the same heading as a case study's — it shares
+// .page__heading's rule further down rather than restating it here, so the two
+// kinds of page cannot drift apart.
 
 // The one or two words in a tier worth catching first — her name, and where she
 // works. Weight rather than colour: the ink is palette-driven and every stop in
@@ -585,6 +578,7 @@ $track-gap: 16px;
   padding: 0;
   width: 100%;
   counter-reset: track;
+  width: 80%;
 }
 
 .project {
@@ -687,7 +681,6 @@ $track-gap: 16px;
 .project__blurb {
   padding-left: $track-width + $track-gap;
   font-size: 1.2rem;
-  width: 80%;
 }
 
 // --- Say hi -----------------------------------------------------------------
@@ -698,30 +691,24 @@ $track-gap: 16px;
   flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
+  // Set apart from the statement above it. The two are only one step apart on
+  // the ramp and both are bold, so at the lead's own 1.75rem they read as two
+  // lines of one paragraph rather than as an invitation and the thing to act on.
+  margin-top: 2.75rem;
 }
 
 .contact__email {
-  font-size: clamp(1.35rem, 3vw, 2.4rem);
+  // Treat the email as a title-like action, in the same voice as the case study
+  // titles rather than as ordinary paragraph text.
+  font-family: "Cabinet Grotesk", system-ui, sans-serif;
+  font-size: var(--fs-heading);
   font-weight: 800;
   line-height: 1.1;
   text-decoration: none;
-  // A rule that draws itself in from the left on hover. Painted as a background
-  // gradient rather than a border or underline so only its width animates —
-  // nothing in the layout moves, and it can sit at its own distance from the
-  // baseline.
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 0% 2px;
-  transition: background-size 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  text-transform: uppercase;
   // The address is one long unbreakable token; let it wrap rather than push out
   // of the column on a narrow screen.
   overflow-wrap: anywhere;
-
-  &:hover,
-  &:focus-visible {
-    background-size: 100% 2px;
-  }
 }
 
 // --- Detail page (project / lab item) ---------------------------------------
@@ -741,6 +728,75 @@ $track-gap: 16px;
   // Top padding clears the nav, which now runs across the top of this column
   // rather than down the side of it.
   padding: 8rem var(--panel-pad) 4rem;
+}
+
+// The eye that watches a case study. Big, fixed, and parked in the empty gutter
+// to the left of the title — the column is 44% of the screen, so there is a
+// clear 28% of nothing on either side of it, and this is what the left one is
+// for.
+//
+// Fixed rather than in the flow: it holds its place on screen while the case
+// study scrolls past it, so it reads as something looking at the page rather
+// than as an illustration inside it.
+.page__eye {
+  position: fixed;
+  // On the title's centre line. That line is deterministic — the column's 8rem
+  // of top padding, then the eyebrow's line and the 12px under it (1.75rem for
+  // the pair), then half the title — so it is stated rather than measured at
+  // runtime, and it follows --title-size if the title is ever resized.
+  // Measured against the rendered page: 180px, which is what this computes.
+  top: calc(8rem + 1.75rem + var(--title-size) / 2);
+  // The column is centred, so its content starts at 50% - half its width; this
+  // puts the eye's right edge there, then pushes it clear by the gap.
+  right: calc(50% + var(--panel-width) / 2 + 2rem);
+  // Centred on the title OPTICALLY, not by its box. -50% would put the middle
+  // of the svg on the title's centre line, and the middle of the svg is not the
+  // middle of the eye: the lashes take up the top of the viewBox, so the eye's
+  // opening — the iris, at y 10.95 of an 18.2-tall viewBox — sits at 60.165% of
+  // the way down rather than halfway. Measured, that left the iris 5.42px low
+  // against a 48px title.
+  //
+  // A percentage here resolves against the element's own height, so this stays
+  // true at every size the clamp above can produce; a px nudge would not.
+  translate: 0 -60.165%;
+  // Sized on the WIDTH, with the gutter itself as the ceiling, so it can never
+  // outgrow the space it sits in. The clamp is the size we actually want —
+  // 3.8vw, floored so it does not vanish and capped so it does not dominate a
+  // very wide screen — and the min() clause is the hard limit: the gutter is
+  // (100% - column) / 2, less the same 2rem gap again so the eye keeps as much
+  // clearance from the screen edge as it has from the title.
+  //
+  // Width rather than height because width is the axis under pressure: with the
+  // height fixed and the width capped, the cap would squash the drawing instead
+  // of scaling it. Height follows from the viewBox's own ratio.
+  width: min(
+    clamp(1.75rem, 3.8vw, 4.5rem),
+    calc((100% - var(--panel-width)) / 2 - 4rem)
+  );
+  height: auto;
+  // Every line, the iris and the pupil are currentColor, so the eye inherits
+  // the palette's ink from <body> and cross-fades with it on a palette change.
+  // No colour of its own, exactly like the small ones.
+  //
+  // Decoration, so it never eats a click meant for the copy behind it.
+  pointer-events: none;
+  // Top-level pages have their own eyes in the nav and the work rows; this one
+  // belongs to a case study alone.
+  display: none;
+  // It arrives after the copy has finished landing — main.js adds the class a
+  // beat later, so the page is read before it is watched. Opacity rather than
+  // display, so there is something for this to fade: display is what decides
+  // whether it is on this kind of page at all.
+  opacity: 0;
+  transition: opacity 0.45s ease-out;
+}
+
+body:has(#swup[data-page="detail"]) .page__eye.is-visible {
+  opacity: 1;
+}
+
+body:has(#swup[data-page="detail"]) .page__eye {
+  display: block;
 }
 
 // The escape hatch, not the exit. A case study opens on the story, so this is
@@ -902,12 +958,22 @@ $track-gap: 16px;
   }
 }
 
-.page__heading {
+// A section heading, on a case study and on the about page alike. One rule for
+// both: these are the same thing doing the same job, and the about page's
+// version used to be its own smaller, tracked, upper-case treatment that had to
+// be re-tuned by hand whenever this one moved.
+//
+// Satoshi rather than Cabinet Grotesk, and no letter-spacing — the weight and
+// the size carry it. That is a deliberate difference from .section__lead, which
+// is display face: the lead is a statement to be caught at a glance, these are
+// signposts inside running copy.
+.page__heading,
+.section__label {
   // Large space above, small below — the gap belongs to the section starting,
   // not to the heading, so the heading reads as attached to the copy under it.
   margin: 3.5rem 0 1.1rem;
   max-width: var(--measure);
-  font-size: clamp(1.35rem, 2vw, 1.7rem);
+  font-size: var(--fs-heading);
   font-weight: 800;
   line-height: 1.25;
   text-wrap: balance;
