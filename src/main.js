@@ -2,8 +2,10 @@ import './styles/main.scss';
 import Swup from 'swup';
 import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
-import QuietGoo, { PROJECT_GOO, NAV_GOO } from './quietGoo.js';
+import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
 import { paletteNames } from './webgl/palettes.js';
+// Defines <vitosha-ridge>, used by the Vitosha case study.
+import './vitoshaRidge.js';
 
 // Declared before the scene because Scene calls onPalette from its own
 // constructor, and the callback below marks the picker.
@@ -194,33 +196,37 @@ restIris();
 //
 // An index rather than swatches: the field behind it is already the colour, and
 // a row of coloured chips would compete with the thing it controls.
+//
+// The numbers share the nav links' weight, width reservation and quieting, but
+// not the eye: six eyes in a row this small read as noise, not as a reply.
 if (picker) {
+  const mode = document.createElement('span');
+  mode.className = 'picker__mode';
+  mode.id = 'picker-mode';
+  mode.textContent = 'mode:';
+
   const list = document.createElement('ul');
   list.className = 'picker__list';
+  list.setAttribute('aria-labelledby', mode.id);
 
   paletteNames.forEach((name, i) => {
-    // "lavenderPeach" → "lavender peach", for the label and the button's name.
-    const label = name.replace(/([A-Z])/g, (m) => ` ${m.toLowerCase()}`);
+    const number = String(i + 1).padStart(2, '0');
 
     const item = document.createElement('li');
-    item.className = 'picker__item';
 
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'picker__link';
     button.dataset.palette = name;
-    button.textContent = `[ ${String(i + 1).padStart(2, '0')} ]`;
-    button.setAttribute('aria-label', label);
+    // Reserves the bold width, the same way the nav links' data-label does.
+    button.dataset.label = number;
+    // "lavenderPeach" → "lavender peach". Not shown any more, but still the
+    // button's name: "02" alone tells a screen reader nothing.
+    button.setAttribute('aria-label', name.replace(/([A-Z])/g, (m) => ` ${m.toLowerCase()}`));
     button.setAttribute('aria-pressed', String(name === scene.paletteName));
+    button.innerHTML = `<span class="picker__num">${number}</span>`;
 
-    const caption = document.createElement('span');
-    caption.className = 'picker__label';
-    caption.textContent = label;
-    // The button already carries this as its accessible name; on screen it is
-    // just the hover reveal, so it would otherwise be announced twice.
-    caption.setAttribute('aria-hidden', 'true');
-
-    item.append(button, caption);
+    item.append(button);
     list.append(item);
   });
 
@@ -229,7 +235,9 @@ if (picker) {
     if (button) scene.setPalette(button.dataset.palette);
   });
 
-  picker.append(list);
+  picker.append(mode, list);
+
+  new QuietGoo(picker, PICKER_GOO);
 }
 
 // Every link in the header, the name included — it is the link to /, which is

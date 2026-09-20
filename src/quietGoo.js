@@ -97,6 +97,17 @@ export const NAV_GOO = {
   ratio: 0.0625, // 1.1px at 17.6px
 };
 
+// Same treatment as the nav, on the palette numbers under it. A smaller
+// fraction than the nav's for the reason above: at 12px the nav's 0.0625 welded
+// the digits into blobs, where it only softens the nav's words.
+export const PICKER_GOO = {
+  list: '.picker__list',
+  item: '.picker__link',
+  text: '.picker__num',
+  name: 'goo-quiet-picker',
+  ratio: 0.04, // 0.48px at 12px
+};
+
 export default class QuietGoo {
   /**
    * @param {ParentNode} root    where to look for the list

@@ -18,18 +18,17 @@
         <p class="page__eyebrow">European Design Festival, Sofia · Teaser · 2026</p>
         <h1 class="page__title">IN THE SKIRTS OF VITOSHA</h1>
 
+        <!-- The mountain itself, opening the story it belongs to. Drawn from the
+             two contour SVGs in public/assets; it hides itself if they are
+             missing. See src/vitoshaRidge.js. -->
+        <vitosha-ridge></vitosha-ridge>
+
         <p class="page__lead">
-          Vitosha is the mountain Sofia sits under. In Bulgarian a mountain’s
-          foothills are its <em>poli</em> — its skirts — and they are where the
-          city ends and the mountain starts. In 2026 the European Design Festival
-          came to Sofia, and this is the site that announced it: a strip of
-          woven textile that, as you swipe, rises into the outline of Vitosha.
-        </p>
-        <p class="page__lead">
-          It works on a phone, held sideways, and nowhere else.
+          Interactive landscape experience for the European Design Festival,
+          Sofia 2026.
         </p>
 
-        <figure
+        <!-- <figure
           style="margin: 0 0 2rem; max-width: var(--measure); display: grid; gap: 1rem;"
           >
           <img
@@ -54,202 +53,106 @@
             The end screen on each of the three textiles. Every visit picks one at
             random, never the same one twice in a row.
           </figcaption>
-        </figure>
+        </figure> -->
 
         <dl class="page__meta">
           <dt>Role</dt>
-          <dd>
-            Front-end and WebGL development. Fabric shaders, scroll and pacing
-            system, device gates, and the full site build.
-          </dd>
+          <dd>Creative Development</dd>
 
-          <!-- TODO: Concept & identity — the notes mention a designer and an
-               art director but name nobody. Credit them here.
-          <dt>Concept &amp; identity</dt>
-          <dd>—</dd>
-          -->
+          <dt>Collaborators</dt>
+          <dd>Art Director, Designer</dd>
 
-          <!-- TODO: Recognition — press, awards, anything the festival shared.
-               Delete outright if there is none.
-          <dt>Recognition</dt>
-          <dd>—</dd>
-          -->
+          <dt>Tech</dt>
+          <dd>Three.js (GLSL), Vanilla JS, GSAP, Lenis, Webpack 5</dd>
         </dl>
 
-        <h2 class="page__heading">The decision to refuse</h2>
+        <h2 class="page__heading">Concept</h2>
         <p class="page__body">
-          Open it on a laptop and it tells you to open it on a phone. Open it on
-          a phone held upright and it tells you to turn it. There is no fallback,
-          no reduced desktop version, no “continue anyway” link.
+          The project brings a literal twist to a famous Bulgarian geographical
+          idiom. The neighborhoods nestled at the base of the mountain
+          overlooking Sofia are called
+          <strong lang="bg">„Полите на Витоша“</strong> — literally,
+          <strong>“The Skirts of Vitosha.”</strong>
         </p>
         <p class="page__body">
-          That is a lot of traffic turned away on purpose, on a site whose entire
-          job is announcing a festival to an international design audience — most
-          of whom will first see the link on a desktop, in an email or on Slack.
+          We turned this linguistic metaphor into a tactile interaction
+          mechanic. Built <strong>strictly mobile-only and landscape-only</strong>,
+          users manipulate a continuous woven digital textile. As they scroll,
+          the fabric warps and pulls upward, molding itself into the rugged ridge
+          line of the mountain.
         </p>
-        <p class="page__body">
-          It was a team decision, made on purpose. A teaser has one job — to make
-          you feel something for thirty seconds — and a panorama you drag with
-          your thumb only makes sense on a phone held sideways.
-        </p>
-        <!-- TODO: the argument in your own words, if the line above isn't it.
-             Did the festival push back? -->
-        <p class="page__body">
-          So the gate had to be strict, and cheap. Plain CSS decides which of the
-          three screens you get — desktop, rotate, or the experience — from
-          screen size, touch versus mouse, and orientation. In portrait every
-          scroll and every animation is frozen, so nothing moves behind the
-          rotate message, and when you turn the phone back you carry on exactly
-          where you were.
-        </p>
+        <pre class="page__code" aria-label="Diagram: the flat textile, labelled Programme, with an idle breeze ripple, beside the warped mountain, labelled Design, with Kopitoto and Knyazhevo at its foot"><code>     THE TEXTILE (Flat)              THE MOUNTAIN (Warped)
+===========================       ===========================
+       [ PROGRAMME ]              ▲       [ DESIGN ]        ▲
+___________________________      / \_______________________/ \
+~~~~ Idle Breeze Ripple ~~~~    /   \  Kopitoto + Knyazhevo  \
+===========================    /     \========================\</code></pre>
 
-        <h2 class="page__heading">Why landscape is harder than it sounds</h2>
-        <p class="page__body">
-          You cannot reliably lock a phone’s orientation from a website. Android
-          allows the Screen Orientation API’s <code>lock()</code>, but only in
-          fullscreen; iOS Safari ignores it entirely. So the site asks for
-          fullscreen and a landscape lock on the very first tap — the only
-          moment browsers allow it — trying several elements in turn, because
-          different mobile browsers accept it on different ones. Where that
-          fails, the only move left is to detect, ask, and wait, which makes the
-          gate a real piece of UI rather than a one-line check.
-        </p>
-        <p class="page__body">
-          And landscape on a phone is the most hostile viewport on the web:
-        </p>
+        <h3 class="page__subheading">Visual identity</h3>
         <ul class="page__list">
           <li>
-            Vertical space collapses once the browser chrome is accounted for.
-            <!-- TODO: what height you actually targeted. -->
+            <strong>Generative themes:</strong> Each session randomly spins up
+            one of three editorial textile colorways (Plum/Pink, Deep Teal/Ice
+            Blue, or Olive-Black/Acid Yellow) with unique distortion filters.
           </li>
           <li>
-            The address bar shows and hides as you interact, and rotating the
-            phone resizes the page too. Both looked like a scroll and could start
-            the sequence by itself. It now starts only after a real gesture —
-            swipe, wheel or key — and resize-driven movement in the first 0.6
-            seconds is ignored.
-          </li>
-          <li>
-            Notches and home indicators eat the edges — hence
-            <code>viewport-fit=cover</code> and the safe-area insets.
-          </li>
-          <li>
-            iPhone users with rotation lock on have to open Control Center to
-            turn the phone. On iOS that doesn’t hide the page, so the animation
-            kept running underneath. The whole experience now pauses whenever the
-            window loses focus, the tab is hidden, or Safari freezes the page,
-            and resumes where it stopped.
-          </li>
-          <li>
-            The theme colours were set by the main script, so text flashed in the
-            wrong colour while it downloaded. A tiny inline script in the head now
-            picks the textile and sets the colours before anything is painted,
-            then hands the choice to the main code.
+            <strong>Dynamic typography:</strong> Italic treatments are driven
+            procedurally by character casing (e.g., <code>dEsiGn</code> triggers
+            distinct slants on lowercase/uppercase mixes) to reference
+            avant-garde print layouts.
           </li>
         </ul>
+
+        <h2 class="page__heading">Technical deep-dives</h2>
         <p class="page__body">
-          The site also ships the Apple web-app meta tags with a translucent
-          status bar, so added to the home screen it runs full-bleed with no
-          browser furniture at all.
-          <!-- TODO: was that the intended way to see it? -->
+          <strong>The “prompt engineer” tax:</strong> <em>This was my first
+          project using an AI dev agent. Instead of lazily spamming the “make it
+          better” button until the codebase melted into unmaintainable mush, I
+          treated the agent like a precision calculator — feeding it explicit
+          matrix transformations and math formulas to bypass boilerplate
+          generation so I could manually orchestrate the shaders and
+          physics.</em>
         </p>
 
-        <h2 class="page__heading">The experience itself</h2>
+        <h3 class="page__subheading">1. SVG line art → GPU heightmap</h3>
         <p class="page__body">
-          Before you touch it, the cloth sways as if in a breeze — stronger at
-          the hem, still at the sides, like fabric pinned at both ends. The first
-          swipe fades the title and starts the piece. Swipe sideways or up and
-          down, both work, and the fabric slides along while its top edge slowly
-          rises from flat into the ridge of Vitosha.
-        </p>
-        <p class="page__body">
-          As it moves, peaks light up along the ridge — Kopitoto, Aleko, Cherni
-          Vrah — each paired with the neighbourhoods at its foot, Boyana,
-          Dragalevtsi, Simeonovo, and each pair arrives with one big word for
-          what the festival offers: <strong>design, exhibitions, talks, studio
-          visits, workshops, awards, party</strong>. After the last pair the
-          scrolling stops, the mountain surges higher, the fabric starts to
-          shimmer, and only the two real venues stay on screen, Cinema Lumière
-          and Toplocentrala, marked as stars. Then the end screen: Share, and
-          Restart, which reloads with a different textile.
+          To avoid heavy 3D asset overhead, we rasterize the designer’s raw SVG
+          contour onto an offscreen canvas at runtime. The canvas is scanned
+          column-by-column into a 1D float array, box-blurred for smoothness,
+          and uploaded to the GPU as a <strong>1×N data texture</strong>. A
+          boundary <code>smoothstep()</code> ensures the terrain loops
+          seamlessly.
         </p>
 
-        <h2 class="page__heading">A mountain drawn out of a drawing</h2>
+        <h3 class="page__subheading">2. Input-driven vertex deformation</h3>
         <p class="page__body">
-          The designer drew the outline of Vitosha as an SVG — one line for the
-          ridge, one for the foothills. On load the site draws that SVG onto an
-          invisible canvas and, for every column of pixels, finds where the line
-          sits. The result is a heightmap: a bar chart of the mountain’s profile.
-          The two ends are blended together so the panorama loops without a
-          seam, and a very light smoothing takes out the pixel stair-steps while
-          keeping the sharp, angular peaks the designer wanted.
-        </p>
-        <p class="page__body">
-          The fabric itself is a Three.js plane cut into a 384 × 96 grid. A
-          vertex shader pushes every point of it up or down from the heightmap —
-          the top edge follows the ridge, the bottom follows the foothills — by
-          an amount tied to how far you’ve scrolled. A second shader does the
-          melting: it drags the textile’s pixels along the shape of the mountain
-          and pulls the red, green and blue channels slightly apart. On the right
-          of the screen there’s a clean zone where the effect fades out so the
-          cloth reads calmly. Each textile has its own tuned settings, which is
-          why one is all rainbow edges and another barely melts at all.
-        </p>
-        <p class="page__body">
-          The textile photos came with torn, transparent top edges, and stretched
-          upward they left a dark outline around the mountain. On load, each
-          column now finds its first solid pixel of fabric and copies that colour
-          upward. On the third textile the white stitching along the torn edge is
-          kept on purpose, at the art director’s request.
-        </p>
-        <p class="page__body">
-          The peak and place names aren’t part of the 3D image. They’re ordinary
-          HTML — sharp, and easy to style — and every frame the code works out
-          where the mountain line is on screen and moves each label onto it, so
-          they look stitched to the moving cloth.
+          Deformation lives inside a custom <code>ShaderMaterial</code>. The
+          vertex shader offsets coordinates dynamically by pulling data from the
+          heightmap texture multiplied by the user’s scroll speed, injecting a
+          subtle sin-wave breeze ripple. The fragment shader handles color
+          channel splitting, causing interactive <strong>chromatic
+          aberration</strong> that scales with scroll acceleration.
         </p>
 
-        <h2 class="page__heading">A speed limit on a swipe</h2>
+        <h3 class="page__subheading">3. Synced GPU-to-DOM label projection</h3>
         <p class="page__body">
-          The first version let a quick flick fly past three or four pairs, and
-          people missed the words — which were the whole message. So the
-          panorama got a speed limit. A swipe sets a target, and the fabric
-          glides towards it at a capped speed. The leftover glide is capped too,
-          so swiping harder never builds up a long runaway slide.
-        </p>
-        <p class="page__body">
-          The real peaks aren’t evenly spaced, so tying the words to them made
-          the rhythm lurch. The reveals are paced instead in equal steps of
-          scroll, based on the average distance between peaks, so the words
-          land at a steady beat while each pair is still on screen. Every word
-          gets about 1.2 seconds, and it still feels like your finger is moving
-          it, not like a video playing.
-        </p>
-        <p class="page__body">
-          The words themselves appear in 0.4 seconds, hold for 0.15, and melt
-          away over 1.1 — timings tuned with the art director on real phones.
-          Some letters are set in italic, and which ones is controlled by writing
-          them in uppercase in the word list — <code>dEsiGn</code>,
-          <code>wOrksHops</code> — which made them easy to adjust together with
-          the designer.
+          To avoid fuzzy WebGL text maps, all typography stays in the native DOM
+          for razor-sharp rendering. The exact shader displacement equations are
+          mirrored on the CPU. Every frame, JavaScript computes the heightmap
+          offset, projects the 3D surface points into 2D screen coordinates using
+          the camera projection matrix, and updates the text via
+          hardware-accelerated <code>transform: translate3d()</code>.
         </p>
 
-        <!-- TODO — "What I'd do differently". One honest paragraph. The draft's
-             candidate, to use only if you agree with it: the desktop gate is a
-             dead end, and a short autoplaying video of the experience behind the
-             "open on your phone" message would have cost little and converted
-             the people who will never pick up their phone.
-        <h2 class="page__heading">What I’d do differently</h2>
-        <p class="page__body">—</p>
-        -->
-
-        <h2 class="page__heading">Outcome</h2>
+        <h3 class="page__subheading">4. Bounded inertia scroll layer</h3>
         <p class="page__body">
-          The festival ran 11–14 June 2026 in Sofia, at Cinema Lumière and
-          Toplocentrala — the two stars left on the mountain at the end.
+          Unchecked mobile gestures break tightly timed scroll interactions.
+          Combining <strong>Lenis</strong> with a custom physical damping system,
+          we decoupled raw touch inputs from camera velocity. We enforced a
+          strict speed cap and bounded drag constraints to stop flick gestures
+          from skipping past critical mountain peaks and paired neighborhood
+          markers.
         </p>
-        <!-- TODO: traffic, shares, whether the festival was happy, any press or
-             awards. -->
 
         <dl class="page__meta">
           <dt>Live site</dt>
@@ -261,7 +164,12 @@
               src="/src/assets/qr-code.png"
               alt="QR code for the live site — scan it with your phone to open it"
               loading="lazy"
-              style="display: block; width: 8rem; height: auto; border-radius: 0.25rem;" />
+              style="
+                display: block;
+                width: 8rem;
+                height: auto;
+                border-radius: 0.25rem;
+              " />
           </dd>
 
           <dt>Festival</dt>
@@ -274,11 +182,6 @@
             >
           </dd>
         </dl>
-
-        <p class="page__note">
-          Built with Three.js, custom GLSL shaders, GSAP and Lenis, in plain
-          JavaScript.
-        </p>
 
         <!-- The real exit. Someone who has read this far has finished the story,
              so this is where the way out belongs — and where the next one gets

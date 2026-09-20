@@ -76,7 +76,9 @@ $inks: (
 }
 
 body {
-  font-family: "Satoshi";
+  // The fallback is for glyphs Satoshi doesn't have — Cyrillic, in the Vitosha
+  // case study. With no fallback those dropped to the browser's default serif.
+  font-family: "Satoshi", system-ui, sans-serif;
   color: var(--ink);
   transition: color 1.2s ease;
 }
@@ -131,6 +133,13 @@ body:has(#swup[data-page="detail"]) {
   left: var(--content-left);
   bottom: 28px;
   z-index: 10;
+  display: flex;
+  // Baseline, so "mode:" and the numbers sit on one line of type. That only
+  // works because .picker__link below takes its baseline from its number.
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
 
   // main.js hides this with the `hidden` attribute whenever a section is up.
   // Spelled out because `[hidden] { display: none }` comes from the UA
@@ -141,69 +150,66 @@ body:has(#swup[data-page="detail"]) {
   }
 }
 
+.picker__mode {
+  font-weight: 800;
+}
+
 .picker__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  gap: 0.35rem;
+  // Tighter than it looks: each number already carries its (hidden) brackets.
+  gap: 0.4rem;
 }
 
-// Positioning context for the label, which hangs above this number.
-.picker__item {
-  position: relative;
-}
-
+// A button, so the reset it needs to read as text. Weight, hover, active and
+// the quieting of the others come from the nav rules below, which it shares.
 .picker__link {
   padding: 0;
   border: 0;
   background: none;
   color: inherit; // follows --ink like everything else
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 800;
   font-variant-numeric: tabular-nums; // 01–06 all set to one width
   cursor: pointer;
-  opacity: 0.5;
-  transition: opacity 0.25s ease;
+}
 
-  &:hover,
-  &:focus-visible {
-    opacity: 1;
-    outline: none;
+// A column flexbox takes its baseline from its first item — the number. As the
+// nav's inline-block, the baseline came from the zero-height ::after that
+// reserves the bold width, which lifted every number off the line. Doubled
+// class so it outranks the shared nav rule's display further down.
+.picker .picker__link {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+// The one playing: bracketed. Every number carries its brackets and only the
+// active one shows them — hung outside instead, they ate into the gaps on
+// either side, so the row looked unevenly spaced around whichever was playing.
+// Kept in the flow, the spacing is the same everywhere and picking another stop
+// moves nothing.
+.picker__num {
+  &::before,
+  &::after {
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
 
-  // The one playing.
-  &[aria-pressed="true"] {
-    opacity: 1;
-    text-decoration: underline;
-    text-underline-offset: 4px;
+  &::before {
+    content: "[";
+  }
+
+  &::after {
+    content: "]";
   }
 }
 
-// Out of the flow and absolutely placed, so revealing it moves nothing — a row
-// that reflowed on hover would shuffle the numbers out from under the pointer.
-.picker__label {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 0.55rem);
-  pointer-events: none;
-  white-space: nowrap;
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  opacity: 0;
-  transform: translateY(4px);
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-
-// Keyboard gets the same reveal as the pointer.
-.picker__item:hover .picker__label,
-.picker__link:focus-visible + .picker__label {
-  opacity: 0.7;
-  transform: none;
+.picker__link[aria-pressed="true"] .picker__num {
+  &::before,
+  &::after {
+    opacity: 1;
+  }
 }
 
 // The site-header — the name on the left, the nav on the right, across the top of
@@ -228,12 +234,16 @@ body:has(#swup[data-page="detail"]) {
 // name is one of the four destinations now that home is a real page, so it
 // should say when you are on it — landing on / used to leave nothing lit at
 // all, which is the one view with no indication of where you are.
-.site-header a {
+// The palette numbers share this block — the weight, the bold-width
+// reservation — but not the eye, which stays the nav's own.
+.site-header a,
+.picker__link {
   font-weight: 800;
   text-decoration: none;
   transition: 0.2s all ease;
 
-  &.is-active {
+  &.is-active,
+  &[aria-pressed="true"] {
     font-weight: 900;
   }
 
@@ -278,7 +288,9 @@ body:has(#swup[data-page="detail"]) {
   translate: -50% -50%;
   // Height rather than width: the links are different lengths, and matching
   // them on height is what keeps the eye the same size above every one.
-  height: 1.6em;
+  // 1.6em when the viewBox was 18.2 tall; scaled by 21.9 / 18.2 when the lower
+  // lashes squared it, so the drawing itself stayed the same size.
+  height: 1.925em;
   width: auto;
   opacity: 0;
   scale: 0.9;
@@ -320,7 +332,9 @@ body:has(#swup[data-page="detail"]) {
 // Focus is included so the same thing happens for anyone moving through the bar
 // by keyboard, who otherwise gets no equivalent of the effect at all.
 .site-header:has(a:hover) a:not(:hover),
-.site-header:has(a:focus-visible) a:not(:focus-visible) {
+.site-header:has(a:focus-visible) a:not(:focus-visible),
+.picker__list:has(.picker__link:hover) .picker__link:not(:hover),
+.picker__list:has(.picker__link:focus-visible) .picker__link:not(:focus-visible) {
   // color: var(--ink-quiet);
   opacity: 0.6;
 }
@@ -656,8 +670,9 @@ $track-gap: 16px;
   right: calc(100% - #{$track-width});
   translate: 0 -50%;
   // Sized by height against the number beside it: the artwork keeps its own
-  // aspect ratio, so the width follows.
-  height: 2.1rem;
+  // aspect ratio, so the width follows. 2.1rem before the lower lashes squared
+  // the viewBox; scaled by 21.9 / 18.2 so the drawing kept its size.
+  height: 2.527rem;
   width: auto;
   // The artwork is drawn entirely in currentColor, so it takes the palette's
   // ink along with the title beside it and needs no colour of its own.
@@ -749,16 +764,11 @@ $track-gap: 16px;
   // The column is centred, so its content starts at 50% - half its width; this
   // puts the eye's right edge there, then pushes it clear by the gap.
   right: calc(50% + var(--panel-width) / 2 + 2rem);
-  // Centred on the title OPTICALLY, not by its box. -50% would put the middle
-  // of the svg on the title's centre line, and the middle of the svg is not the
-  // middle of the eye: the lashes take up the top of the viewBox, so the eye's
-  // opening — the iris, at y 10.95 of an 18.2-tall viewBox — sits at 60.165% of
-  // the way down rather than halfway. Measured, that left the iris 5.42px low
-  // against a 48px title.
-  //
-  // A percentage here resolves against the element's own height, so this stays
-  // true at every size the clamp above can produce; a px nudge would not.
-  translate: 0 -60.165%;
+  // Centred on the title by its box, which is now the same as centring it by
+  // its iris: with lashes above and below, the eye is symmetric in its viewBox.
+  // (With the upper lashes alone the iris sat 60.165% of the way down, and this
+  // had to be offset by that instead.)
+  translate: 0 -50%;
   // Sized on the WIDTH, with the gutter itself as the ceiling, so it can never
   // outgrow the space it sits in. The clamp is the size we actually want —
   // 3.8vw, floored so it does not vanish and capped so it does not dominate a
@@ -977,6 +987,64 @@ body:has(#swup[data-page="detail"]) .page__eye {
   font-weight: 800;
   line-height: 1.25;
   text-wrap: balance;
+}
+
+// A step down from .page__heading, for the parts inside a long section. Same
+// weight, body-ish size: it should read as a label on the copy under it, not as
+// a new section starting, so the space above is a fraction of the heading's.
+// The Vitosha cloth that opens its case study: the teaser's silhouette drifting
+// sideways, filled in the palette's ink. It sizes itself here rather than in the
+// element, so the page it sits in owns its proportions.
+vitosha-ridge {
+  display: block;
+  width: 100%;
+  height: clamp(200px, 32vw, 420px);
+  margin: 0 0 2rem;
+  color: inherit;
+
+  // The element hides itself when the contours are missing. Spelled out because
+  // `[hidden] { display: none }` comes from the UA stylesheet and the author
+  // `display` above outranks it — without this it leaves a hole.
+  &[hidden] {
+    display: none;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.page__subheading {
+  margin: 2.25rem 0 0.6rem;
+  max-width: var(--measure);
+  font-size: var(--fs-body);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+// Code blocks. The same rule as inline code below — no box or tint, because the
+// ground is a live shader and any fill would be a hole punched in it — so a
+// hairline in the ink marks the block's edge instead. Scrolls sideways rather
+// than wrapping: a wrapped line of GLSL or a wrapped diagram stops meaning what
+// it says.
+.page__code {
+  margin: 0 0 1.25rem;
+  // Not var(--measure): ch resolves against this block's own smaller type, so
+  // 65ch here came out ~120px narrower than the paragraphs around it and cut
+  // the GLSL mid-line. The column is the limit instead.
+  max-width: none;
+  padding: 0.25rem 0 0.25rem 1rem;
+  border-left: 1px solid currentColor;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  opacity: 0.8;
+
+  code {
+    font: inherit;
+  }
 }
 
 .page__list {

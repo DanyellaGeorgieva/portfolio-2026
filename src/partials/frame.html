@@ -64,7 +64,7 @@
        loop is free-running rather than started on hover, so what anyone
        actually sees is a random point in it, and the length of the cycle is
        really the length of the wait before they see a blink at all. -->
-  <symbol id="icon-eye" viewBox="0 0 21.9 18.2">
+  <symbol id="icon-eye" viewBox="0 0 21.9 21.9">
     <!-- Stroke weight is measured off the reference rather than picked: there,
          a stroke is about a nineteenth of the eye's width. It matters more than
          it looks, because it sets whether a short lash reads as a capsule or as
@@ -74,7 +74,11 @@
          layout onto a zero-origin viewBox. It has to be zero-origin: <use>
          resolves its viewport at (0, 0), so a viewBox starting anywhere else
          renders the symbol offset by exactly that origin and clips whatever
-         falls outside — which showed up as the top lashes being sliced off. -->
+         falls outside — which showed up as the top lashes being sliced off.
+
+         Square since the lower lashes arrived: they mirror the upper ones
+         across y 14, so the box grows by the same margin below as above, and
+         the eye's centre is now the middle of the viewBox. -->
     <g transform="translate(-1.05 -3.05)"
        fill="none" stroke="currentColor" stroke-width="1.2"
        stroke-linecap="round" stroke-linejoin="round">
@@ -94,13 +98,22 @@
            They belong to the open eye, so they go with the iris when the lid
            comes down. -->
       <!-- pathLength="1" makes the dash pattern length-independent, so one
-           inherited stroke-dashoffset retracts all five identically. -->
+           inherited stroke-dashoffset retracts all ten identically. -->
       <g stroke-dasharray="1 1">
         <line x1="3.68" y1="9.64" x2="2.35" y2="7.89" pathLength="1" />
         <line x1="7.71" y1="7.36" x2="6.93" y2="5.30" pathLength="1" />
         <line x1="12.00" y1="6.55" x2="12.00" y2="4.35" pathLength="1" />
         <line x1="16.29" y1="7.36" x2="17.07" y2="5.30" pathLength="1" />
         <line x1="20.32" y1="9.64" x2="21.65" y2="7.89" pathLength="1" />
+        <!-- The lower five: the upper five mirrored across the eye's centre
+             line (y 14), so each sits square to the lower lid the way its
+             partner sits square to the upper one. Same group, so the same
+             dashoffset retracts them on the same beat. -->
+        <line x1="3.68" y1="18.36" x2="2.35" y2="20.11" pathLength="1" />
+        <line x1="7.71" y1="20.64" x2="6.93" y2="22.70" pathLength="1" />
+        <line x1="12.00" y1="21.45" x2="12.00" y2="23.65" pathLength="1" />
+        <line x1="16.29" y1="20.64" x2="17.07" y2="22.70" pathLength="1" />
+        <line x1="20.32" y1="18.36" x2="21.65" y2="20.11" pathLength="1" />
         <animate attributeName="stroke-dashoffset"
                  values="0;
                                  0;
@@ -219,11 +232,11 @@
        it. This is the second.
        
        The geometry is the open state of #icon-eye, copied exactly: same
-       viewBox, same translate, same stroke, the same five lash coordinates and
+       viewBox, same translate, same stroke, the same ten lash coordinates and
        the same two lid arcs at their resting control points. If the drawing up
        there is ever retuned, retune it here too — these are one eye in two
        states, and nothing in the build checks that they still agree. -->
-  <symbol id="icon-eye-still" viewBox="0 0 21.9 18.2">
+  <symbol id="icon-eye-still" viewBox="0 0 21.9 21.9">
     <g transform="translate(-1.05 -3.05)"
        fill="none" stroke="currentColor" stroke-width="1.2"
        stroke-linecap="round" stroke-linejoin="round">
@@ -232,6 +245,11 @@
       <line x1="12.00" y1="6.55" x2="12.00" y2="4.35" />
       <line x1="16.29" y1="7.36" x2="17.07" y2="5.30" />
       <line x1="20.32" y1="9.64" x2="21.65" y2="7.89" />
+      <line x1="3.68" y1="18.36" x2="2.35" y2="20.11" />
+      <line x1="7.71" y1="20.64" x2="6.93" y2="22.70" />
+      <line x1="12.00" y1="21.45" x2="12.00" y2="23.65" />
+      <line x1="16.29" y1="20.64" x2="17.07" y2="22.70" />
+      <line x1="20.32" y1="18.36" x2="21.65" y2="20.11" />
 
       <!-- Offset by three custom properties rather than by anything written
            here, because custom properties inherit THROUGH a <use> shadow tree
@@ -263,7 +281,7 @@
      give it a chance to flicker; and the blink is a free-running SMIL loop, so
      a fresh element would restart the cycle mid-navigation. Hidden on top-level
      pages by the stylesheet. -->
-<svg class="page__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false">
+<svg class="page__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false">
   <use href="#icon-eye-still" />
 </svg>
 
@@ -272,15 +290,15 @@
      and the eye stays aria-hidden decoration on top of it. -->
 <header class="site-header">
   <a href="/"><span class="site-header__label">Dani Paneva</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
 
   <nav class="main-nav" aria-label="Primary">
     <a href="/work/"><span class="site-header__label">work</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
     <a href="/about/"><span class="site-header__label">about</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
     <a href="/contact/"><span class="site-header__label">contact</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 18.2" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
   </nav>
 </header>
 
