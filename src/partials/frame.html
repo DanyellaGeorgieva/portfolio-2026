@@ -2,6 +2,56 @@
      (and its live WebGL context) survives navigation. -->
 <canvas id="webgl"></canvas>
 
+<!-- First-paint guard.
+     ===================================================================
+     The stylesheet is not there at the first paint — in dev it arrives with the
+     JS bundle — and an <svg> with no CSS yet is simply a visible <svg>.
+     Measured on a case study: at 150ms the watching eye was on screen at full
+     opacity, and when the stylesheet landed it FADED OUT, its transition
+     running from the browser's own 1 down to the 0 it should have started at.
+
+     `hidden` on the element does not do this job: it is an HTML attribute, this
+     is an <svg>, and the browser's `[hidden]` rule left it at display:inline —
+     measured, not assumed. An inline rule here does, because it is in the
+     document before the element it names.
+
+     Kept to the one element that flashes. This is not the place to restate the
+     stylesheet; main.scss decides everything after the first paint, and its
+     `body:has(...) .page__eye { display: block }` outranks this on the pages
+     where the eye belongs. -->
+<style>
+  /* Every decorative SVG in the shell, held at its resting state until the
+     stylesheet arrives. Each declaration is one main.scss also makes, so it
+     does not matter which of the two wins a tie — and the hover rules that
+     reveal these are more specific than anything here, so they still win.
+
+     Sizes, because an <svg> with a viewBox and no width or height fills the
+     width it is given: measured on the home page, the nav's eyes were 1,084px
+     square before any CSS, and the document 4,578px tall instead of 700.
+
+     Opacity, because these start hidden and their transitions run in both
+     directions: without this they arrive at the browser's default 1 and then
+     visibly fade out once the stylesheet lands. */
+  .site-header__eye,
+  .project__view {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .page__eye {
+    display: none;
+  }
+
+  /* Holds the filter and icon definitions. Nothing in it is drawn, but the
+     element itself is 300 × 150 until told otherwise. */
+  .filter-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+</style>
+
 <!-- The gooey filter. Defined once here, in the shell, so it survives a swup
      swap and every page references the same definition rather than carrying its
      own copy. It paints nothing itself — it is a definition.
@@ -270,6 +320,7 @@
       <path d="M2.5 14 Q12 4 21.5 14" />
     </g>
   </symbol>
+
 </svg>
 
 <!-- The case-study eye. The same drawing as the one in a work row and in the
@@ -280,7 +331,10 @@
      on screen and never moves, so rebuilding it on every swup swap would only
      give it a chance to flicker; and the blink is a free-running SMIL loop, so
      a fresh element would restart the cycle mid-navigation. Hidden on top-level
-     pages by the stylesheet. -->
+     pages by the stylesheet.
+
+     Held back through the first paint by the guard at the top of this file —
+     see the note there for why it needs one. -->
 <svg class="page__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false">
   <use href="#icon-eye-still" />
 </svg>

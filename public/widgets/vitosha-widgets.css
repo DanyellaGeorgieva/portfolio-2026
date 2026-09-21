@@ -1,0 +1,100 @@
+/* Vitosha heightmap — widget kit.
+ * Generated from the artifact page by make-widgets.py; edit template.html.
+ * Every rule is scoped under .vtw, which the script puts on each widget,
+ * so nothing here can reach the rest of your site.
+ */
+
+.vtw { display: block; color: var(--text); }
+.vtw *, .vtw *::before, .vtw *::after { box-sizing: border-box; }
+.vtw.is-single-textile .swatches { display: none; }
+
+.vtw {
+    color-scheme: dark;
+    --bg: #071B24;
+    --text: #AFDFF9;
+    --muted: color-mix(in srgb, var(--text) 64%, var(--bg));
+    --faint: color-mix(in srgb, var(--text) 38%, var(--bg));
+    --line: color-mix(in srgb, var(--text) 18%, var(--bg));
+    --panel: color-mix(in srgb, var(--text) 5%, var(--bg));
+    --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --body: "Manrope", "Helvetica Neue", Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+.vtw[data-textile="t1"] { --bg: #241228; --text: #F29FC5; }
+.vtw[data-textile="t3"] { --bg: #1E1F16; --text: #E6E783; }
+.vtw .stage {
+    position: relative; width: 100%;
+    height: clamp(240px, 44vw, 540px);
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    overflow: hidden; cursor: grab; touch-action: pan-y;
+    user-select: none; -webkit-user-select: none;
+  }
+.vtw .stage.dragging { cursor: grabbing; }
+.vtw .stage canvas { display: block; width: 100%; height: 100%; }
+.vtw .markers { position: absolute; inset: 0; pointer-events: none; }
+.vtw .mk { position: absolute; left: 0; top: 0; width: 7px; height: 7px; will-change: transform; }
+.vtw .mk__dot { position: absolute; inset: 0; border-radius: 50%; background: var(--text); }
+.vtw .mk__star { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; color: var(--text); }
+.vtw .mk__star svg { display: block; width: 100%; height: 100%; }
+.vtw .mk__label {
+    position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+    font-size: 10px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+  }
+.vtw .mk--chip .mk__label { background: color-mix(in srgb, var(--bg) 82%, transparent); padding: 3px 4px; }
+.vtw .stage__hint {
+    position: absolute; right: 12px; top: 10px; font-size: 11px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); pointer-events: none;
+  }
+.vtw .controls {
+    display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center;
+    padding-block: 14px 4px;
+  }
+.vtw .ctl { display: grid; gap: 4px; min-width: 0; }
+.vtw .ctl label, .vtw .ctl .lbl {
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    display: flex; justify-content: space-between; gap: 12px;
+  }
+.vtw .ctl output { color: var(--text); font-family: var(--mono); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.vtw input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--text); }
+.vtw .swatches { display: flex; gap: 8px; }
+.vtw .swatch {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer; padding: 0;
+    border: 1.5px solid transparent; position: relative;
+  }
+.vtw .swatch[aria-pressed="true"] { border-color: var(--text); }
+.vtw .swatch span { position: absolute; inset: 5px; border-radius: 50%; }
+.vtw .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+.vtw .seg button {
+    font: inherit; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    background: none; color: var(--muted); border: 0; border-radius: 999px;
+    padding: 5px 14px; cursor: pointer;
+  }
+.vtw .seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.vtw .btn {
+    font: inherit; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    background: none; color: var(--text); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px; cursor: pointer;
+  }
+.vtw .btn:hover { border-color: var(--text); }
+.vtw button:focus-visible, .vtw input:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.vtw .badge {
+    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; border: 1px dashed var(--faint); color: var(--muted);
+  }
+.vtw .badge.custom { border-style: solid; border-color: var(--text); color: var(--text); }
+.vtw .viz { display: grid; gap: 10px; }
+.vtw .viz canvas { display: block; width: 100%; }
+.vtw .scan canvas, .vtw .tex canvas, .vtw #blurOv { cursor: crosshair; touch-action: none; }
+.vtw .readout {
+    font-family: var(--mono); font-size: 12.5px; color: var(--text);
+    font-variant-numeric: tabular-nums; min-height: 1.6em; margin: 0;
+  }
+.vtw .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 0; list-style: none; }
+.vtw .stats li { font-size: 12px; color: var(--muted); }
+.vtw .stats b { font-family: var(--mono); font-weight: 400; color: var(--text); font-variant-numeric: tabular-nums; }
+.vtw .row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: end; }
+.vtw .loupe-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) {
+  .vtw .loupe-wrap { grid-template-columns: 1fr; }
+}
+.vtw .caption { font-size: 12px; color: var(--muted); margin: 0; }

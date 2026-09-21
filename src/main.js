@@ -6,6 +6,7 @@ import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
 import { paletteNames } from './webgl/palettes.js';
 // Defines <vitosha-ridge>, used by the Vitosha case study.
 import './vitoshaRidge.js';
+import vitoshaWidgets from './vitoshaWidgets.js';
 
 // Declared before the scene because Scene calls onPalette from its own
 // constructor, and the callback below marks the picker.
@@ -138,6 +139,12 @@ const EYE_CUE_DELAY = 300;
 let eyeCue = null;
 
 const pageEye = document.querySelector('.page__eye');
+
+/** Shut the eye, and cancel any cue that would open it again. */
+function hidePageEye() {
+  clearTimeout(eyeCue);
+  pageEye?.classList.remove('is-visible');
+}
 
 function setIris(x, y) {
   pageEye?.style.setProperty('--iris-x', `${x.toFixed(3)}px`);
@@ -290,37 +297,14 @@ function advancePalette() {
 const PAGE_SCALE = 0.9; // vs 3.6 default — a 4× magnification
 const PAGE_SPEED = 0.05; // vs 0.18 default — barely moving
 
-// The pinned "← work" on a detail page. Null on the top-level pages, which have
-// none.
+// The pinned "back" on a detail page. Null on the top-level pages, which have
+// none. Kept because Esc navigates to wherever it points.
+//
+// It used to be shown only on a scroll up, on the reasoning that reading down is
+// reading and scrolling up is wanting to leave. It stands there the whole time
+// now: a way out you have to go looking for is one that is missing whenever
+// somebody wants it.
 let backLink = null;
-let lastScrollY = 0;
-let scrollQueued = false;
-
-// Reading down is reading; scrolling back up is what someone does when they have
-// stopped reading and want to get somewhere. So the escape hatch follows the
-// direction of travel rather than sitting there the whole time.
-function updateBackLink() {
-  if (!backLink) return;
-  const y = window.scrollY;
-  // Trackpads emit a lot of sub-pixel noise; anything under a few px isn't a
-  // direction, it's jitter, and acting on it makes the link flicker.
-  if (Math.abs(y - lastScrollY) < 4) return;
-  backLink.classList.toggle('is-visible', y < lastScrollY);
-  lastScrollY = y;
-}
-
-window.addEventListener(
-  'scroll',
-  () => {
-    if (scrollQueued) return;
-    scrollQueued = true;
-    requestAnimationFrame(() => {
-      scrollQueued = false;
-      updateBackLink();
-    });
-  },
-  { passive: true },
-);
 
 // --- Per-page setup ---------------------------------------------------------
 // Rebuilt per page: swup replaces #swup wholesale, so an instance kept from the
@@ -366,8 +350,6 @@ function setupPage() {
     // Fresh page, fresh scroll position — and the hatch starts closed, so the
     // case study opens on its title and nothing else.
     backLink = main.querySelector('.back');
-    backLink?.classList.remove('is-visible');
-    lastScrollY = 0;
     scene.setScale(PAGE_SCALE);
     scene.setSpeed(PAGE_SPEED);
   } else {
@@ -385,11 +367,15 @@ function setupPage() {
   // The eye waits for the copy. It is in the shell, so it survives the swap and
   // has to be put back to hidden on every arrival — otherwise it would already
   // be open on the next case study, having been revealed on the last one.
-  clearTimeout(eyeCue);
-  pageEye?.classList.remove('is-visible');
+  hidePageEye();
   restIris();
 
-  gooeyText = new GooeyText(main);
+  // On a case study the melt belongs to the title alone: every heading melting
+  // spends the effect over and over and leaves the title with nothing of its
+  // own. The rest of the copy fades in after it, one line at a time. Top-level
+  // pages keep the behaviour they had — their sections are short enough that
+  // melting each piece still reads as one gesture.
+  gooeyText = new GooeyText(main, isDetail ? { gooOnly: '.page__title' } : undefined);
   gooeyText.play(() => {
     // A beat after the last line lands, not with it: arriving together would
     // make the eye part of the page's entrance, and the point is that it opens
@@ -399,6 +385,11 @@ function setupPage() {
   // Tuning handle, dev only: __goo.reset() parks the copy at the start of the
   // reveal so the blurred state can be looked at; __goo.play() runs it again.
   if (import.meta.env.DEV) window.__goo = gooeyText;
+
+  // The Vitosha case study's interactive pieces, on the page that carries them.
+  // It has to be called per page rather than once: the kit is a one-shot script
+  // and swup gives it a new document to mount into on every arrival.
+  vitoshaWidgets(main);
 
   // Pointing at one project thickens the others. It no-ops on any page without
   // a projects list, so it is built unconditionally rather than gated on view.
@@ -410,6 +401,12 @@ function setupPage() {
 
 // swup keeps the canvas alive by only ever replacing #swup. No await-animations.
 const swup = new Swup({ containers: ['#swup'], animationSelector: false });
+// The eye is in the shell, so it outlives the page it was opened on. Closing it
+// when the next page has already arrived is too late: for the length of the
+// fade it sits open over a case study that is still assembling itself. This
+// closes it as the visit starts, before any of the new page is on screen.
+swup.hooks.on('visit:start', hidePageEye);
+
 swup.hooks.on('page:view', () => {
   setupPage();
 });

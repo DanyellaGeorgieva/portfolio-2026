@@ -102,6 +102,12 @@ const DURATION = 1100;
 const STAGGER = 170;
 const SPREAD_MAX = 900;
 
+// How long the copy waits for a title that melts ahead of it. Just short of
+// DURATION: the last of the blur is the part you stop watching, so the text
+// starts moving while the title is finishing rather than after it has stopped,
+// and the two read as one entrance instead of two.
+const TITLE_HOLD = 850;
+
 // Every piece of copy in a top-level section or a case study. Deliberately a
 // structural selector rather than a class list: a page gets the reveal by
 // having text in it, so new copy is covered without anyone remembering to opt
@@ -122,8 +128,22 @@ const TEXT = ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__
 const ease = (t) => 1 - (1 - t) ** 3;
 
 export default class GooeyText {
-  /** @param {ParentNode} root  the view to find copy inside */
-  constructor(root) {
+  /**
+   * @param {ParentNode} root  the view to find copy inside
+   * @param {object} [options]
+   * @param {string} [options.gooOnly]  a selector that limits which elements may
+   *   melt; everything else fades however large it is, and waits for the melt to
+   *   be over before it starts. Case studies pass their title here: a page whose
+   *   headings all melted spent its one effect thirteen times, and the title —
+   *   the thing the effect is for — had nothing left to distinguish it.
+   */
+  constructor(root, { gooOnly = null } = {}) {
+    // Staging the copy behind the titles is part of the same request as
+    // restricting the melt, so it follows gooOnly rather than being inferred
+    // from what happens to be on the page. Without it a top-level section —
+    // where large and small copy alternate down the page — would have its
+    // headings jump the queue and its paragraphs arrive after all of them.
+    this.staged = Boolean(gooOnly);
     this.frame = null;
     this.items = [];
     this.defs = document.querySelector(`#${TEMPLATE_ID}`)?.parentNode ?? null;
@@ -144,7 +164,9 @@ export default class GooeyText {
 
       // Small copy carries no filter at all — not a filter left idle, none
       // cloned in the first place. Nothing to repaint, and nothing to clean up.
-      if (size < GOO_MIN_SIZE) return { el, blur: null };
+      // With gooOnly set, everything outside that selector is treated the same
+      // way whatever its size: the cheap path is also the one being asked for.
+      if (size < GOO_MIN_SIZE || (gooOnly && !el.matches(gooOnly))) return { el, blur: null };
 
       // Each gooey element gets its own filter, so they can be staggered. One
       // shared filter would be a single DOM write per frame instead of several,
@@ -195,13 +217,36 @@ export default class GooeyText {
     this.reset();
 
     const started = performance.now();
+
+    // Two sequences, not one. The melting titles go first, from the top; the
+    // rest of the copy follows in one piece once they are nearly in — a case
+    // study is a page to read, and a paragraph that arrives after the one above
+    // it has already been started is a page that has to be waited for. Where
+    // nothing melts — every top-level page — the hold is zero and this is the
+    // single staggered sequence it always was.
+    const melting = this.items.filter(({ blur }) => blur).length;
+    const fading = this.items.length - melting;
+    const hold = this.staged && melting && fading ? TITLE_HOLD : 0;
     const step = Math.min(STAGGER, SPREAD_MAX / Math.max(1, this.items.length - 1));
+    const meltStep = Math.min(STAGGER, SPREAD_MAX / Math.max(1, melting - 1));
+
+    let meltIndex = 0;
+    this.items.forEach((item, i) => {
+      if (!hold) {
+        // One sequence in document order, which is what every page did before
+        // case studies asked for their titles first.
+        item.delay = i * step;
+        return;
+      }
+      // Staged: titles in order, then all the copy together on one beat.
+      item.delay = item.blur ? meltIndex++ * meltStep : hold;
+    });
 
     const tick = (now) => {
       let running = false;
 
-      this.items.forEach(({ el, blur, start }, i) => {
-        const t = (now - started - i * step) / DURATION;
+      this.items.forEach(({ el, blur, start, delay }) => {
+        const t = (now - started - delay) / DURATION;
 
         if (t <= 0) {
           running = true;

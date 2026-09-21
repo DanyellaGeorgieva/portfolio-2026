@@ -13,15 +13,14 @@
 
     <main id="swup" class="view" data-page="detail">
       <article class="page">
-        <a class="back" href="/work/">← work</a>
+        <a class="back" href="/work/">
+          <span>back</span>
+        </a>
 
-        <p class="page__eyebrow">European Design Festival, Sofia · Teaser · 2026</p>
+        <p class="page__eyebrow">
+          European Design Festival, Sofia · Teaser · 2026
+        </p>
         <h1 class="page__title">IN THE SKIRTS OF VITOSHA</h1>
-
-        <!-- The mountain itself, opening the story it belongs to. Drawn from the
-             two contour SVGs in public/assets; it hides itself if they are
-             missing. See src/vitoshaRidge.js. -->
-        <vitosha-ridge></vitosha-ridge>
 
         <p class="page__lead">
           Interactive landscape experience for the European Design Festival,
@@ -59,9 +58,6 @@
           <dt>Role</dt>
           <dd>Creative Development</dd>
 
-          <dt>Collaborators</dt>
-          <dd>Art Director, Designer</dd>
-
           <dt>Tech</dt>
           <dd>Three.js (GLSL), Vanilla JS, GSAP, Lenis, Webpack 5</dd>
         </dl>
@@ -75,83 +71,190 @@
           <strong>“The Skirts of Vitosha.”</strong>
         </p>
         <p class="page__body">
-          We turned this linguistic metaphor into a tactile interaction
-          mechanic. Built <strong>strictly mobile-only and landscape-only</strong>,
-          users manipulate a continuous woven digital textile. As they scroll,
-          the fabric warps and pulls upward, molding itself into the rugged ridge
+          My job was to turn this linguistic metaphor into a tactile interaction
+          mechanic. Built
+          <strong>strictly mobile-only and landscape-only</strong>, users
+          manipulate a continuous woven digital textile. As they scroll, the
+          fabric warps and pulls upward, molding itself into the rugged ridge
           line of the mountain.
         </p>
-        <pre class="page__code" aria-label="Diagram: the flat textile, labelled Programme, with an idle breeze ripple, beside the warped mountain, labelled Design, with Kopitoto and Knyazhevo at its foot"><code>     THE TEXTILE (Flat)              THE MOUNTAIN (Warped)
-===========================       ===========================
-       [ PROGRAMME ]              ▲       [ DESIGN ]        ▲
-___________________________      / \_______________________/ \
-~~~~ Idle Breeze Ripple ~~~~    /   \  Kopitoto + Knyazhevo  \
-===========================    /     \========================\</code></pre>
 
-        <h3 class="page__subheading">Visual identity</h3>
-        <ul class="page__list">
-          <li>
-            <strong>Generative themes:</strong> Each session randomly spins up
-            one of three editorial textile colorways (Plum/Pink, Deep Teal/Ice
-            Blue, or Olive-Black/Acid Yellow) with unique distortion filters.
+        <vitosha-ridge></vitosha-ridge>
+
+        <h2 class="page__heading">How a line becomes a mountain</h2>
+        <p class="page__body">
+          <strong>The “prompt engineer” tax:</strong>
+          <em
+            >This was my first project using an AI dev agent. Instead of lazily
+            spamming the “make it better” button until the codebase melted into
+            unmaintainable mush, I treated the agent like a precision calculator
+            — feeding it explicit matrix transformations and math formulas to
+            bypass boilerplate generation so I could manually orchestrate the
+            shaders and physics.</em
+          >
+        </p>
+
+        <!-- The pipeline, step by step. Each step ends in a live widget from
+             public/widgets, mounted by src/vitoshaWidgets.js: they share one
+             pipeline, so a slider in one updates the rest. Step 06 is the
+             exception — a still, inlined at transform time by inlineDiagrams()
+             in vite.config.js so it takes the palette's ink. Both the widgets
+             and that drawing are computed from the real measured contours. -->
+        <ol class="steps">
+          <li class="step">
+            <h3 class="page__subheading">The source line</h3>
+            <p class="page__body">
+              The contours came from the art director as stroke-only SVGs: one
+              path with <code>fill="none"</code>, drawn across the whole
+              panorama. That keeps the skyline easy to redraw at any point in
+              the project, but a path describes curves, not heights — so it
+              gives the GPU nothing it can displace a mesh with. The first job
+              is to measure it.
+            </p>
+            <!-- The contour as drawn, with its file stats. -->
+            <div class="widget" data-vitosha="line"></div>
           </li>
-          <li>
-            <strong>Dynamic typography:</strong> Italic treatments are driven
-            procedurally by character casing (e.g., <code>dEsiGn</code> triggers
-            distinct slants on lowercase/uppercase mixes) to reference
-            avant-garde print layouts.
+
+          <li class="step">
+            <h3 class="page__subheading">Rasterise &amp; Scan each column</h3>
+            <p class="page__body">
+              The SVG is drawn to an offscreen canvas 1,024 px wide, keeping its
+              original aspect ratio. Then each column is scanned from top to
+              bottom. The first pixel whose alpha is above the threshold marks
+              the ridge, and its row becomes the column’s height:
+              <code>1 − topY / height</code>. The threshold of 20 is low so that
+              it still catches the faint anti-aliased pixels at the edges of the
+              thin stroke.
+            </p>
+            <p class="page__body">
+              Hover over or drag across the strip to inspect a column. The loupe
+              shows the actual alpha values of the pixels.
+            </p>
+            <!-- Hover any column; alpha-threshold slider; replay the scan. -->
+            <div class="widget" data-vitosha="scan"></div>
           </li>
-        </ul>
 
-        <h2 class="page__heading">Technical deep-dives</h2>
+          <li class="step">
+            <h3 class="page__subheading">Guarantee the loop</h3>
+            <p class="page__body">
+              The panorama repeats forever, because the texture uses
+              <code>RepeatWrapping</code>. So column 1,023 sits directly next to
+              column 0, and the heightmap has to be periodic for the ridge to
+              stay continuous there. The pipeline doesn’t take that on trust: it
+              eases the outer 8% at each end toward a height the two ends share,
+              on a <code>smoothstep</code> curve. The join is then exact by
+              construction, whatever contour is dropped in — and in these files,
+              where the ends already measure level, what the easing actually
+              does is flatten those outer columns toward that shared height.
+            </p>
+            <!-- Blend-width slider. -->
+            <div class="widget" data-vitosha="seam"></div>
+          </li>
+
+          <li class="step">
+            <h3 class="page__subheading">Blur, but keep the peaks</h3>
+            <p class="page__body">
+              Because each column is snapped to a whole pixel row, the scan
+              comes out as stair steps, which look like jitter once they’re
+              stretched across a phone screen. A sliding-window box blur fixes
+              that and runs in <code>O(width)</code>, however large the radius.
+              Production uses the smallest possible blur: radius 1, one pass. It
+              removes the steps while keeping Vitosha’s sharp, angular peaks.
+              Increase the radius and the mountain rounds off into rolling
+              hills. You can see it change in the render at the top of the page.
+            </p>
+            <!-- Drag the zoom window; radius; passes. -->
+            <div class="widget" data-vitosha="blur"></div>
+          </li>
+
+          <li class="step">
+            <h3 class="page__subheading">Pack a 1 × 1024 texture</h3>
+            <p class="page__body">
+              The 1,024 floats are stored as bytes in a texture one texel tall,
+              which is the entire mountain range in 4 KB.
+              <code>LinearFilter</code> blends smoothly between neighbouring
+              texels. <code>RepeatWrapping</code> lets the shader keep scrolling
+              past the right edge and wrap back to the start, and step 03
+              already made that join seamless.
+            </p>
+            <!-- Hover any texel. -->
+            <div class="widget" data-vitosha="texture"></div>
+          </li>
+
+          <li class="step">
+            <h3 class="page__subheading">One map, two readers</h3>
+            <p class="page__body">
+              Two parts of the page read the same numbers. The vertex shader
+              samples the texture for every vertex column, every frame, and
+              raises the textile’s top and bottom edges. The peak and
+              neighbourhood labels are normal HTML elements, so their text stays
+              sharp and accessible. To keep them on the peaks, JavaScript
+              repeats the shader’s calculation using the saved heights array:
+              the same wrap, the same mask and the same amplitude. It then
+              projects the point through the Three.js camera to get a screen
+              position. That is why the dots in the render at the top stay on
+              the ridge while you drag, change the height or switch contour
+              settings.
+            </p>
+            <!-- The two peaks that fall inside the window this drawing shows.
+                 Positions are percentages of the SVG's own box, worked out from
+                 its path: the drawing covers u 0.62 → 0.94 of the panorama, and
+                 its tallest point sits at x 520 where Cherni Vrah maps to 522,
+                 which is what pins the mapping. The labels are an overlay, so
+                 the generated file underneath stays as generated. -->
+            <div class="diagram">
+              <figure
+                class="diagram__figure"
+                data-svg="./assets/6-cloth.svg"></figure>
+              <ul class="diagram__labels">
+                <li style="left: 43.5%; top: 5.12%">
+                  <span>Cherni Vrah</span><i></i>
+                </li>
+                <li style="left: 4.53%; top: 28.6%">
+                  <span>Momina Skala</span><i></i>
+                </li>
+
+                <!-- The two venues, on the hem under the summit they sit below
+                     in life: Cinema Lumière shares Cherni Vrah's column exactly.
+                     Starred rather than dotted, and set in the cloth's own light
+                     because that is what they are printed on. -->
+                <li class="is-venue" style="left: 43.5%; top: 78.71%">
+                  <span>Cinema Lumière</span>
+                  <svg viewBox="0 0 23 22" aria-hidden="true" focusable="false">
+                    <path
+                      fill="currentColor"
+                      d="M15.929 12.5401L20.4094 18.7037L15.929 22L11.3921 15.7832L7.01459 21.7073L2.64375 18.4176L7.17401 12.5401L0 10.0553L1.72708 4.92289L8.7948 7.46084V0H14.3148V7.46084L21.3792 5.13577L23 10.2715L15.929 12.5401Z" />
+                  </svg>
+                </li>
+                <li class="is-venue" style="left: 54.06%; top: 87.29%">
+                  <span>Toplocentrala</span>
+                  <svg viewBox="0 0 23 22" aria-hidden="true" focusable="false">
+                    <path
+                      fill="currentColor"
+                      d="M15.929 12.5401L20.4094 18.7037L15.929 22L11.3921 15.7832L7.01459 21.7073L2.64375 18.4176L7.17401 12.5401L0 10.0553L1.72708 4.92289L8.7948 7.46084V0H14.3148V7.46084L21.3792 5.13577L23 10.2715L15.929 12.5401Z" />
+                  </svg>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ol>
+
+        <h2 class="page__heading">The part nobody can explain</h2>
         <p class="page__body">
-          <strong>The “prompt engineer” tax:</strong> <em>This was my first
-          project using an AI dev agent. Instead of lazily spamming the “make it
-          better” button until the codebase melted into unmaintainable mush, I
-          treated the agent like a precision calculator — feeding it explicit
-          matrix transformations and math formulas to bypass boilerplate
-          generation so I could manually orchestrate the shaders and
-          physics.</em>
+          The chromatic melting effect was a chaotic three-way collaboration:
+          the art director’s vision, an AI agent running on pure vibes, and me,
+          trying to keep the browser alive. We looped the prompt until the
+          fabric looked properly psychedelic. It runs flawlessly at 120fps, but
+          ask me to explain the math behind the distortion and I will plead the
+          fifth on behalf of the whole team.
         </p>
 
-        <h3 class="page__subheading">1. SVG line art → GPU heightmap</h3>
+        <!-- The hand-off to the QR below: the last thing said before the only
+             way in. -->
         <p class="page__body">
-          To avoid heavy 3D asset overhead, we rasterize the designer’s raw SVG
-          contour onto an offscreen canvas at runtime. The canvas is scanned
-          column-by-column into a 1D float array, box-blurred for smoothness,
-          and uploaded to the GPU as a <strong>1×N data texture</strong>. A
-          boundary <code>smoothstep()</code> ensures the terrain loops
-          seamlessly.
-        </p>
-
-        <h3 class="page__subheading">2. Input-driven vertex deformation</h3>
-        <p class="page__body">
-          Deformation lives inside a custom <code>ShaderMaterial</code>. The
-          vertex shader offsets coordinates dynamically by pulling data from the
-          heightmap texture multiplied by the user’s scroll speed, injecting a
-          subtle sin-wave breeze ripple. The fragment shader handles color
-          channel splitting, causing interactive <strong>chromatic
-          aberration</strong> that scales with scroll acceleration.
-        </p>
-
-        <h3 class="page__subheading">3. Synced GPU-to-DOM label projection</h3>
-        <p class="page__body">
-          To avoid fuzzy WebGL text maps, all typography stays in the native DOM
-          for razor-sharp rendering. The exact shader displacement equations are
-          mirrored on the CPU. Every frame, JavaScript computes the heightmap
-          offset, projects the 3D surface points into 2D screen coordinates using
-          the camera projection matrix, and updates the text via
-          hardware-accelerated <code>transform: translate3d()</code>.
-        </p>
-
-        <h3 class="page__subheading">4. Bounded inertia scroll layer</h3>
-        <p class="page__body">
-          Unchecked mobile gestures break tightly timed scroll interactions.
-          Combining <strong>Lenis</strong> with a custom physical damping system,
-          we decoupled raw touch inputs from camera velocity. We enforced a
-          strict speed cap and bounded drag constraints to stop flick gestures
-          from skipping past critical mountain peaks and paired neighborhood
-          markers.
+          Eager to see the full experience? Scan the QR code below, disable your
+          rotation lock, and turn your phone sideways. Mobile-only,
+          landscape-only. I promise the visual is worth it.
         </p>
 
         <dl class="page__meta">
@@ -185,7 +288,8 @@ ___________________________      / \_______________________/ \
 
         <!-- The real exit. Someone who has read this far has finished the story,
              so this is where the way out belongs — and where the next one gets
-             its chance. The pinned "← all works" is only the escape hatch. -->
+             its chance. The pinned "back" at the top left is only the escape
+             hatch. -->
         <nav class="page__exit" aria-label="More work">
           <a class="page__exit-back" href="/work/">← all works</a>
           <a class="page__exit-next" href="/work/next-dc/">

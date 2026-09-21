@@ -126,14 +126,21 @@ body:has(#swup[data-page="detail"]) {
 
 // --- Palette picker ---------------------------------------------------------
 // An index, not a set of swatches: the field behind it is already the colour, so
-// coloured chips would compete with the thing they control. Bottom left, on the
-// same edge as the name in the site-header above it.
+// coloured chips would compete with the thing they control. Centred along the
+// bottom of the screen, under the middle of the field it changes.
 .picker {
   position: fixed;
-  left: var(--content-left);
+  // Centred on the screen rather than pinned to the left margin. Stretched
+  // across and centred by the flexbox it already is, rather than nudged back by
+  // half its own width with a transform: there is no transform to collide with
+  // whatever this row does later, and it stays centred as the row's width
+  // changes with the label and the numbers.
+  left: 0;
+  right: 0;
   bottom: 28px;
   z-index: 10;
   display: flex;
+  justify-content: center;
   // Baseline, so "mode:" and the numbers sit on one line of type. That only
   // works because .picker__link below takes its baseline from its number.
   align-items: baseline;
@@ -797,60 +804,50 @@ $track-gap: 16px;
   // beat later, so the page is read before it is watched. Opacity rather than
   // display, so there is something for this to fade: display is what decides
   // whether it is on this kind of page at all.
+  //
+  // No transition here, on purpose: it belongs to the class below, so it runs
+  // on the way in and not on the way out. On the base rule it ran both ways,
+  // and the way out is a navigation — arriving at the next case study, the eye
+  // was painted open and then spent 0.45s fading away over a page that had only
+  // just started to arrive.
   opacity: 0;
-  transition: opacity 0.45s ease-out;
 }
 
 body:has(#swup[data-page="detail"]) .page__eye.is-visible {
   opacity: 1;
+  transition: opacity 0.45s ease-out;
 }
 
+// Author rules outrank the browser's `[hidden] { display: none }`, so this is
+// what brings the eye back on the pages it belongs to — and why the attribute
+// in the markup can hold it through the first paint without stranding it.
 body:has(#swup[data-page="detail"]) .page__eye {
   display: block;
 }
 
-// The escape hatch, not the exit. A case study opens on the story, so this is
-// out of the flow and invisible on load; it slides in when you scroll UP, the
-// gesture that means you have stopped reading and started looking for a way
-// somewhere. Scrolling down puts it away again. The real exit is .page__exit at
-// the end, where someone who has finished actually wants it.
+// The way out of a case study, pinned top left and always there. It used to
+// fade in on a scroll up and out again on the way down, which meant the way out
+// was missing at the moment of wanting it.
+//
+// Words alone, set like a nav link — same weight, same case — because it is the
+// same kind of thing: a way to another page, not a button. It has carried an
+// arrow, a moon and a pyramid at various points; none of them said anything the
+// word does not.
 .back {
   position: fixed;
   top: 1.5rem;
   left: var(--content-left);
   z-index: 10;
-  // It floats over running copy and over a field that is always moving, so it
-  // carries its own ground. Without this it reads as a stray line of the case
-  // study rather than as a control, and half the time it is illegible.
-  padding: 0.5rem 0.95rem;
-  border-radius: 999px;
-  background-color: rgba(255, 255, 255, 0.42);
-  backdrop-filter: blur(10px);
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 800;
+  text-transform: uppercase;
   text-decoration: none;
-  opacity: 0;
-  transform: translateY(-0.5rem);
-  pointer-events: none;
-  transition:
-    opacity 0.35s ease,
-    transform 0.35s ease,
-    background-color 0.3s ease;
+  opacity: 0.75;
+  transition: opacity 0.35s ease;
 
-  &.is-visible {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-  }
-
-  // Keyboard users tab to it before any scrolling has happened, so focus has to
-  // bring it in too — otherwise focus lands on something that isn't there.
   &:hover,
   &:focus-visible {
     opacity: 1;
-    transform: none;
-    pointer-events: auto;
-    background-color: rgba(255, 255, 255, 0.62);
   }
 }
 
@@ -989,6 +986,109 @@ body:has(#swup[data-page="detail"]) .page__eye {
   text-wrap: balance;
 }
 
+// The pipeline, step by step. Still an <ol>, because the order is the point —
+// step 05 leans on step 03 having happened — but it is numbered by the prose
+// rather than by a marker, and each step's title is a .page__subheading like
+// every other sub-part of a case study.
+.steps {
+  list-style: none;
+  margin: 0 0 2rem;
+  padding: 0;
+}
+
+.step {
+  margin: 0 0 3rem;
+}
+
+// The interactive pieces from the widget kit (public/widgets/). No ground of
+// their own: they sit on the field like the copy around them, and their strokes
+// are the palette's ink. The kit's own colours — a textile's pink or pale blue
+// on a dark panel — belonged to the artifact page it was cut from.
+//
+// The canvases get their ink from a patch inside the kit, marked HOST PATCH,
+// because they are drawn with a JS colour that never passes through CSS. What is
+// set here is everything else: labels, readouts, sliders, captions.
+//
+// Specificity beats the kit's own `.vtw[data-textile="…"]`, which would
+// otherwise win — its stylesheet is injected at runtime, so it comes after this
+// one and a tie would go to it.
+.page .widget {
+  margin: 1.25rem 0 0;
+  max-width: min(100%, 46rem);
+  --text: var(--ink);
+  --bg: transparent;
+}
+
+// The diagrams. They are drawn in currentColor and inlined into the page (see
+// inlineDiagrams in vite.config.js), so they take the palette's ink and change
+// with it — which is also why they carry no background of their own. Wider than
+// the measure: they are drawings at 1200 units across, and the reading column
+// would squeeze them to half the size their labels were drawn for.
+.diagram {
+  position: relative; // the labels below are placed against it
+  margin: 1.25rem 0 0;
+  max-width: min(100%, 46rem);
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.diagram__figure {
+  margin: 0;
+}
+
+// Names on a still drawing, the way they ride the live one at the top of the
+// page. Percentages of the drawing's own box, so they stay on their summits at
+// any width — the SVG scales, and so do they.
+.diagram__labels {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+
+  li {
+    position: absolute;
+    display: flex;
+    // The dot is last in this markup, so a plain column already puts it at the
+    // bottom of the box — which is the point being named. (The ridge's markers
+    // are the other way round, dot first, and reverse the column instead.)
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    translate: -50% -100%;
+    width: max-content;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  i {
+    width: 0.26rem;
+    height: 0.26rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  // The festival venues sit on the cloth rather than above it, so they take the
+  // cloth's light instead of the page's ink, and a star instead of a dot: they
+  // are the two places on this mountain you can walk into.
+  .is-venue {
+    color: rgb(255 255 255 / 0.92);
+  }
+
+  svg {
+    width: 0.56rem;
+    height: auto;
+  }
+}
+
 // A step down from .page__heading, for the parts inside a long section. Same
 // weight, body-ish size: it should read as a label on the copy under it, not as
 // a new section starting, so the space above is a fraction of the heading's.
@@ -996,6 +1096,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 // sideways, filled in the palette's ink. It sizes itself here rather than in the
 // element, so the page it sits in owns its proportions.
 vitosha-ridge {
+  position: relative; // the markers are placed against it
   display: block;
   width: 100%;
   height: clamp(200px, 32vw, 420px);
@@ -1014,6 +1115,82 @@ vitosha-ridge {
     width: 100%;
     height: 100%;
   }
+}
+
+// The place names, riding the cloth. HTML rather than painted into the canvas:
+// they stay sharp at any size and a screen reader can read them, which is the
+// case study's own argument about the teaser's labels.
+.vitosha-ridge__markers {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  // The cloth beneath is the thing you drag; the names are not in the way.
+  pointer-events: none;
+  overflow: hidden;
+}
+
+// Each marker is positioned by a transform on its own top-left corner, so the
+// element's box is the point the name hangs from. JS writes the transform every
+// frame; everything else about it is here.
+.vitosha-ridge__marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  // Reverse, so the dot — first in the markup, for a screen reader's sake — is
+  // the LAST thing down the column and lands on the line. Read the other way
+  // the dot was at the top of the box and the whole label floated 24px above
+  // the ridge it was naming. Measured, both before and after.
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0.3rem;
+  width: max-content;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  // Only ever transformed and faded, both of which the compositor handles.
+  will-change: transform, opacity;
+
+  &:not(.is-shown) {
+    // Off the panorama's visible window: out of the way entirely, so nothing is
+    // laid out or composited for a name that is not on screen.
+    display: none;
+  }
+}
+
+// Each marker hangs from its own dot: the box's bottom edge is the point being
+// named, and the name stacks above it.
+.vitosha-ridge__marker--peak {
+  translate: -50% -100%;
+}
+
+// The places at the mountain's foot are ON the cloth, just inside its hem, the
+// way the teaser prints them — and in the cloth's own light rather than the
+// page's ink, which on a shape filled with ink would be invisible. Below the
+// hem was the other option and a worse one: there is only a tenth of the
+// element's height down there, so the names were clipped by its edge.
+.vitosha-ridge__marker--place {
+  translate: -50% -100%;
+  color: rgb(255 255 255 / 0.92);
+}
+
+.vitosha-ridge__dot {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+// The two festival venues: the only places on the mountain you can walk into.
+.vitosha-ridge__star {
+  width: 0.62rem;
+  height: auto;
+  color: inherit;
 }
 
 .page__subheading {
