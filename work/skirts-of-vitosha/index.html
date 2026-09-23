@@ -72,28 +72,26 @@
         </p>
         <p class="page__body">
           My job was to turn this linguistic metaphor into a tactile interaction
-          mechanic. Built
-          <strong>strictly mobile-only and landscape-only</strong>, users
-          manipulate a continuous woven digital textile. As they scroll, the
+          mechanic. Built strictly for phones held in landscape, the piece let's
+          users manipulate a continuous digital textile. As they scroll, the
           fabric warps and pulls upward, molding itself into the rugged ridge
           line of the mountain.
         </p>
 
-        <vitosha-ridge></vitosha-ridge>
+        <vitosha-ridge data-opacity="0.4"></vitosha-ridge>
 
-        <h2 class="page__heading">How a line becomes a mountain</h2>
+        <h2 class="page__heading">The “prompt engineer” tax:</h2>
         <p class="page__body">
-          <strong>The “prompt engineer” tax:</strong>
-          <em
-            >This was my first project using an AI dev agent. Instead of lazily
-            spamming the “make it better” button until the codebase melted into
-            unmaintainable mush, I treated the agent like a precision calculator
-            — feeding it explicit matrix transformations and math formulas to
-            bypass boilerplate generation so I could manually orchestrate the
-            shaders and physics.</em
-          >
+          I'd be lying if I said ”make it better” never once left my keyboard,
+          but my goal was to avoid the trap of vague, repeated prompting that
+          spirals into spaghetti code. So instead of one-shot prompts, I wrote
+          precise, plain-language specs describing the fabric's exact behavior,
+          then made a point of actually understanding the resulting math rather
+          than treating it as a black box, before manually orchestrating the
+          shaders and motion myself.
         </p>
 
+        <h2 class="page__heading">How a line becomes a mountain</h2>
         <!-- The pipeline, step by step. Each step ends in a live widget from
              public/widgets, mounted by src/vitoshaWidgets.js: they share one
              pipeline, so a slider in one updates the rest. Step 06 is the
@@ -143,9 +141,10 @@
               stay continuous there. The pipeline doesn’t take that on trust: it
               eases the outer 8% at each end toward a height the two ends share,
               on a <code>smoothstep</code> curve. The join is then exact by
-              construction, whatever contour is dropped in — and in these files,
-              where the ends already measure level, what the easing actually
-              does is flatten those outer columns toward that shared height.
+              construction (the light blur afterwards doesn't reopen it),
+              whatever contour is dropped in — and in these files, where the
+              ends already measure level, what the easing actually does is
+              flatten those outer columns toward that shared height.
             </p>
             <!-- Blend-width slider. -->
             <div class="widget" data-vitosha="seam"></div>
@@ -158,10 +157,10 @@
               comes out as stair steps, which look like jitter once they’re
               stretched across a phone screen. A sliding-window box blur fixes
               that and runs in <code>O(width)</code>, however large the radius.
-              Production uses the smallest possible blur: radius 1, one pass. It
-              removes the steps while keeping Vitosha’s sharp, angular peaks.
-              Increase the radius and the mountain rounds off into rolling
-              hills. You can see it change in the render at the top of the page.
+              Production uses a minimal blur: radius 1, one pass. It removes the
+              steps while keeping Vitosha’s sharp, angular peaks. Increase the
+              radius and the mountain rounds off into rolling hills. You can see
+              it change in the render at the top of the page.
             </p>
             <!-- Drag the zoom window; radius; passes. -->
             <div class="widget" data-vitosha="blur"></div>
@@ -171,8 +170,8 @@
             <h3 class="page__subheading">Pack a 1 × 1024 texture</h3>
             <p class="page__body">
               The 1,024 floats are stored as bytes in a texture one texel tall,
-              which is the entire mountain range in 4 KB.
-              <code>LinearFilter</code> blends smoothly between neighbouring
+              so each contour fits in 4 KB.
+              <code>LinearFilter</code> blends smoothly between neighboring
               texels. <code>RepeatWrapping</code> lets the shader keep scrolling
               past the right edge and wrap back to the start, and step 03
               already made that join seamless.
@@ -185,16 +184,16 @@
             <h3 class="page__subheading">One map, two readers</h3>
             <p class="page__body">
               Two parts of the page read the same numbers. The vertex shader
-              samples the texture for every vertex column, every frame, and
-              raises the textile’s top and bottom edges. The peak and
-              neighbourhood labels are normal HTML elements, so their text stays
-              sharp and accessible. To keep them on the peaks, JavaScript
-              repeats the shader’s calculation using the saved heights array:
-              the same wrap, the same mask and the same amplitude. It then
-              projects the point through the Three.js camera to get a screen
-              position. That is why the dots in the render at the top stay on
-              the ridge while you drag, change the height or switch contour
-              settings.
+              samples the texture for every vertex, every frame, and moves the
+              textile up or down, blending from the bottom contour to the top
+              one. The peak, neighborhoods and venue labels are normal HTML
+              elements, so their text stays sharp and accessible. To keep them
+              on the peaks, JavaScript mirrors the shader's calculation using
+              the saved heights array, with the same wrap, mask and amplitude.
+              It then projects the point through the Three.js camera to get a
+              screen position. That is why the dots in the render at the top
+              stay on the ridge while you drag, change the height or switch
+              contour settings.
             </p>
             <!-- The two peaks that fall inside the window this drawing shows.
                  Positions are percentages of the SVG's own box, worked out from
@@ -239,20 +238,15 @@
           </li>
         </ol>
 
-        <h2 class="page__heading">The part nobody can explain</h2>
+        <h2 class="page__heading">Behind the Distortion</h2>
         <p class="page__body">
-          The chromatic melting effect was a chaotic three-way collaboration:
-          the art director’s vision, an AI agent running on pure vibes, and me,
-          trying to keep the browser alive. We looped the prompt until the
-          fabric looked properly psychedelic. It runs flawlessly at 120fps, but
-          ask me to explain the math behind the distortion and I will plead the
-          fifth on behalf of the whole team.
+          The fabric's ridge line is traced as an SVG path, then distorted with
+          a handful of extra effects stacked on top. There are three textile and
+          colour variants, each tuned differently; you'll land on one at random,
+          and never the same one twice in a row.
         </p>
-
-        <!-- The hand-off to the QR below: the last thing said before the only
-             way in. -->
         <p class="page__body">
-          Eager to see the full experience? Scan the QR code below, disable your
+          Curious which one you'll get? Scan the QR code below, disable your
           rotation lock, and turn your phone sideways. Mobile-only,
           landscape-only. I promise the visual is worth it.
         </p>
@@ -291,7 +285,7 @@
              its chance. The pinned "back" at the top left is only the escape
              hatch. -->
         <nav class="page__exit" aria-label="More work">
-          <a class="page__exit-back" href="/work/">← all works</a>
+          <a class="page__exit-back" href="/work/">← WORK</a>
           <a class="page__exit-next" href="/work/next-dc/">
             <span class="page__exit-label">Next project</span>
             <span class="page__exit-title">Next-DC Agency Site</span>

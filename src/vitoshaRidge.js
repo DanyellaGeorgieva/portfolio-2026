@@ -157,6 +157,37 @@ const STAR =
 // there, so the marker fades out with the ridge it belongs to.
 const MARKER_FADE = 0.35;
 
+// What one frame is worth, and the point past which a frame is late rather than
+// slow. 50ms is three frames at 60Hz and one and a half at 30: long enough not
+// to fire on an ordinary busy frame, short enough to catch a real stall.
+const FRAME = 1000 / 60;
+const LATE_FRAME = 50;
+
+// How long a flick takes to give itself up, as an exponential time constant:
+// after TAU the throw has spent about two thirds of the difference between its
+// own speed and the drift's. Long enough to feel like weight, short enough that
+// the cloth is back to its own pace within a couple of seconds.
+const TAU = 520;
+
+// The fastest a throw may leave the hand, in panoramas per second. A flick is
+// measured between two pointer events, and two that arrive close together can
+// report a speed nothing on screen should ever move at — measured, a quick drag
+// handed back 14 panoramas a second, which is the width of this element forty
+// times over. Two thirds of a panorama a second is fast and still a mountain.
+const MAX_THROW = 0.75;
+
+// How much of the recent past a throw is measured over, and the least it can be
+// measured across at all. 90ms is a few frames of movement — enough to be a
+// gesture rather than a twitch.
+const THROW_WINDOW = 90;
+const MIN_THROW_MS = 25;
+
+// How solid the cloth is. Short of opaque, so the field behind it carries
+// through the mountain rather than stopping at it — the shader is the ground
+// this whole site stands on, and a silhouette that blacks it out reads as a
+// hole cut in the page. Override per element with data-opacity.
+const CLOTH_ALPHA = 0.82;
+
 // GLSL's smoothstep, because the mask it shapes is the shader's own.
 const smoothstep = (e0, e1, x) => {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
@@ -192,9 +223,19 @@ class VitoshaRidge extends HTMLElement {
       this.maskFalloff =
         this.dataset.maskFalloff === undefined ? MASK_FALLOFF : +this.dataset.maskFalloff;
       this.offset = this.dataset.start === undefined ? 0.6 : +this.dataset.start;
+      this.alpha = this.dataset.opacity === undefined ? CLOTH_ALPHA : +this.dataset.opacity;
       this.still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Panoramas per second. It starts at the drift's own pace and returns to
+      // it after a throw — one number covers the ambient movement, the flick
+      // and the settling back, so there are no modes to be in.
+      this.velocity = this.drift;
       this.w = 0;
       this.h = 0;
+
+      this.canvas.addEventListener('pointerdown', this.onDown);
+      this.canvas.addEventListener('pointermove', this.onMove);
+      this.canvas.addEventListener('pointerup', this.onUp);
+      this.canvas.addEventListener('pointercancel', this.onUp);
     }
 
     this.playing = true;
@@ -231,6 +272,16 @@ class VitoshaRidge extends HTMLElement {
       });
   }
 
+  /** The pace it moves at when nobody is touching it. */
+  get drift() {
+    return this.still ? 0 : this.speed;
+  }
+
+  /** How much of one panorama is across the element, at its current size. */
+  get tiles() {
+    return this.w / (this.h * BAND * IMAGE_ASPECT) / WIDE;
+  }
+
   disconnectedCallback() {
     this.resizes?.disconnect();
     this.views?.disconnect();
@@ -253,12 +304,13 @@ class VitoshaRidge extends HTMLElement {
 
     ctx.clearRect(0, 0, w, h);
     ctx.fillStyle = getComputedStyle(this).color; // the palette's ink
+    ctx.globalAlpha = this.alpha;
 
     // The same framing the mesh had: a band of the view's height, hung below
     // centre, with the contour drawn WIDE panoramas across.
     const cloth = h * BAND;
     const middle = h / 2 - h * DROP;
-    const tiles = w / (cloth * IMAGE_ASPECT) / WIDE;
+    const tiles = this.tiles;
     const step = 2; // px between samples
 
     // How much of the shaping survives at this column: full on the left, gone
@@ -282,6 +334,7 @@ class VitoshaRidge extends HTMLElement {
     for (let x = w; x >= 0; x -= step) ctx.lineTo(x, hemY(x));
     ctx.closePath();
     ctx.fill();
+    ctx.globalAlpha = 1;
 
     this.placeMarkers(ridgeY, hemY, mask, tiles);
   };
@@ -319,13 +372,82 @@ class VitoshaRidge extends HTMLElement {
   }
 
   tick = (now) => {
-    const dt = Math.min(100, now - this.last);
+    const elapsed = now - this.last;
     this.last = now;
-    if (this.playing && !this.still) {
-      this.offset += (this.speed * dt) / 1000;
-      this.draw();
+
+    // A frame that arrives late is a gap, not movement. The browser hands back
+    // the real elapsed time after a stall — another tab, a scroll that had work
+    // to do, one of the widgets further down this very page recomputing its
+    // pipeline — and spending all of it at once moves the cloth by six frames
+    // in the time of one. Measured: the old clamp let a stalled frame jump
+    // ~3.5px where a normal one moves 0.58px, which is the hop you could see.
+    //
+    // So a late frame is worth exactly one frame of drift; only real frames
+    // carry their own time.
+    const dt = elapsed > LATE_FRAME ? FRAME : elapsed;
+
+    // While a hand is on it, the hand is the only thing moving it.
+    if (this.playing && !this.dragging) {
+      // Whatever speed it is going, it is always giving that up in favour of
+      // the drift. A throw is just a large head start on that, and the drift is
+      // the case where there is nothing to give up — which is why this one line
+      // serves the ambient movement, the flick and the settle alike.
+      this.velocity += (this.drift - this.velocity) * (1 - Math.exp(-dt / TAU));
+      if (this.velocity) {
+        this.offset += (this.velocity * dt) / 1000;
+        this.draw();
+      }
     }
+
     this.frame = requestAnimationFrame(this.tick);
+  };
+
+  onDown = (event) => {
+    this.dragging = true;
+    this.dragX = event.clientX;
+    this.velocity = 0; // taken out of the drift; the hand decides now
+    // Where it has been, so releasing can ask how fast it was going. A short
+    // history rather than the gap between the last two events: those two can
+    // arrive in the same millisecond, which measures as no speed at all or an
+    // impossible one, and the last twitch before letting go is not the throw.
+    this.history = [{ t: event.timeStamp, offset: this.offset }];
+    this.classList.add('is-dragging');
+    this.canvas.setPointerCapture(event.pointerId);
+  };
+
+  onMove = (event) => {
+    if (!this.dragging) return;
+    const dx = event.clientX - this.dragX;
+    this.dragX = event.clientX;
+
+    // Dragging right pulls the panorama back the way it came.
+    this.offset -= (dx / this.w) * this.tiles;
+
+    this.history.push({ t: event.timeStamp, offset: this.offset });
+    while (this.history.length > 2 && event.timeStamp - this.history[0].t > THROW_WINDOW) {
+      this.history.shift();
+    }
+
+    this.draw();
+  };
+
+  onUp = (event) => {
+    if (!this.dragging) return;
+    this.dragging = false;
+    this.classList.remove('is-dragging');
+
+    // How far it travelled across the window, over how long: that is the speed
+    // it keeps going at. Too short a window to measure, and it simply rejoins
+    // the drift rather than guessing.
+    const first = this.history[0];
+    const span = (event?.timeStamp ?? performance.now()) - first.t;
+    const thrown = span >= MIN_THROW_MS ? ((this.offset - first.offset) / span) * 1000 : this.drift;
+    this.velocity = Math.max(-MAX_THROW, Math.min(MAX_THROW, thrown));
+    this.history = null;
+
+    // The drag's own frames are not the loop's: without this the first tick
+    // after a release would bill it for the whole time the hand was down.
+    this.last = performance.now();
   };
 }
 
