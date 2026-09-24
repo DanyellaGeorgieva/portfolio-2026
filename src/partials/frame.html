@@ -31,20 +31,25 @@
 
      Opacity, because these start hidden and their transitions run in both
      directions: without this they arrive at the browser's default 1 and then
-     visibly fade out once the stylesheet lands. */
-  .site-header__eye,
-  .project__view {
+     visibly fade out once the stylesheet lands.
+
+     Every selector is wrapped in :where(), which costs it all its specificity.
+     This block sits in the body, so it comes after the stylesheet and would win
+     any tie — meaning a later change in main.scss could be silently overruled
+     from here. At zero specificity it can only ever apply when nothing else
+     does, which is exactly the gap it is for. */
+  :where(.site-header__eye, .project__view) {
     position: absolute;
     opacity: 0;
   }
 
-  .page__eye {
+  :where(.page__eye) {
     display: none;
   }
 
   /* Holds the filter and icon definitions. Nothing in it is drawn, but the
      element itself is 300 × 150 until told otherwise. */
-  .filter-defs {
+  :where(.filter-defs) {
     position: absolute;
     width: 0;
     height: 0;

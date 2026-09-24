@@ -591,8 +591,14 @@ html:has(#swup[data-page="top"]) {
 // The column the track number sits in, and the gap after it. Used by the
 // counter, by the eye that replaces it, and by the blurb that lines up under
 // the title — so the four cannot drift apart.
-$track-width: 50px;
-$track-gap: 16px;
+// The counter's column and the space after it. Custom properties rather than
+// Sass variables: they are a proportion of the row, and a phone wants a smaller
+// one — this way the breakpoint sets it once instead of restating every rule
+// that leans on it.
+:root {
+  --track-width: 50px;
+  --track-gap: 16px;
+}
 
 .projects {
   list-style: none;
@@ -648,10 +654,10 @@ $track-gap: 16px;
     content: counter(track, decimal-leading-zero) ".";
     font-size: 2rem;
     font-weight: 400;
-    width: $track-width;
-    min-width: $track-width;
+    width: var(--track-width);
+    min-width: var(--track-width);
     text-align: right;
-    margin-right: $track-gap;
+    margin-right: var(--track-gap);
     transition: opacity 0.2s ease;
   }
 }
@@ -674,7 +680,7 @@ $track-gap: 16px;
   top: 50%;
   // Right edge flush with the counter's, so the eye sits exactly where the
   // right-aligned number does rather than centred on a column it underfills.
-  right: calc(100% - #{$track-width});
+  right: calc(100% - var(--track-width));
   translate: 0 -50%;
   // Sized by height against the number beside it: the artwork keeps its own
   // aspect ratio, so the width follows. 2.1rem before the lower lashes squared
@@ -701,7 +707,7 @@ $track-gap: 16px;
 }
 
 .project__blurb {
-  padding-left: $track-width + $track-gap;
+  padding-left: calc(var(--track-width) + var(--track-gap));
   font-size: 1.2rem;
 }
 
@@ -1282,5 +1288,151 @@ vitosha-ridge {
   &:focus-visible {
     opacity: 1;
     text-decoration-thickness: 2px;
+  }
+}
+
+// --- Small screens ----------------------------------------------------------
+// The shell is the whole of the home page — a name, three links, the palette
+// index and the field behind them — so making home work on a phone is making
+// those four things work. Everything here is the shell; the reading pages get
+// their own pass.
+//
+// The breakpoint is where the bar runs out of room rather than a device size.
+// Measured at 390px: the name ends at 123px and the nav starts at 123px, so the
+// two are touching with nothing between them, and anything narrower collides.
+@media (max-width: 640px) {
+  :root {
+    // The margin everything on a page hangs off. 36px is a desktop gutter; on a
+    // phone it is a tenth of the screen.
+    --content-left: 20px;
+  }
+
+  .site-header {
+    padding: 16px 20px;
+    font-size: 0.95rem;
+    // Below about 360px even the smaller type cannot hold one line. Rather than
+    // shrink it further, the nav drops to its own line and stays hard right —
+    // two short lines read better than one cramped one.
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+
+  .main-nav {
+    gap: 18px;
+    margin-left: auto; // holds the nav right when it has wrapped to its own line
+  }
+
+  .picker {
+    // Clear of the home indicator on a phone that has one. The fallback keeps
+    // the old distance everywhere else; env() needs viewport-fit=cover in the
+    // page's viewport meta to report anything but zero.
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    gap: 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .picker__list {
+    gap: 0.3rem;
+  }
+
+  // The reading column. 42% of the screen is a column on a desktop and a
+  // letterbox on a phone — measured at 390px it came out 164px wide, with 32px
+  // titles wrapping three lines inside it and about 65px left for the blurb.
+  // On a phone the screen IS the column, less its gutters.
+  .section {
+    width: auto;
+    margin: 0 var(--content-left);
+    padding-top: 6rem;
+  }
+
+  .projects {
+    width: 100%;
+  }
+
+  // The number's column, scaled to the type beside it rather than left at a
+  // desktop 50px — at this size that was a third of the row spent on "01."
+  :root {
+    --track-width: 32px;
+    --track-gap: 10px;
+  }
+
+  .project {
+    margin-bottom: 2.25rem;
+  }
+
+  .project__head::before,
+  .project__title {
+    font-size: 1.4rem;
+  }
+
+  .project__blurb {
+    font-size: 1rem;
+  }
+
+  // --- A case study ---------------------------------------------------------
+  // Same move as the work list: the reading column is a proportion of a desktop
+  // window, and on a phone the screen is already the column. Measured at 390px
+  // before this: 172px of text, a 48px title breaking mid-word into "SKIRT / S
+  // OF / VITO / SHA", and 96px of horizontal overflow.
+  .page {
+    width: auto;
+    margin-inline: var(--content-left);
+    // Less top padding than the desktop's 8rem, because the pinned way out
+    // below is no longer pinned and no longer needs clearing.
+    padding: 2.5rem 0 3rem;
+  }
+
+  // On a desktop this sits in the gutter beside the column. A phone has no
+  // gutter, so a fixed one floats over the copy the whole way down — measured,
+  // it was sitting on the second paragraph. It rides with the page instead, at
+  // the top where a way back belongs; the exit at the foot is the other one.
+  .back {
+    position: static;
+    display: inline-block;
+    margin-bottom: 1.75rem;
+  }
+
+  :root {
+    // The title sizes off the screen now rather than off a fixed 48px. The
+    // floor keeps it a title; the ceiling stops it eating a small screen.
+    --title-size: clamp(1.9rem, 8.5vw, 2.6rem);
+  }
+
+  // The watching eye lives in the gutter beside the column, and on a phone
+  // there is no gutter — it was measured sitting on top of the copy.
+  //
+  // Matching the selector that puts it on screen, rather than just naming the
+  // class: `body:has(...) .page__eye { display: block }` is more specific than
+  // a bare class, so a plain `.page__eye` in here lost to it and the eye stayed.
+  body:has(#swup[data-page="detail"]) .page__eye {
+    display: none;
+  }
+
+  // Taller than the desktop clamp would give it here. The cloth is a fixed
+  // share of the element's height, so a short element puts the ridge close to
+  // the top: measured at 200px, a summit sat 22px from the edge and its name
+  // needs about 24px above it, so every label was clipped away. At 260 there is
+  // room for the name the peak is there to carry.
+  vitosha-ridge {
+    height: 260px;
+  }
+
+  // Label above value rather than beside it: the two-column grid gave the
+  // value about half of an already narrow column.
+  .page__meta {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+
+    dd {
+      margin-bottom: 0.9rem;
+    }
+  }
+
+  // A URL has no spaces to break at, and this one is wider than a phone: the
+  // Festival link alone was the 96px of overflow. Anywhere, not break-word,
+  // because it should break at a slash before it breaks the layout.
+  .page__meta a,
+  .page__body a {
+    overflow-wrap: anywhere;
   }
 }

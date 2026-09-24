@@ -572,6 +572,19 @@ function startVitosha() {
   }
 
   function drawAll() {
+    // HOST PATCH (portfolio): nothing is drawn into a widget that has no width.
+    //
+    // Every draw below sizes itself from cv.clientWidth, and a canvas that is
+    // not laid out reports 0 — which divides through vScaleFor() into NaN, and
+    // a canvas sized NaN is a canvas sized 0, which drawImage refuses:
+    //   InvalidStateError: ... a canvas element with a width or height of 0
+    //
+    // It happens for two reasons on this site. A widget the page left out gets
+    // the detached stand-in from $() further up, and the page itself is taken
+    // out of the document on every swup navigation while this run's observers
+    // are still live — both leave a real element with no layout.
+    if (!$("#srcCv").clientWidth) return;
+
     drawSource(); drawScan(); drawSeam(); drawBlur(); drawTex();
   }
 
