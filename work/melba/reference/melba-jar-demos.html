@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Melba 2021 — jar demos</title>
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.17.1/build/matter.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/poly-decomp@0.3.0/build/decomp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/paper@0.12.15/dist/paper-core.min.js"></script>
+<style>
+:root {
+  --bg: #ffffff;
+  --ink: #0e1a33;
+  --muted: #6b7385;
+  --faint: #e6e8ee;
+  --track: #dfe2e8;
+  --peach: #ea8b00;
+  --mustard: #e2a41a;
+  --red: #ff3c15;
+  --carrot: #ff0d2a;
+  --half: #ff5331;
+  --green: #69db26;
+  --green-dk: #185615;
+  --cream: #e2dccf;
+  --cream-edge: rgba(0, 0, 0, 0.16);
+  --part-a: rgba(226, 164, 26, 0.28);
+  --part-b: rgba(255, 60, 21, 0.22);
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151d; --ink: #e9e6dc; --muted: #9aa1b0; --faint: #262c38; --track: #313847;
+    --cream-edge: rgba(0, 0, 0, 0); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151d; --ink: #e9e6dc; --muted: #9aa1b0; --faint: #262c38; --track: #313847;
+  --cream-edge: rgba(0, 0, 0, 0); color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 17px/1.65 "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 620px; margin: 0 auto; padding: 56px 20px 80px; }
+h2 { font-size: 22px; line-height: 1.25; margin: 0 0 14px; font-weight: 700; letter-spacing: -0.01em; }
+p { margin: 0 0 16px; max-width: 60ch; }
+.demo { margin: 36px 0 96px; }
+.stage {
+  position: relative; width: 100%; max-width: 380px; margin: 28px 0 22px;
+  touch-action: pan-y; cursor: crosshair;
+}
+.stage canvas { display: block; width: 100%; height: auto; }
+.stage:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
+
+.controls { display: grid; gap: 18px; max-width: 380px; }
+.slider { max-width: 280px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--track); border-radius: 999px; padding: 3px; }
+.seg button, .pill {
+  font: 500 13px/1 "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink); background: transparent; border: 0;
+  border-radius: 999px; padding: 10px 16px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pill { border: 1px solid var(--track); padding: 11px 18px; }
+.pill:hover, .seg button:hover:not([aria-pressed="true"]) { background: var(--faint); }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.slider { display: grid; grid-template-columns: 1fr auto; row-gap: 8px; align-items: center; }
+.slider label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.slider output { font: 600 13px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; text-align: right; min-width: 5ch; }
+.slider input { grid-column: 1 / -1; width: 100%; }
+input[type=range] {
+  -webkit-appearance: none; appearance: none; height: 6px; border-radius: 6px; background:
+  linear-gradient(var(--ink), var(--ink)) 0 / var(--p, 50%) 100% no-repeat, var(--track); margin: 6px 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); border: 0; cursor: pointer;
+}
+input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--ink); border: 0; cursor: pointer; }
+input[type=range]:focus-visible { outline: 2px solid var(--ink); outline-offset: 6px; }
+
+.readout {
+  font: 500 14px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--ink);
+  margin: 22px 0 10px; max-width: 380px; min-height: 3em;
+}
+.caption { font-size: 13px; line-height: 1.55; color: var(--muted); max-width: 380px; margin: 0; }
+.fallback { font-size: 14px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .seg button, .pill { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+
+<!-- ============ DEMO 1: collider vs skin ============ -->
+<section class="demo" id="demo-skin" aria-labelledby="skin-title">
+  <h2 id="skin-title">Collider and skin</h2>
+  <p>Every object leads a double life. Matter.js only simulates the collider: a deliberately simple polygon of three to twelve points, hidden in the page as an SVG. Visitors only ever see the skin, the illustration laid on top. The one concave outline, the leaf, gets cut into convex pieces first, because that is all the engine can handle.</p>
+
+  <div class="stage" tabindex="0" aria-label="Jar of floating produce. Move the pointer over it to nudge the contents.">
+    <canvas></canvas>
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" data-view="skin" aria-pressed="true">Skins</button>
+        <button type="button" data-view="both" aria-pressed="false">Both</button>
+        <button type="button" data-view="collider" aria-pressed="false">Colliders</button>
+      </div>
+      <button type="button" class="pill" data-shake>Shake</button>
+    </div>
+  </div>
+
+  <div class="readout" aria-live="polite"></div>
+  <p class="caption">Skins: what visitors saw. Colliders: what the physics engine simulates. The outlines are the real ones from the live site; the shaded pieces are the leaf's convex parts, and the dashed shapes are the invisible walls hiding behind the drawn glass. Hover or drag across the jar to nudge the contents.</p>
+</section>
+
+<!-- ============ DEMO 2: jelly ============ -->
+<section class="demo" id="demo-jelly" aria-labelledby="jelly-title">
+  <h2 id="jelly-title">A ring of dots pretending to be jelly</h2>
+  <p>The blob is a ring of invisible dots. Each dot is rigidly linked to its neighbour, springs loosely to the dot two places along, and is tethered to where it started. A smooth curve drawn through the dots every frame does the rest.</p>
+
+  <div class="stage" tabindex="0" aria-label="Jar with a jelly blob. Move the pointer over the blob to poke it.">
+    <canvas></canvas>
+  </div>
+
+  <div class="controls">
+    <div class="row">
+      <div class="seg" role="group" aria-label="Preset">
+        <button type="button" data-preset="melt" aria-pressed="false">Melt</button>
+        <button type="button" data-preset="original" aria-pressed="true">Original</button>
+        <button type="button" data-preset="rubber" aria-pressed="false">Rubber</button>
+        <button type="button" data-preset="stone" aria-pressed="false">Stone</button>
+      </div>
+    </div>
+    <div class="slider">
+      <label for="j-tether">Tether</label><output for="j-tether" data-out="tether"></output>
+      <input id="j-tether" type="range" min="0" max="1000" step="1">
+    </div>
+    <div class="slider">
+      <label for="j-shape">Shape spring</label><output for="j-shape" data-out="shape"></output>
+      <input id="j-shape" type="range" min="0" max="1000" step="1">
+    </div>
+    <div class="slider">
+      <label for="j-dots">Dots</label><output for="j-dots" data-out="dots"></output>
+      <input id="j-dots" type="range" min="6" max="44" step="2">
+    </div>
+    <div class="row">
+      <button type="button" class="pill" data-structure aria-pressed="false">Show the dots</button>
+      <button type="button" class="pill" data-shake>Shake</button>
+    </div>
+  </div>
+
+  <div class="readout" aria-live="polite"></div>
+  <p class="caption">Tether pulls each dot back home. Shape spring stops the ring folding in on itself. Original is the Review jar's tuning: 16 dots, tether 0.009, shape spring 0.04. Poke the blob, or shake the jar.</p>
+</section>
+
+</main>
+
+<script>
+(() => {
+  if (!window.Matter) {
+    document.querySelectorAll('.stage').forEach(s => s.insertAdjacentHTML('afterend', '<p class="fallback">The physics library could not load, so this demo is unavailable.</p>'));
+    return;
+  }
+  const { Engine, Bodies, Body, Composite, Constraint, Query, Common, Sleeping, Vertices } = Matter;
+  if (window.decomp) Common.setDecomp(window.decomp);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const W = 320, H = 440, DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  const css = () => {
+    const s = getComputedStyle(document.documentElement);
+    const g = n => s.getPropertyValue(n).trim();
+    return { ink: g('--ink'), muted: g('--muted'), faint: g('--faint'), peach: g('--peach'), carrot: g('--carrot'), half: g('--half'),
+      mustard: g('--mustard'), red: g('--red'), green: g('--green'), greenDk: g('--green-dk'), cream: g('--cream'), creamEdge: g('--cream-edge'),
+      partA: g('--part-a'), partB: g('--part-b'), bg: g('--bg') };
+  };
+
+  /* ---------- shared: jar, walls, canvas ---------- */
+  function setupCanvas(stage) {
+    const c = stage.querySelector('canvas');
+    c.width = W * DPR; c.height = H * DPR;
+    const ctx = c.getContext('2d');
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    return { c, ctx };
+  }
+  function makeWalls() {
+    const o = { isStatic: true, chamfer: { radius: 14 }, label: 'wall' };
+    return [
+      Bodies.rectangle(160, 14, 180, 40, o),
+      Bodies.rectangle(57, 55, 76, 70, o),
+      Bodies.rectangle(263, 55, 76, 70, o),
+      Bodies.rectangle(4, 230, 40, 460, o),
+      Bodies.rectangle(316, 230, 40, 460, o),
+      Bodies.rectangle(160, 420, 320, 40, o),
+    ];
+  }
+  function jarPath(ctx) {
+    ctx.beginPath();
+    ctx.moveTo(95, 34); ctx.lineTo(95, 62);
+    ctx.bezierCurveTo(95, 86, 24, 84, 24, 114);
+    ctx.lineTo(24, 368); ctx.quadraticCurveTo(24, 400, 56, 400);
+    ctx.lineTo(264, 400); ctx.quadraticCurveTo(296, 400, 296, 368);
+    ctx.lineTo(296, 114);
+    ctx.bezierCurveTo(296, 84, 225, 86, 225, 62);
+    ctx.lineTo(225, 34);
+  }
+  function drawJar(ctx, col, alpha = 1) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.lineWidth = 3; ctx.strokeStyle = col.ink; ctx.lineJoin = 'round';
+    jarPath(ctx); ctx.stroke();
+    ctx.fillStyle = col.ink;
+    roundRect(ctx, 84, 14, 152, 20, 6); ctx.fill();
+    ctx.restore();
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function polyPath(ctx, verts) {
+    ctx.beginPath(); ctx.moveTo(verts[0].x, verts[0].y);
+    for (let i = 1; i < verts.length; i++) ctx.lineTo(verts[i].x, verts[i].y);
+    ctx.closePath();
+  }
+  function smoothPath(ctx, pts) { // closed quadratic smoothing through midpoints
+    const n = pts.length; ctx.beginPath();
+    const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    let m = mid(pts[n - 1], pts[0]); ctx.moveTo(m.x, m.y);
+    for (let i = 0; i < n; i++) { const p = pts[i], q = mid(p, pts[(i + 1) % n]); ctx.quadraticCurveTo(p.x, p.y, q.x, q.y); }
+    ctx.closePath();
+  }
+  // the original hover nudge: random direction, random strength 1x..13x, scaled by mass
+  function nudge(body, k = 12) {
+    if (body.isStatic) return;
+    Sleeping.set(body, false);
+    const f = 0.0005 * body.mass;
+    Body.applyForce(body, body.position, {
+      x: (f + Common.random() * f * k) * Common.choose([1, -1]),
+      y: (f + Common.random() * f * k) * Common.choose([1, -1]),
+    });
+  }
+  function toWorld(stage, e) {
+    const r = stage.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+  }
+  function runWhenVisible(el, step) {
+    let raf = 0, visible = false;
+    const loop = () => { step(); raf = requestAnimationFrame(loop); };
+    new IntersectionObserver(([en]) => {
+      if (en.isIntersecting && !visible) { visible = true; loop(); }
+      else if (!en.isIntersecting && visible) { visible = false; cancelAnimationFrame(raf); }
+    }, { rootMargin: '100px' }).observe(el);
+  }
+
+  /* ---------- real collider outlines, copied from the hidden SVGs on the live site ---------- */
+  const SVG = {
+    peach: 'M 6.1 60.2 L 0.7999999999999998 57.300000000000004 L 1.4 46.7 L 7.9 26.800000000000004 L 24.9 9.400000000000006 L 49.9 0.7000000000000064 L 73.6 4 L 88.8 13 L 99.2 24.5 L 102 32 L 98.9 35.6 L 6.1 60.2 z',
+    cone: 'M 0.6 36.5 L 0.1 0.6 L 11.2 2.3 L 23.9 9.5 L 31.299999999999997 18.6 L 35.199999999999996 29.1 L 35.9 35.4 L 0.6 36.5 z',
+    carrot: 'M 29.6 331.4 L 0.3 0 H 56.099999999999994',
+    brokoli: 'M 50 98 L 1.1 31.1 L 2.9000000000000004 19.900000000000002 L 24.2 5.3 L 50 0 L 77 5.3 L 97.8 19.9 L 99.5 31.299999999999997 L 50 98 z',
+    half: 'M51.8791 0.391968H24.2151L0.782471 121.118H51.8791V0.391968Z',
+    leaf: 'M10.6835 65.4817H34.8272L44.3923 17.1841L27.7157 55.1957L21.3508 0.135773L15.306 54.8398L0.407227 17.8959L10.6835 65.4817Z',
+  };
+  const SOURCE = { peach: 'peach', cone: 'cone', carrot: 'carrot', carrotGreen: 'carrot', broccoli: 'brokoli', half: 'half', leaf: 'leaf' };
+  function parsePath(d) {
+    const t = d.match(/[MLHVZmlhvz]|-?\d*\.?\d+(?:e-?\d+)?/g), pts = [];
+    let i = 0, c = 'M', x = 0, y = 0;
+    while (i < t.length) {
+      if (/[a-z]/i.test(t[i])) c = t[i++];
+      const C = c.toUpperCase();
+      if (C === 'Z') continue;
+      if (C === 'H') x = +t[i++]; else if (C === 'V') y = +t[i++]; else { x = +t[i++]; y = +t[i++]; }
+      pts.push({ x, y });
+    }
+    const f = pts[0], l = pts[pts.length - 1];
+    if (pts.length > 3 && Math.abs(f.x - l.x) < 1e-6 && Math.abs(f.y - l.y) < 1e-6) pts.pop();
+    return pts;
+  }
+  function outlineOf(kind, sx, sy) {
+    const p = parsePath(SVG[SOURCE[kind]]), b = Matter.Bounds.create(p);
+    const cx = (b.min.x + b.max.x) / 2, cy = (b.min.y + b.max.y) / 2;
+    return p.map(q => ({ x: (q.x - cx) * sx, y: (q.y - cy) * sy }));
+  }
+  const common = () => ({ restitution: 0, density: 0.005, frictionAir: 0.025, label: 'dynamic' });
+  function makeItem(kind, x, y, opts = {}) {
+    let body, outline = null;
+    if (kind === 'dot') body = Bodies.circle(x, y, opts.r, common());
+    else if (kind === 'label') body = Bodies.rectangle(x, y, opts.w, 28, common());
+    else {
+      const sx = opts.sx || opts.scale || 1, sy = opts.sy || opts.scale || 1;
+      outline = outlineOf(kind, sx, sy);
+      // pass a copy: Matter sorts convex vertex lists in place, which would scramble the skin outline
+      body = Bodies.fromVertices(x, y, [outline.map(p => ({ x: p.x, y: p.y }))], common());
+      // keep the drawing locked to the collider: match bounding boxes, then store relative to the body
+      const ob = Matter.Bounds.create(outline), bb = body.bounds;
+      const dx = (bb.min.x + bb.max.x) / 2 - (ob.min.x + ob.max.x) / 2, dy = (bb.min.y + bb.max.y) / 2 - (ob.min.y + ob.max.y) / 2;
+      outline = outline.map(p => ({ x: p.x + dx - body.position.x, y: p.y + dy - body.position.y }));
+    }
+    if (opts.angle) Body.rotate(body, opts.angle);
+    const item = { kind, body, outline, opts, s: Math.min(opts.sx || opts.scale || 1, opts.sy || opts.scale || 1) };
+    body.item = item;
+    return item;
+  }
+  // Stand-in skins, drawn over the real collider outlines until the festival PNGs are swapped in.
+  function drawShape(ctx, it, col) {
+    const b = it.body, o = it.outline, k = it.kind, s = it.s;
+    ctx.save(); ctx.translate(b.position.x, b.position.y); ctx.rotate(b.angle);
+    if (k === 'dot') {
+      ctx.fillStyle = col[it.opts.color]; ctx.beginPath(); ctx.arc(0, 0, it.opts.r, 0, 7); ctx.fill();
+    } else if (k === 'label') {
+      ctx.fillStyle = col.ink; ctx.font = '800 25px "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(it.opts.text, 0, 1, it.opts.w);
+    } else if (k === 'peach') {
+      // crescent: rounded back over the hull, hollowed underside where the collider is a straight chord
+      ctx.beginPath(); ctx.moveTo(o[0].x, o[0].y);
+      for (let i = 1; i < o.length - 1; i++) ctx.quadraticCurveTo(o[i].x, o[i].y, (o[i].x + o[i + 1].x) / 2, (o[i].y + o[i + 1].y) / 2);
+      const e = o[o.length - 1]; ctx.lineTo(e.x, e.y);
+      const mx = (e.x + o[0].x) / 2, my = (e.y + o[0].y) / 2, len = Math.hypot(mx, my) || 1;
+      ctx.quadraticCurveTo(mx - mx / len * 30 * s, my - my / len * 30 * s, o[0].x, o[0].y);
+      ctx.fillStyle = col.peach; ctx.fill();
+    } else if (k === 'cone') {
+      const c = o[0], r = Math.hypot(o[1].x - c.x, o[1].y - c.y);
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(o[1].x, o[1].y); ctx.arc(c.x, c.y, r, -Math.PI / 2, 0); ctx.closePath();
+      ctx.fillStyle = col.mustard; ctx.fill();
+    } else if (k === 'carrot' || k === 'carrotGreen') {
+      polyPath(ctx, o); ctx.fillStyle = k === 'carrot' ? col.carrot : col.greenDk; ctx.fill();
+    } else if (k === 'broccoli') {
+      // cream "hand": a stem and fingers fanning out to the collider's upper edge
+      const palm = { x: (o[0].x + o[4].x) / 2, y: o[0].y + (o[4].y - o[0].y) * 0.55 };
+      const strokes = [[o[0], 15], ...[1, 2, 3, 4, 5, 6, 7].map(i => [{ x: palm.x + (o[i].x - palm.x) * 0.82, y: palm.y + (o[i].y - palm.y) * 0.82 }, 17])];
+      ctx.lineCap = 'round';
+      [[col.creamEdge, 2], [col.cream, 0]].forEach(([c, extra]) => {
+        ctx.strokeStyle = c;
+        strokes.forEach(([q, w]) => { ctx.lineWidth = w * s * 1.8 + extra; ctx.beginPath(); ctx.moveTo(palm.x, palm.y); ctx.lineTo(q.x, q.y); ctx.stroke(); });
+      });
+    } else if (k === 'half') {
+      polyPath(ctx, o); ctx.fillStyle = col.half; ctx.fill();
+    } else if (k === 'leaf') {
+      polyPath(ctx, o); ctx.fillStyle = it.opts.color ? col[it.opts.color] : col.greenDk; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+
+  /* ================= DEMO 1 ================= */
+  (function skinDemo() {
+    const root = document.getElementById('demo-skin');
+    const stage = root.querySelector('.stage');
+    const { ctx } = setupCanvas(stage);
+    const readout = root.querySelector('.readout');
+    const engine = Engine.create({ enableSleeping: true });
+    engine.gravity.y = 0; engine.gravity.x = 0;
+    const walls = makeWalls();
+    Composite.add(engine.world, walls);
+
+    const items = [];
+    const add = (kind, x, y, opts) => { const it = makeItem(kind, x, y, opts); items.push(it); Composite.add(engine.world, it.body); };
+    add('peach', 92, 150, { scale: 0.8 });
+    add('peach', 226, 352, { scale: 0.8, angle: -0.2 });
+    add('peach', 94, 362, { scale: 0.8, angle: 2.9 });
+    add('carrot', 262, 205, { sx: 0.4, sy: 0.38, angle: 0.12 });
+    add('carrotGreen', 46, 262, { sx: 0.4, sy: 0.38, angle: -0.08 });
+    add('broccoli', 196, 286, { scale: 0.55 });
+    add('cone', 170, 376, { scale: 0.9 });
+    add('cone', 212, 162, { scale: 0.9, angle: 1.2 });
+    add('half', 282, 346, { scale: 0.45 });
+    add('leaf', 150, 124, { scale: 0.7, angle: -0.2 });
+    add('label', 140, 205, { w: 118, text: 'SYMPO' });
+    add('label', 130, 240, { w: 84, text: 'SIUM' });
+    [[165, 78, 5, 'red'], [280, 135, 5, 'red'], [240, 116, 5, 'mustard'], [110, 300, 5, 'red'], [150, 318, 5, 'mustard'], [238, 258, 5, 'red'], [46, 392, 5, 'mustard'], [262, 394, 5, 'red']]
+      .forEach(([x, y, r, c]) => add('dot', x, y, { r, color: c }));
+    add('dot', 78, 205, { r: 14, color: 'green' });
+
+    let view = 'skin', hovered = null;
+    const nParts = items.reduce((a, it) => a + (it.body.parts.length > 1 ? it.body.parts.length - 1 : 1), 0);
+    const concave = items.filter(it => it.body.parts.length > 2).length;
+    function updateReadout() {
+      const base = `${items.length} bodies → ${nParts} convex parts · ${walls.length} walls`;
+      let h = `${concave} concave shape${concave === 1 ? '' : 's'} (the leaf), split by poly-decomp`;
+      if (hovered) {
+        const it = hovered.item, parts = hovered.parts.length > 1 ? hovered.parts.length - 1 : 1;
+        const names = { carrotGreen: 'green carrot', broccoli: 'broccoli' };
+        const name = it.kind === 'label' ? `“${it.opts.text}”` : (names[it.kind] || it.kind);
+        const pts = it.outline ? `, ${it.outline.length}-point outline` : '';
+        h = `${name}${pts}: ${parts} convex part${parts > 1 ? 's' : ''}, mass ${hovered.mass.toFixed(1)}`;
+      }
+      readout.innerHTML = `${base}<br>${h}`;
+    }
+    updateReadout();
+
+    const drawSkin = drawShape;
+    function drawCollider(ctx, b, col) {
+      const parts = b.parts.length > 1 ? b.parts.slice(1) : [b];
+      parts.forEach((p, i) => {
+        polyPath(ctx, p.vertices);
+        ctx.fillStyle = parts.length > 1 ? (i % 2 ? col.partB : col.partA) : 'transparent'; ctx.fill();
+        ctx.lineWidth = 1.25; ctx.strokeStyle = col.ink; ctx.stroke();
+      });
+      ctx.fillStyle = col.ink; ctx.beginPath(); ctx.arc(b.position.x, b.position.y, 2, 0, 7); ctx.fill();
+      if (b === hovered) { ctx.lineWidth = 2.5; polyPath(ctx, b.vertices); ctx.stroke(); }
+    }
+
+    function frame() {
+      Engine.update(engine, 1000 / 60);
+      const col = css();
+      ctx.clearRect(0, 0, W, H);
+      if (view !== 'skin') {
+        ctx.save(); ctx.setLineDash([4, 4]); ctx.lineWidth = 1.25; ctx.strokeStyle = col.muted;
+        walls.forEach(w => { polyPath(ctx, w.vertices); ctx.stroke(); }); ctx.restore();
+      }
+      if (view !== 'collider') items.forEach(it => drawSkin(ctx, it, col));
+      if (view !== 'skin') items.forEach(it => drawCollider(ctx, it.body, col));
+      drawJar(ctx, col, view === 'collider' ? 0.18 : 1);
+    }
+    runWhenVisible(stage, frame);
+
+    const dyn = () => items.map(i => i.body);
+    function onMove(e) {
+      const p = toWorld(stage, e);
+      const hit = Query.point(dyn(), p);
+      const h = hit[0] || null;
+      if (h) nudge(h, 12);
+      if (h !== hovered) { hovered = h; updateReadout(); }
+    }
+    stage.addEventListener('pointermove', onMove);
+    stage.addEventListener('pointerdown', onMove);
+    stage.addEventListener('pointerleave', () => { hovered = null; updateReadout(); });
+    const shake = () => dyn().forEach(b => nudge(b, 22));
+    root.querySelector('[data-shake]').addEventListener('click', shake);
+    stage.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); shake(); } });
+    root.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => {
+      view = btn.dataset.view;
+      root.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+    }));
+    if (!reduced) new IntersectionObserver(([en], obs) => { if (en.isIntersecting) { setTimeout(shake, 400); obs.disconnect(); } }, { threshold: 0.6 }).observe(stage);
+  })();
+
+  /* ================= DEMO 2 ================= */
+  (function jellyDemo() {
+    const root = document.getElementById('demo-jelly');
+    const stage = root.querySelector('.stage');
+    const { ctx } = setupCanvas(stage);
+    const readout = root.querySelector('.readout');
+    const engine = Engine.create({ enableSleeping: false, constraintIterations: 4 });
+    engine.gravity.y = 0; engine.gravity.x = 0;
+    Composite.add(engine.world, makeWalls());
+
+    // Paper.js does the curve smoothing, as on the original site
+    let paperPath = null;
+    if (window.paper) {
+      const scope = new paper.PaperScope(); scope.setup(new scope.Size(W, H));
+      paperPath = new scope.Path({ closed: true, insert: false });
+    }
+
+    const props = [];
+    const addProp = (kind, x, y, opts) => { const it = makeItem(kind, x, y, opts); props.push(it); Composite.add(engine.world, it.body); };
+    addProp('peach', 84, 140, { scale: 0.8 });
+    addProp('peach', 240, 152, { scale: 0.8, angle: 0.5 });
+    addProp('peach', 250, 372, { scale: 0.8, angle: 2.4 });
+    addProp('cone', 60, 372, { scale: 0.9, angle: -0.6 });
+    [[160, 110, 5, 'red'], [120, 184, 5, 'mustard'], [212, 200, 5, 'red'], [48, 250, 5, 'red'], [290, 262, 5, 'mustard']]
+      .forEach(([x, y, r, c]) => addProp('dot', x, y, { r, color: c }));
+
+    const C = { x: 160, y: 285, r: 72 };
+    let nodes = [], links = [], tethers = [], shapeSprings = [], homes = [];
+    const state = { tether: 0.009, shape: 0.04, dots: 16, structure: false };
+    const group = Body.nextGroup(true);
+
+    function buildRing() {
+      Composite.remove(engine.world, [...nodes, ...links, ...tethers, ...shapeSprings]);
+      const n = state.dots;
+      homes = Array.from({ length: n }, (_, i) => {
+        const t = i / n * Math.PI * 2 - Math.PI / 2;
+        return { x: C.x + Math.cos(t) * C.r, y: C.y + Math.sin(t) * C.r };
+      });
+      nodes = homes.map(h => Bodies.circle(h.x, h.y, 6, { restitution: 0, density: 0.005, label: 'node', collisionFilter: { group } }));
+      tethers = nodes.map((b, i) => Constraint.create({ pointA: { ...homes[i] }, bodyB: b, stiffness: state.tether, length: 0 }));
+      links = nodes.map((b, i) => Constraint.create({ bodyA: b, bodyB: nodes[(i + 1) % n], stiffness: 1 }));
+      shapeSprings = nodes.map((b, i) => Constraint.create({ bodyA: b, bodyB: nodes[(i + 2) % n], stiffness: state.shape }));
+      Composite.add(engine.world, [...nodes, ...tethers, ...links, ...shapeSprings]);
+      if (paperPath) { paperPath.removeSegments(); paperPath.addSegments(homes.map(h => [h.x, h.y])); }
+    }
+    buildRing();
+
+    // log-scale sliders
+    const logMap = (min, max) => ({ to: v => min * Math.pow(max / min, v / 1000), from: x => Math.round(1000 * Math.log(x / min) / Math.log(max / min)) });
+    const tMap = logMap(0.0003, 0.6), sMap = logMap(0.001, 1);
+    const inT = root.querySelector('#j-tether'), inS = root.querySelector('#j-shape'), inD = root.querySelector('#j-dots');
+    const outs = { tether: root.querySelector('[data-out=tether]'), shape: root.querySelector('[data-out=shape]'), dots: root.querySelector('[data-out=dots]') };
+    const presets = { melt: [0.0006, 0.002, 16], original: [0.009, 0.04, 16], rubber: [0.06, 0.35, 16], stone: [0.5, 1, 16] };
+    const fmt = x => (x >= 0.1 ? x.toFixed(2) : x.toFixed(x < 0.001 ? 4 : 3));
+    const fill = el => el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%');
+
+    function sync(fromPreset) {
+      inT.value = tMap.from(state.tether); inS.value = sMap.from(state.shape); inD.value = state.dots;
+      [inT, inS, inD].forEach(fill);
+      outs.tether.textContent = fmt(state.tether); outs.shape.textContent = fmt(state.shape); outs.dots.textContent = state.dots;
+      tethers.forEach(c => { c.stiffness = state.tether; }); shapeSprings.forEach(c => { c.stiffness = state.shape; });
+      const match = Object.entries(presets).find(([, p]) => Math.abs(p[0] - state.tether) / p[0] < 0.03 && Math.abs(p[1] - state.shape) / p[1] < 0.03 && p[2] === state.dots);
+      root.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', String(!!match && b.dataset.preset === match[0])));
+      const note = match && match[0] === 'original' ? 'the Review jar’s settings' : match ? `${match[0]} preset` : 'custom';
+      readout.innerHTML = `${state.dots} dots · ${state.dots * 3} constraints<br>tether ${fmt(state.tether)} · shape ${fmt(state.shape)} · ${note}`;
+    }
+    inT.addEventListener('input', () => { state.tether = tMap.to(+inT.value); sync(); });
+    inS.addEventListener('input', () => { state.shape = sMap.to(+inS.value); sync(); });
+    inD.addEventListener('input', () => { state.dots = +inD.value; buildRing(); sync(); });
+    root.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+      const [t, s, d] = presets[b.dataset.preset]; state.tether = t; state.shape = s;
+      if (d !== state.dots) { state.dots = d; buildRing(); }
+      sync(); poke(C.x - 40, C.y - 30, 0.06);
+    }));
+    const structBtn = root.querySelector('[data-structure]');
+    structBtn.addEventListener('click', () => {
+      state.structure = !state.structure; structBtn.setAttribute('aria-pressed', String(state.structure));
+      structBtn.textContent = state.structure ? 'Hide the dots' : 'Show the dots';
+    });
+    sync();
+
+    function poke(x, y, strength = 0.03, vx = 0, vy = 0) {
+      nodes.forEach(b => {
+        const dx = b.position.x - x, dy = b.position.y - y, d = Math.hypot(dx, dy);
+        if (d < 46) {
+          const k = (1 - d / 46) * strength * b.mass;
+          const len = Math.hypot(vx, vy);
+          const dir = len > 0.5 ? { x: vx / len, y: vy / len } : { x: dx / (d || 1), y: dy / (d || 1) };
+          Body.applyForce(b, b.position, { x: dir.x * k, y: dir.y * k });
+        }
+      });
+    }
+
+    let last = null;
+    function onMove(e) {
+      const p = toWorld(stage, e);
+      const v = last ? { x: p.x - last.x, y: p.y - last.y } : { x: 0, y: 0 };
+      last = p;
+      poke(p.x, p.y, 0.012, v.x, v.y);
+      Query.point(props.map(i => i.body), p).forEach(b => nudge(b, 12));
+    }
+    stage.addEventListener('pointermove', onMove);
+    stage.addEventListener('pointerdown', e => { const p = toWorld(stage, e); last = p; poke(p.x, p.y, 0.08); });
+    stage.addEventListener('pointerleave', () => { last = null; });
+    const shake = () => { props.forEach(i => nudge(i.body, 22)); nodes.forEach(b => nudge(b, 30)); };
+    root.querySelector('[data-shake]').addEventListener('click', shake);
+    stage.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); shake(); } });
+
+    function drawBlob(col) {
+      const pts = nodes.map(b => b.position);
+      if (paperPath && paperPath.segments.length === pts.length) {
+        pts.forEach((p, i) => { paperPath.segments[i].point.x = p.x; paperPath.segments[i].point.y = p.y; });
+        paperPath.smooth();
+        const s = paperPath.segments, n = s.length;
+        ctx.beginPath(); ctx.moveTo(s[0].point.x, s[0].point.y);
+        for (let i = 0; i < n; i++) {
+          const a = s[i], b = s[(i + 1) % n];
+          ctx.bezierCurveTo(a.point.x + a.handleOut.x, a.point.y + a.handleOut.y, b.point.x + b.handleIn.x, b.point.y + b.handleIn.y, b.point.x, b.point.y);
+        }
+        ctx.closePath();
+      } else smoothPath(ctx, pts);
+      ctx.fillStyle = col.mustard; ctx.fill();
+    }
+    const drawProp = (it, col) => drawShape(ctx, it, col);
+    function drawStructure(col) {
+      ctx.save(); ctx.strokeStyle = col.ink; ctx.fillStyle = col.ink;
+      ctx.lineWidth = 0.75; ctx.globalAlpha = 0.45;
+      shapeSprings.forEach(c => { ctx.beginPath(); ctx.moveTo(c.bodyA.position.x, c.bodyA.position.y); ctx.lineTo(c.bodyB.position.x, c.bodyB.position.y); ctx.stroke(); });
+      ctx.globalAlpha = 1; ctx.setLineDash([2, 3]);
+      tethers.forEach(c => { ctx.beginPath(); ctx.moveTo(c.pointA.x, c.pointA.y); ctx.lineTo(c.bodyB.position.x, c.bodyB.position.y); ctx.stroke(); });
+      ctx.setLineDash([]); ctx.lineWidth = 1.5;
+      links.forEach(c => { ctx.beginPath(); ctx.moveTo(c.bodyA.position.x, c.bodyA.position.y); ctx.lineTo(c.bodyB.position.x, c.bodyB.position.y); ctx.stroke(); });
+      homes.forEach(h => { ctx.beginPath(); ctx.moveTo(h.x - 3, h.y - 3); ctx.lineTo(h.x + 3, h.y + 3); ctx.moveTo(h.x + 3, h.y - 3); ctx.lineTo(h.x - 3, h.y + 3); ctx.stroke(); });
+      nodes.forEach(b => { ctx.beginPath(); ctx.arc(b.position.x, b.position.y, 4, 0, 7); ctx.fill(); });
+      ctx.restore();
+    }
+    function frame() {
+      Engine.update(engine, 1000 / 60);
+      const col = css();
+      ctx.clearRect(0, 0, W, H);
+      ctx.save(); if (state.structure) ctx.globalAlpha = 0.35; drawBlob(col); ctx.restore();
+      props.forEach(it => drawProp(it, col));
+      if (state.structure) drawStructure(col);
+      drawJar(ctx, col);
+    }
+    runWhenVisible(stage, frame);
+    if (!reduced) new IntersectionObserver(([en], obs) => { if (en.isIntersecting) { setTimeout(shake, 400); obs.disconnect(); } }, { threshold: 0.6 }).observe(stage);
+  })();
+})();
+</script>
+</body>
+</html>

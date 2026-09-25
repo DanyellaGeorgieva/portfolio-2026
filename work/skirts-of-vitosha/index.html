@@ -216,10 +216,15 @@
                 <!-- The two venues, on the hem under the summit they sit below
                      in life: Cinema Lumière shares Cherni Vrah's column exactly.
                      Starred rather than dotted, and set in the cloth's own light
-                     because that is what they are printed on. -->
+                     because that is what they are printed on.
+
+                     width/height are the star's size before the stylesheet
+                     arrives. Without them an <svg> with only a viewBox fills the
+                     column: measured at 1180 × 1129 on first paint, a giant star
+                     until main.scss shrank it to its 0.56rem. -->
                 <li class="is-venue" style="left: 43.5%; top: 78.71%">
                   <span>Cinema Lumière</span>
-                  <svg viewBox="0 0 23 22" aria-hidden="true" focusable="false">
+                  <svg viewBox="0 0 23 22" width="9" height="9" aria-hidden="true" focusable="false">
                     <path
                       fill="currentColor"
                       d="M15.929 12.5401L20.4094 18.7037L15.929 22L11.3921 15.7832L7.01459 21.7073L2.64375 18.4176L7.17401 12.5401L0 10.0553L1.72708 4.92289L8.7948 7.46084V0H14.3148V7.46084L21.3792 5.13577L23 10.2715L15.929 12.5401Z" />
@@ -227,7 +232,7 @@
                 </li>
                 <li class="is-venue" style="left: 54.06%; top: 87.29%">
                   <span>Toplocentrala</span>
-                  <svg viewBox="0 0 23 22" aria-hidden="true" focusable="false">
+                  <svg viewBox="0 0 23 22" width="9" height="9" aria-hidden="true" focusable="false">
                     <path
                       fill="currentColor"
                       d="M15.929 12.5401L20.4094 18.7037L15.929 22L11.3921 15.7832L7.01459 21.7073L2.64375 18.4176L7.17401 12.5401L0 10.0553L1.72708 4.92289L8.7948 7.46084V0H14.3148V7.46084L21.3792 5.13577L23 10.2715L15.929 12.5401Z" />

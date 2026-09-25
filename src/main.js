@@ -333,6 +333,10 @@ function setupPage() {
   // Every navigation steps the palette — nav clicks, project links, the "next
   // project" at the foot of a case study, Back and Forward. One rule covers
   // them all now that every view is a real page.
+  // The first page of a visit opens on its own field: a case study loaded
+  // directly would otherwise start at the home page's zoom and be seen easing
+  // 4× into its own. Between pages the ease stays — that one is the transition.
+  const field = navigated ? undefined : { instant: true };
   if (navigated) advancePalette();
   navigated = true;
 
@@ -350,13 +354,13 @@ function setupPage() {
     // Fresh page, fresh scroll position — and the hatch starts closed, so the
     // case study opens on its title and nothing else.
     backLink = main.querySelector('.back');
-    scene.setScale(PAGE_SCALE);
-    scene.setSpeed(PAGE_SPEED);
+    scene.setScale(PAGE_SCALE, field);
+    scene.setSpeed(PAGE_SPEED, field);
   } else {
     backLink = null;
     // Back to the default field.
-    scene.setScale();
-    scene.setSpeed();
+    scene.setScale(undefined, field);
+    scene.setSpeed(undefined, field);
   }
 
   // Every piece of copy on every page, case studies included — the blur is a
@@ -390,6 +394,17 @@ function setupPage() {
   // It has to be called per page rather than once: the kit is a one-shot script
   // and swup gives it a new document to mount into on every arrival.
   vitoshaWidgets(main);
+
+  // The Melba jars bring Matter.js and Paper.js with them, so only a page that
+  // has one fetches them. Each module defines its element on arrival, and the
+  // jars already on the page upgrade themselves.
+  if (main.querySelector('jar-skin')) import('./melba/jarSkin.js');
+  if (main.querySelector('jar-jelly')) import('./melba/jarJelly.js');
+
+  // The Next-DC diagrams, on the page that has them.
+  if (main.querySelector('ndc-roll, ndc-curtain, ndc-grid, ndc-labels, ndc-theme, ndc-micro')) {
+    import('./nextdc/index.js');
+  }
 
   // Pointing at one project thickens the others. It no-ops on any page without
   // a projects list, so it is built unconditionally rather than gated on view.

@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Next DC — Daniela Paneva</title>
+    <title>Next-DC Agency Site — Daniela Paneva</title>
     <meta
       name="description"
-      content="Next DC — the agency’s own site, built as lead front-end developer. Video work grid, site-wide theming, and a masked reveal system." />
+      content="Next-DC Agency Site — the studio’s own website: curtains, a drifting work grid, labels that fly to the cursor, rolling text, a dark mode on hover and a lot of small animations." />
   </head>
   <body>
     {{> frame }}
@@ -17,25 +17,14 @@
           <span>back</span>
         </a>
 
-        <p class="page__eyebrow">Agency site · 2025</p>
+        <p class="page__eyebrow">Next-DC · Agency site · 2023</p>
         <h1 class="page__title">NEXT-DC AGENCY SITE</h1>
 
         <p class="page__lead">
-          Next DC is an independent agency working out of Sofia, London and
-          Amsterdam, with PUMA, Twitter, BMW, Carlsberg, WWF and Jack Daniel’s on
-          the client list. This is their own site — which meant the brief was the
-          hardest kind: it had to demonstrate the standard the studio sells, with
-          no client to blame for compromises.
+          The website of an independent creative studio working out of Sofia,
+          London and Amsterdam, where the motion does the talking.
         </p>
 
-        <!-- TODO: how long the build ran, and for how much of it you were the
-             only front-end developer. Draft sentence, once you have both:
-             "I built it over X, as the only front-end developer for Y."
-        <p class="page__body">I built it over X, as the only front-end developer for Y.</p>
-        -->
-
-        <!-- The standing head: Role, Concept & identity, Recognition — same
-             rows, same order as Melba. -->
         <dl class="page__meta">
           <dt>Role</dt>
           <dd>
@@ -43,110 +32,151 @@
             completed after I went on leave.
           </dd>
 
-          <!-- Was "Design & art direction". Renamed to match Melba's row, which
-               credits the same kind of work under the site-wide label. -->
-          <dt>Concept &amp; identity</dt>
-          <dd>Next DC</dd>
+          <dt>Tech</dt>
+          <dd>
+            GSAP (ScrollTrigger, ScrollSmoother, CustomEase), Tailwind CSS,
+            Sass, Swiper, Vanilla JS, Webpack 5
+          </dd>
 
-          <!-- TODO: any award or recognition — or delete this row for good. The
-               draft's Outcome section asks the same question: new business,
-               press, awards, anything the studio tracked.
-          <dt>Recognition</dt>
-          <dd>—</dd>
-          -->
+          <dt>Concept &amp; identity</dt>
+          <dd>Next-DC</dd>
         </dl>
 
-        <!-- ====================================================================
-             PICK YOUR SPINE — then delete the other two.
-
-             A case study needs one technical idea, not a feature list. Melba's
-             was "colliders and artwork are different problems." All three below
-             are true about this build, so I've rendered all three rather than
-             choosing for you. Keep whichever is most true, write it properly
-             with the numbers, and cut the other two down to one sentence each —
-             or delete them outright.
-             ==================================================================== -->
-
-        <h2 class="page__heading">A work grid made of video</h2>
+        <h2 class="page__heading">Concept</h2>
         <p class="page__body">
-          The case study grid loads video per tile, mixing <code>.webp</code> and
-          <code>.mp4</code>. That’s the classic agency-site trap: the thing that
-          sells the studio is also the thing that destroys load performance, and
-          every agency site is judged on speed by exactly the people who would
-          hire the agency.
+          Next-DC’s clients run from PUMA and BMW to Carlsberg, WWF and Twitter;
+          this was the site for the studio itself. The design is quiet on
+          purpose, a Garamond display face, Neue Haas Grotesk and a strict
+          12-column grid, so the motion carries it.
         </p>
-        <!-- TODO: how many tiles, what the total weight was, and what you did —
-             lazy loading, poster frames, IntersectionObserver, decode budgets,
-             pausing offscreen video, different sources by connection or
-             viewport. This is where the numbers go. -->
 
-        <h2 class="page__heading">Theming across a whole site</h2>
-        <p class="page__body">
-          There’s a theme switcher. Doing that properly across an entire site —
-          every surface, every state, media that was authored for one background
-          appearing on another — is much harder than it looks, and it’s the same
-          instinct that later became the palette-per-section system on my own
-          portfolio.
-        </p>
-        <!-- TODO: how the tokens were structured, what broke when you flipped
-             it, what had to be authored twice, whether it persisted across
-             pages. -->
-
-        <h2 class="page__heading">The reveal system</h2>
-        <p class="page__body">
-          Every headline exists twice in the DOM — one copy clipped, one visible —
-          driving a masked line-by-line reveal on load and on scroll. Applied
-          consistently across every page, in a way that had to survive arbitrary
-          CMS copy at any length, in two scripts.
-        </p>
-        <!-- TODO: how lines were split, what happened with Cyrillic and Latin at
-             different lengths, how it behaved under prefers-reduced-motion,
-             whether it ever caused layout shift. -->
-
-        <h2 class="page__heading">The rest of the build</h2>
-        <ul class="page__list">
-          <li>
-            A custom CMS rather than a site builder, so the templates had to hold
-            up against content nobody had written yet.
-            <!-- TODO: what that constrained. -->
+        <!-- Each point is a few lines and one diagram. The diagrams are
+             src/nextdc/, loaded by main.js only on this page; each keeps the
+             caption written here under what it builds. Their numbers are the
+             site's own, from nextdc_frontend's js and scss. -->
+        <h2 class="page__heading">How it moves</h2>
+        <ol class="steps">
+          <li class="step">
+            <h3 class="page__subheading">Curtains, at both ends</h3>
+            <p class="page__body">
+              The homepage opens and closes on a curtain. At the top the hero
+              is pinned and the work slides up over it. At the bottom the page
+              lifts away to uncover a footer that was underneath it all along.
+            </p>
+            <p class="page__body">
+              The footer is the hack. It’s <code>position: relative</code> with
+              <code>bottom</code> set to its own height and
+              <code>z-index: -30</code>, so it paints 600 px higher, behind the
+              last screen of content, while its own slot stays in the layout.
+              That empty slot is exactly the scroll the reveal needs: a
+              ScrollTrigger pins the footer for those 600 px with
+              <code>pinSpacing: false</code>, and the content scrolls off it.
+            </p>
+            <ndc-curtain>
+              <p class="caption">
+                Left, the homepage as you scroll it; right, the page as it’s
+                laid out, with the footer painted above its own dashed slot.
+                Drag to scroll, or let it play.
+              </p>
+            </ndc-curtain>
           </li>
-          <li>
-            A percentage loader.
-            <!-- TODO: what it was actually waiting on — and whether it was
-                 honest or decorative. Either answer is interesting. -->
+
+          <li class="step">
+            <h3 class="page__subheading">A work grid that won’t sit still</h3>
+            <p class="page__body">
+              On the work grids the middle column drifts from −100 to +100 px
+              against the scroll, so the tiles never line up into a
+              spreadsheet. Hover one and the still zooms inside its frame, the
+              corners round off, and its looping video appears in the middle,
+              framed by the image.
+            </p>
+            <ndc-grid>
+              <p class="caption">
+                The middle column is <code>.preview:nth-child(3n − 1)</code>,
+                scrubbed to the scroll. Hover a tile, or watch them take turns.
+              </p>
+            </ndc-grid>
           </li>
-          <!-- TODO: bilingual? multi-office content? the feed and goodies
-               sections? Add them here.
-          <li>—</li>
-          -->
-        </ul>
 
-        <!-- TODO — "Numbers" section. All recoverable from the live site with
-             DevTools; nothing renders until the figures are real.
-        <h2 class="page__heading">Numbers</h2>
-        <ul class="page__list">
-          <li>Lighthouse or Core Web Vitals, particularly LCP on the work grid: —</li>
-          <li>Total page weight, home and case study: —</li>
-          <li>Number of templates / pages built: —</li>
-          <li>Mobile: —</li>
-        </ul>
-        -->
+          <li class="step">
+            <h3 class="page__subheading">Labels that fly to the cursor</h3>
+            <p class="page__body">
+              One cursor element trails the mouse, closing 20% of the gap each
+              frame, corrected for frame time so the lag feels the same on any
+              screen. It says whatever the thing underneath declares in its
+              <code>data-</code> attributes: SCROLL over the hero, VIEW PROJECT
+              over the video, a client and project, a date and title, a name and
+              bio on the Team page. The longer labels open from the bottom up
+              with a clip-path.
+            </p>
+            <ndc-labels>
+              <p class="caption">
+                The labels are the ones in my templates. Move the pointer over
+                the box, or watch the cursor tour it.
+              </p>
+            </ndc-labels>
+          </li>
 
-        <!-- TODO — "What I'd do differently". One honest paragraph. The
-             strongest version is about the thing you shipped knowing it wasn't
-             right, and why. Candidates: the loader, the video budget, anything
-             you'd have refactored with two more weeks.
-        <h2 class="page__heading">What I’d do differently</h2>
-        <p class="page__body">—</p>
-        -->
+          <li class="step">
+            <h3 class="page__subheading">Text that rolls</h3>
+            <p class="page__body">
+              Every animated line is written twice, in a box one line tall.
+              GSAP moves the pair up on a custom curve, lines 0.1 s apart, so
+              the first copy rolls out of the top as the second rolls in. There’s
+              no text splitting, so any line an editor types rolls the same way:
+              the homepage subtitle on the live site has since been rewritten,
+              in four lines instead of three, and it still rolls.
+            </p>
+            <ndc-roll>
+              <p class="caption">
+                The subtitle as I shipped it, on the site’s own
+                <code>text-ease</code> curve. Show the window to see the box
+                each line is clipped to and the copies parked around it.
+              </p>
+            </ndc-roll>
+          </li>
 
-        <h2 class="page__heading">Outcome</h2>
-        <!-- TODO: what it did for the agency — new business, press, awards,
-             anything the studio tracked. Goes above the handover paragraph. -->
+          <li class="step">
+            <h3 class="page__subheading">Light and dark</h3>
+            <p class="page__body">
+              Hover the sun in the hero’s corner and the whole site turns over:
+              the light hero goes dark while the dark work goes light, the red
+              Garamond headline turns green, and every section fades over
+              0.3 s. The catch was the header, which takes the colour of the
+              section behind it, so a dark header has to go light too. That’s
+              the extra <code>html.dark #header.dark</code> rule.
+            </p>
+            <ndc-theme>
+              <p class="caption">
+                In Next-DC’s own colours. Hover or tap the sun.
+              </p>
+            </ndc-theme>
+          </li>
+
+          <li class="step">
+            <h3 class="page__subheading">And a lot of small things</h3>
+            <p class="page__body">
+              Most of the hovers are CSS alone, and a few hide a joke. The eye
+              next to “Today’s inspiration feed” has a V inside it: on hover the
+              eye fades, the V slides out and I, E, W follow 50 ms apart. The
+              footer says LET’S TAL and the logo’s X, which rolls over into a
+              K. And project titles roll over into a twin in another typeface.
+            </p>
+            <ndc-micro>
+              <p class="caption">
+                Six of them, rebuilt from the site’s stylesheets at its own
+                timings. Hover one, or watch them take turns.
+              </p>
+            </ndc-micro>
+          </li>
+        </ol>
+
+        <h2 class="page__heading">Three years on</h2>
         <p class="page__body">
-          I handed the project over one section short of finished and went on
-          maternity leave. A colleague completed the Team page.
-          <!-- TODO: which month. -->
+          I built the site between February and April 2023 and handed it over
+          when I went on maternity leave. In September 2026 it’s still running
+          on next-dc.com: the curtains, the cursor, the rolling text and the sun
+          in the corner, now carrying content I never saw.
         </p>
 
         <dl class="page__meta">
@@ -158,13 +188,6 @@
           </dd>
         </dl>
 
-        <!-- TODO: the stack, to match Melba's colophon line.
-        <p class="page__note">Built with —.</p>
-        -->
-
-        <!-- The real exit. Someone who has read this far has finished the story,
-             so this is where the way out belongs — and where the next one gets
-             its chance. The pinned "← all works" is only the escape hatch. -->
         <nav class="page__exit" aria-label="More work">
           <a class="page__exit-back" href="/work/">← WORK</a>
           <a class="page__exit-next" href="/work/melba/">

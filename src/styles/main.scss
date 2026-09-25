@@ -247,7 +247,11 @@ body:has(#swup[data-page="detail"]) {
 .picker__link {
   font-weight: 800;
   text-decoration: none;
-  transition: 0.2s all ease;
+  // Opacity only — the dimming when another link is pointed at. Not `all`,
+  // which caught the font size arriving with the stylesheet and grew the nav
+  // in on every load; and not font-weight, which animated the active link
+  // turning bold just after load. Bold is instant.
+  transition: opacity 0.2s ease;
 
   &.is-active,
   &[aria-pressed="true"] {
@@ -278,14 +282,11 @@ body:has(#swup[data-page="detail"]) {
 }
 
 // --- Nav hover: the name gives way to an eye ---------------------------------
-// A crossfade alone reads as two things dissolving into each other. Scaling
-// them against one another — the name shrinking away, the eye growing in —
-// reads as one thing being replaced by another, which is what it is.
+// A plain crossfade on opacity. No scaling: the name and the eye stay the size
+// they are and only trade places.
 .site-header__label {
   display: block;
-  transition:
-    opacity 0.2s ease,
-    scale 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .site-header__eye {
@@ -300,24 +301,19 @@ body:has(#swup[data-page="detail"]) {
   height: 1.925em;
   width: auto;
   opacity: 0;
-  scale: 0.9;
   // It sits over the link it belongs to; the link keeps the pointer.
   pointer-events: none;
-  transition:
-    opacity 0.2s ease,
-    scale 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .site-header a:hover,
 .site-header a:focus-visible {
   .site-header__label {
     opacity: 0;
-    scale: 0.92;
   }
 
   .site-header__eye {
     opacity: 1;
-    scale: 1;
   }
 }
 
@@ -1023,6 +1019,933 @@ body:has(#swup[data-page="detail"]) .page__eye {
   max-width: min(100%, 46rem);
   --text: var(--ink);
   --bg: transparent;
+}
+
+// The Melba jars (src/melba/). Built on the page rather than from the kit, so
+// the kit's stylesheet never reaches them — these are its rules, restated with
+// the same sizes, and with its colours worked out the way `.page .widget` above
+// works them out: ink on a transparent ground. The canvases read the ink off
+// the element's `color`.
+// The Next-DC diagrams (src/nextdc/) share the same controls, so they are
+// listed here with the jars; what is their own follows below.
+jar-skin,
+jar-jelly,
+ndc-roll,
+ndc-curtain,
+ndc-grid,
+ndc-labels,
+ndc-theme,
+ndc-micro {
+  --muted: color-mix(in srgb, var(--ink) 64%, transparent);
+  --line: color-mix(in srgb, var(--ink) 18%, transparent);
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  display: grid;
+  gap: 10px;
+  margin: 1.25rem 0 0;
+  max-width: min(100%, 46rem);
+  color: var(--ink);
+
+  .jar-demo__stage {
+    // The jar is drawn at 320 × 440 and scales down with the column. Past this
+    // width it would only be a bigger jar, not a clearer one.
+    width: 100%;
+    max-width: 380px;
+    cursor: crosshair;
+    // Up and down still scrolls the case study; sideways stirs the jar.
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 6px;
+    }
+  }
+
+  .controls {
+    display: grid;
+    gap: 14px;
+    padding-block: 14px 4px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    align-items: end;
+  }
+
+  .ctl {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    output {
+      color: var(--ink);
+      font-family: var(--mono);
+      letter-spacing: 0;
+      text-transform: none;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  input[type="range"] {
+    width: 200px;
+    max-width: 100%;
+    accent-color: var(--ink);
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px;
+
+    button {
+      font: inherit;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: none;
+      color: var(--muted);
+      border: 0;
+      border-radius: 999px;
+      padding: 5px 14px;
+      cursor: pointer;
+    }
+
+    // The ground is transparent, so "inverted" can't be the background's
+    // colour: the page's own near-white stands in for it.
+    button[aria-pressed="true"] {
+      background: var(--ink);
+      color: #fff;
+    }
+  }
+
+  .btn {
+    font: inherit;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: none;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--ink);
+    }
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  .readout {
+    margin: 0;
+    // Two lines, always, so the caption doesn't jump as the text changes.
+    min-height: 3em;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .caption {
+    margin: 0;
+    max-width: var(--measure);
+    font-size: 12px;
+    color: var(--muted);
+  }
+}
+
+// --- Next-DC ------------------------------------------------------------------
+
+// Two copies, one window. Each row is exactly as tall as the site's: its
+// window 32/36 of a line (h-8 on text-3xl), its copies a full line each.
+ndc-roll {
+  .demo__stage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+    align-items: end;
+  }
+
+  .roll {
+    --line: 1.2em;
+    font-size: var(--fs-lead);
+    line-height: var(--line);
+  }
+
+  .roll__row {
+    position: relative;
+    height: calc(var(--line) * 32 / 36);
+  }
+
+  .roll__window {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  // The same pair again, unclipped and faint: what "Show the window" reveals.
+  .roll__ghost {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &.is-xray {
+    .roll__ghost {
+      opacity: 0.2;
+    }
+
+    .roll__window {
+      outline: 1px dashed var(--ink);
+      outline-offset: 0;
+    }
+
+    // Room for the parked copies. A pair reaches from one line above its
+    // window (where it ends) to two below (where it starts), so each row
+    // needs that much clear around it.
+    .roll {
+      padding-block: var(--line) calc(var(--line) * 2.2);
+    }
+
+    .roll__row + .roll__row {
+      margin-top: calc(var(--line) * 2.3);
+    }
+  }
+
+  .roll__plot {
+    margin: 0;
+    display: grid;
+    gap: 4px;
+
+    canvas {
+      display: block;
+      width: 200px;
+      height: 110px;
+    }
+
+    figcaption {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+  }
+}
+
+// The rest of the Next-DC diagrams. Drawn in the palette's ink, with one
+// colour borrowed from the site — its red, --accent — for the thing each
+// diagram is about. The theme diagram is the exception: colour is its subject,
+// so it wears Next-DC's own.
+ndc-curtain,
+ndc-grid,
+ndc-labels,
+ndc-theme,
+ndc-micro {
+  --accent: #ff5e5e;
+  --paper: color-mix(in oklab, var(--ink) 6%, white);
+  --serif: "EB Garamond", Garamond, "Cormorant Garamond", Baskerville, "Times New Roman", serif;
+  // Next-DC's easings, from its _easing.scss.
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-in-out-quad: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+}
+
+// --- The curtains ---
+ndc-curtain {
+  .curtain {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    height: auto;
+    font-family: var(--mono);
+  }
+
+  .curtain__title {
+    font-size: 9px;
+    fill: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .curtain__label {
+    font-family: var(--serif);
+    font-size: 15px;
+    fill: var(--ink);
+  }
+
+  .curtain__small {
+    font-size: 7.5px;
+    fill: var(--muted);
+  }
+
+  .curtain__on-ink {
+    font-size: 8px;
+    fill: var(--paper);
+  }
+
+  .curtain__on-accent {
+    font-size: 12px;
+    font-weight: 800;
+    fill: #fff;
+  }
+
+  .is-hero {
+    fill: var(--paper);
+  }
+
+  .is-content {
+    fill: var(--ink);
+  }
+
+  .is-tile {
+    fill: none;
+    stroke: var(--paper);
+    stroke-opacity: 0.35;
+  }
+
+  .is-footer {
+    fill: var(--accent);
+  }
+
+  .curtain__frame {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.5;
+  }
+
+  // The footer where it paints, laid over the content it hides behind.
+  .curtain__painted {
+    fill: var(--accent);
+    fill-opacity: 0.35;
+    stroke: var(--accent);
+    stroke-dasharray: 3 2;
+  }
+
+  .curtain__slot {
+    fill: none;
+    stroke: var(--ink);
+    stroke-dasharray: 3 2;
+  }
+
+  .curtain__arrow {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.2;
+  }
+
+  .curtain__window {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+  }
+}
+
+// --- The work grid ---
+ndc-grid {
+  .grid {
+    position: relative;
+    height: 260px;
+    max-width: 520px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .grid__page {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px 12px;
+    padding: 16px 14px;
+    will-change: transform;
+  }
+
+  .grid__tile {
+    display: grid;
+    gap: 5px;
+    cursor: default;
+  }
+
+  .grid__frame {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    transition: border-radius 0.5s var(--ease-in-out-quad);
+  }
+
+  .grid__still {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, transparent 48%, color-mix(in oklab, var(--ink) 30%, transparent) 49% 51%, transparent 52%),
+      color-mix(in oklab, var(--ink) 14%, transparent);
+    transition: transform 0.5s var(--ease-in-out-quad);
+  }
+
+  // The video, framed by the still at 80% width.
+  .grid__video {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 80%;
+    aspect-ratio: 16 / 9;
+    translate: -50% -50%;
+    display: none;
+    background: var(--accent);
+
+    i {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -35% -50%;
+      border: 6px solid transparent;
+      border-left: 9px solid #fff;
+      border-right: 0;
+    }
+  }
+
+  .grid__line {
+    height: 3px;
+    background: var(--ink);
+    opacity: 0.35;
+
+    &--short {
+      width: 55%;
+    }
+  }
+
+  .grid__tile.is-hover {
+    .grid__frame {
+      border-radius: 12px;
+    }
+
+    .grid__still {
+      transform: scale(1.2);
+    }
+
+    .grid__video {
+      display: block;
+    }
+  }
+}
+
+// --- The flying labels ---
+ndc-labels {
+  .lbl {
+    position: relative;
+    height: 260px;
+    max-width: 520px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    cursor: none;
+    touch-action: pan-y;
+  }
+
+  .lbl__hero-word {
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.55;
+  }
+
+  .lbl__target {
+    position: absolute;
+    background: color-mix(in oklab, var(--ink) 14%, transparent);
+    outline: 1.5px solid transparent;
+    transition: outline-color 0.2s ease;
+
+    &.is-over {
+      outline-color: var(--accent);
+    }
+
+    // The hero video: a play mark.
+    &.is-video::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      translate: -35% -50%;
+      border: 8px solid transparent;
+      border-left: 12px solid var(--ink);
+      border-right: 0;
+      opacity: 0.5;
+    }
+
+    &.is-post {
+      background:
+        repeating-linear-gradient(
+          transparent 0 10px,
+          color-mix(in oklab, var(--ink) 25%, transparent) 10px 12px
+        ),
+        color-mix(in oklab, var(--ink) 6%, transparent);
+    }
+  }
+
+  .lbl__cursor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none; // so it never finds itself under the pointer
+    will-change: transform;
+  }
+
+  .lbl__dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    translate: -50% -50%;
+  }
+
+  .lbl__pill {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  // The longer labels open like the site's: a clip-path from the bottom up.
+  .lbl__card {
+    position: absolute;
+    left: 10px;
+    top: 8px;
+    width: 150px;
+    display: grid;
+    gap: 3px;
+    padding: 8px 10px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.3;
+    clip-path: inset(100% 0 0 0);
+
+    b {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    &.is-open {
+      clip-path: inset(0 0 0 0);
+      // power2.out, 0.5 s
+      transition: clip-path 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+  }
+}
+
+// --- Dark mode on hover: Next-DC's own colours ---
+ndc-theme {
+  .thm {
+    --light: #ebebeb;
+    --dark: #161616;
+    --red: #ff5e5e;
+    --green: #097032;
+    --brown: #6c4f24;
+    --black: #262626;
+
+    max-width: 520px;
+    overflow: hidden;
+    border-radius: 6px;
+    // Every section fades its colours the way the site's did.
+    * {
+      transition:
+        background-color 0.3s var(--ease-out-quad),
+        color 0.3s var(--ease-out-quad),
+        border-color 0.3s var(--ease-out-quad);
+    }
+  }
+
+  .thm__hero {
+    position: relative;
+    display: grid;
+    align-content: end;
+    gap: 2px;
+    height: 170px;
+    padding: 14px 16px;
+    background: var(--light);
+    color: var(--black);
+    text-transform: uppercase;
+  }
+
+  .thm__logo {
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    font-weight: 800;
+  }
+
+  .thm__title {
+    font-family: var(--serif);
+    font-size: clamp(26px, 5vw, 36px);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--red);
+  }
+
+  .thm__sub {
+    font-size: clamp(16px, 3vw, 22px);
+    line-height: 1.1;
+
+    em {
+      font-style: normal;
+      color: var(--green);
+    }
+  }
+
+  .thm__switch {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--brown);
+    cursor: pointer;
+
+    svg {
+      display: block;
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  .thm__work {
+    background: var(--dark);
+    padding: 0 16px 16px;
+  }
+
+  // The header over the work section: #header.dark.
+  .thm__bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid color-mix(in srgb, #fff 40%, transparent);
+    color: #fff;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .thm__tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding-top: 14px;
+
+    i {
+      aspect-ratio: 4 / 3;
+      background: color-mix(in srgb, #fff 16%, transparent);
+    }
+  }
+
+  .thm.is-dark {
+    .thm__hero {
+      background: var(--dark);
+      color: #fff;
+    }
+
+    .thm__title {
+      color: var(--green);
+    }
+
+    .thm__sub em {
+      color: var(--brown);
+    }
+
+    .thm__switch {
+      color: #fff;
+    }
+
+    .thm__work {
+      background: var(--light);
+    }
+
+    // html.dark #header.dark: the extra rule, a dark header gone light.
+    .thm__bar {
+      color: var(--black);
+      border-color: color-mix(in srgb, var(--black) 40%, transparent);
+    }
+
+    .thm__tiles i {
+      background: color-mix(in srgb, var(--black) 14%, transparent);
+    }
+  }
+}
+
+// --- The micro-animations: the site's CSS, at its own timings ---
+ndc-micro {
+  .micro {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    max-width: 520px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    @media (max-width: 480px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .micro__cell {
+    display: grid;
+    grid-template-rows: 56px auto;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    transition: border-color 0.2s ease;
+    cursor: default;
+
+    &.is-on {
+      border-color: var(--accent);
+    }
+  }
+
+  .micro__stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .micro__note {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  // The eye becomes VIEW.
+  .m-view {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 64px;
+    height: 24px;
+    color: var(--accent);
+    font-size: 20px;
+    line-height: 1;
+
+    > span:not(:first-of-type) {
+      opacity: 0;
+      transition: opacity 0.1s var(--ease-out-quad);
+    }
+
+    > span:first-of-type {
+      margin-left: 14px;
+      transition: margin-left 0.3s var(--ease-out-quad);
+    }
+  }
+
+  .m-view__eye {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 24px;
+    fill: currentColor;
+    transition: opacity 0.1s var(--ease-out-quad);
+  }
+
+  .is-on .m-view {
+    .m-view__eye {
+      opacity: 0;
+    }
+
+    > span {
+      opacity: 1;
+    }
+
+    > span:first-of-type {
+      margin-left: 0;
+    }
+
+    > span:nth-of-type(2) {
+      transition-delay: 0.05s;
+    }
+
+    > span:nth-of-type(3) {
+      transition-delay: 0.1s;
+    }
+
+    > span:nth-of-type(4) {
+      transition-delay: 0.15s;
+    }
+  }
+
+  // A label and its data-replace twin.
+  .m-swap {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    line-height: 1.2;
+
+    > span,
+    &::after {
+      display: block;
+      transition: transform 0.3s var(--ease-out-quad);
+    }
+
+    &::after {
+      content: attr(data-replace);
+      position: absolute;
+      inset: 0;
+      transform: translateY(100%);
+    }
+  }
+
+  .is-on .m-swap {
+    > span {
+      transform: translateY(-100%);
+    }
+
+    &::after {
+      transform: translateY(0);
+    }
+  }
+
+  .m-pill {
+    padding: 6px 14px;
+    border: 1px solid var(--ink);
+    border-radius: 55px;
+    font-size: 12px;
+  }
+
+  .m-title {
+    font-size: 24px;
+    text-transform: uppercase;
+    // Clipped top and bottom only: the Garamond twin is wider than the word
+    // it replaces, and a plain overflow: hidden cut its last letter off.
+    overflow: visible;
+    clip-path: inset(0 -100%);
+
+    // The twin is another typeface altogether, centred on the word it
+    // replaces.
+    &::after {
+      left: 50%;
+      right: auto;
+      translate: -50% 0;
+      white-space: nowrap;
+      font-family: var(--serif);
+      color: var(--accent);
+    }
+  }
+
+  // LET'S TAL + the logo's X, which rolls over into the K.
+  .m-talk {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .m-talk__x {
+    display: inline-block;
+    height: 1.2em;
+    overflow: hidden;
+    vertical-align: bottom;
+
+    span {
+      display: block;
+      transition: transform 0.4s var(--ease-in-out-quad);
+
+      &::after {
+        content: "K";
+        display: block;
+      }
+    }
+  }
+
+  .is-on .m-talk__x span {
+    transform: translateY(-50%);
+  }
+
+  .m-pages {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    i {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      font-size: 10px;
+      font-style: normal;
+      transition:
+        width 0.3s var(--ease-out-quad),
+        background-color 0.3s var(--ease-out-quad),
+        color 0.3s var(--ease-out-quad);
+    }
+  }
+
+  .is-on .m-pages .is-current {
+    width: 64px;
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .m-star svg {
+    display: block;
+    width: 26px;
+    height: 26px;
+    fill: var(--accent);
+  }
+
+  .is-on .m-star svg {
+    animation: ndc-star 0.8s linear infinite;
+  }
+}
+
+@keyframes ndc-star {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // The diagrams. They are drawn in currentColor and inlined into the page (see

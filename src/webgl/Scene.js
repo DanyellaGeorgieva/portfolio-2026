@@ -409,7 +409,14 @@ export default class Scene {
    * Ease a scalar uniform toward a new value. tick() advances it; a call
    * mid-tween re-aims from wherever the value currently sits, so it never snaps.
    */
-  tweenTo(name, target) {
+  tweenTo(name, target, { instant = false } = {}) {
+    // Straight there, no ease: the first page of a visit, which should open on
+    // its own field rather than be seen zooming into it.
+    if (instant) {
+      this.tweens.delete(name);
+      this.material.uniforms[name].value = target;
+      return;
+    }
     // Already there, or already heading there (setupPage() re-runs on every
     // swup view, so the same target can arrive twice).
     const running = this.tweens.get(name);
@@ -424,8 +431,8 @@ export default class Scene {
    * Cell/channel density — a higher target packs the field into more, smaller
    * cells. No argument returns to the default.
    */
-  setScale(target = DEFAULTS.scale) {
-    this.tweenTo('uScale', target);
+  setScale(target = DEFAULTS.scale, options) {
+    this.tweenTo('uScale', target, options);
   }
 
   /**
@@ -433,8 +440,8 @@ export default class Scene {
    * default. Safe to change at any time: tick() accumulates the phase, so the
    * field only changes pace, it never jumps.
    */
-  setSpeed(target = DEFAULTS.speed) {
-    this.tweenTo('uSpeed', target);
+  setSpeed(target = DEFAULTS.speed, options) {
+    this.tweenTo('uSpeed', target, options);
   }
 
   /**
