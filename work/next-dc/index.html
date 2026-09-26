@@ -21,8 +21,8 @@
         <h1 class="page__title">NEXT-DC AGENCY SITE</h1>
 
         <p class="page__lead">
-          The website of an independent creative studio working out of Sofia,
-          London and Amsterdam, where the motion does the talking.
+          The website of an independent creative agency working out of Sofia,
+          London and Amsterdam.
         </p>
 
         <dl class="page__meta">
@@ -44,10 +44,11 @@
 
         <h2 class="page__heading">Concept</h2>
         <p class="page__body">
-          Next-DC’s clients run from PUMA and BMW to Carlsberg, WWF and Twitter;
-          this was the site for the studio itself. The design is quiet on
-          purpose, a Garamond display face, Neue Haas Grotesk and a strict
-          12-column grid, so the motion carries it.
+          Next-DC’s client portfolio spans global giants like PUMA, BMW,
+          Carlsberg, WWF, and Twitter. This platform serves as the studio's own
+          digital flagship. Because the layout design remains quiet on purpose,
+          the responsibility of commanding the user's attention falls entirely
+          on high-performance motion choreography.
         </p>
 
         <!-- Each point is a few lines and one diagram. The diagrams are
@@ -57,11 +58,16 @@
         <h2 class="page__heading">How it moves</h2>
         <ol class="steps">
           <li class="step">
-            <h3 class="page__subheading">Curtains, at both ends</h3>
+            <h3 class="page__subheading">
+              The Curtain Rig (Top & Bottom Reveals)
+            </h3>
             <p class="page__body">
-              The homepage opens and closes on a curtain. At the top the hero
-              is pinned and the work slides up over it. At the bottom the page
-              lifts away to uncover a footer that was underneath it all along.
+              The platform opens and closes on a simulated theater curtain
+              effect. At the top of the timeline, the hero layout stays
+              structurally pinned while the project grid slides directly over
+              it. At the bottom, the viewport content lifts away to uncover a
+              hidden footer that was sitting underneath the layout stack all
+              along.
             </p>
             <p class="page__body">
               The footer is the hack. It’s <code>position: relative</code> with
@@ -82,13 +88,16 @@
           </li>
 
           <li class="step">
-            <h3 class="page__subheading">A work grid that won’t sit still</h3>
+            <h3 class="page__subheading">The Drifting Project Grid</h3>
             <p class="page__body">
-              On the work grids the middle column drifts from −100 to +100 px
-              against the scroll, so the tiles never line up into a
-              spreadsheet. Hover one and the still zooms inside its frame, the
-              corners round off, and its looping video appears in the middle,
-              framed by the image.
+              To prevent the work grids from looking like a sterile, static
+              spreadsheet, the middle layout column—selected via
+              .preview:nth-child(3n - 1)—is scrubbed directly to the scroll
+              timeline, causing it to dynamically drift from -100px to +100px
+              against the main scroll direction. Interacting with a project tile
+              triggers a compound state transition: the static preview scales
+              upward smoothly (×1.2), the border-radius interpolates from 0px to
+              24px, and a looping inline preview video fades into center focus.
             </p>
             <ndc-grid>
               <p class="caption">
@@ -99,7 +108,7 @@
           </li>
 
           <li class="step">
-            <h3 class="page__subheading">Labels that fly to the cursor</h3>
+            <h3 class="page__subheading">Inertia Cursor Labels</h3>
             <p class="page__body">
               One cursor element trails the mouse, closing 20% of the gap each
               frame, corrected for frame time so the lag feels the same on any
@@ -120,12 +129,20 @@
           <li class="step">
             <h3 class="page__subheading">Text that rolls</h3>
             <p class="page__body">
-              Every animated line is written twice, in a box one line tall.
-              GSAP moves the pair up on a custom curve, lines 0.1 s apart, so
-              the first copy rolls out of the top as the second rolls in. There’s
-              no text splitting, so any line an editor types rolls the same way:
-              the homepage subtitle on the live site has since been rewritten,
-              in four lines instead of three, and it still rolls.
+              To achieve an elite, seamless typography rolling transition
+              without the fragility of text-splitting libraries, every animated
+              string is written twice inside an explicit overflow-hidden
+              container exactly one line tall.
+            </p>
+            <p class="page__body">
+              GSAP interpolates the paired blocks upward along a highly
+              customized easing curve (text-ease), staggered exactly 0.1s apart.
+              The first text string rolls out of the top boundary while the
+              second copy rolls in from the bottom. Because this relies on
+              native CSS text layout, any copy an editor types behaves
+              flawlessly. If an administrator rewrites a subtitle to wrap across
+              four lines instead of three, the structural translation loop
+              executes without breaking the animation container.
             </p>
             <ndc-roll>
               <p class="caption">
@@ -139,12 +156,12 @@
           <li class="step">
             <h3 class="page__subheading">Light and dark</h3>
             <p class="page__body">
-              Hover the sun in the hero’s corner and the whole site turns over:
+              Click the sun in the hero’s corner and the whole site turns over:
               the light hero goes dark while the dark work goes light, the red
-              Garamond headline turns green, and every section fades over
-              0.3 s. The catch was the header, which takes the colour of the
-              section behind it, so a dark header has to go light too. That’s
-              the extra <code>html.dark #header.dark</code> rule.
+              Garamond headline turns green, and every section fades over 0.3 s.
+              The catch was the header, which takes the colour of the section
+              behind it, so a dark header has to go light too. That’s the extra
+              <code>html.dark #header.dark</code> rule.
             </p>
             <ndc-theme>
               <p class="caption">
@@ -159,8 +176,8 @@
               Most of the hovers are CSS alone, and a few hide a joke. The eye
               next to “Today’s inspiration feed” has a V inside it: on hover the
               eye fades, the V slides out and I, E, W follow 50 ms apart. The
-              footer says LET’S TAL and the logo’s X, which rolls over into a
-              K. And project titles roll over into a twin in another typeface.
+              footer says LET’S TAL and the logo’s X, which rolls over into a K.
+              And project titles roll over into a twin in another typeface.
             </p>
             <ndc-micro>
               <p class="caption">
