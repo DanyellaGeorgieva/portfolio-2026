@@ -1113,6 +1113,7 @@ ndc-micro {
     button {
       font: inherit;
       font-size: 12px;
+      font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       background: none;
@@ -1134,11 +1135,12 @@ ndc-micro {
   .btn {
     font: inherit;
     font-size: 12px;
+    font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     background: none;
     color: var(--ink);
-    border: 1px solid var(--line);
+    border: 1px solid var(--ink);
     border-radius: 999px;
     padding: 6px 14px;
     cursor: pointer;

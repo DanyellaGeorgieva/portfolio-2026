@@ -54,6 +54,8 @@ class JarJelly extends JarDemo {
           <button type="button" data-preset="stone" aria-pressed="false">Stone</button>
           <button type="button" data-custom aria-pressed="false">Custom</button>
         </div>
+        <button type="button" class="btn" data-structure aria-pressed="true">Hide the dots</button>
+        <button type="button" class="btn" data-shake>Shake</button>
       </div>
       <div class="row">
         <div class="ctl">
@@ -68,10 +70,6 @@ class JarJelly extends JarDemo {
           <label for="${this.uid}-dots">Dots <output data-out="dots"></output></label>
           <input type="range" id="${this.uid}-dots" data-in="dots" min="6" max="44" step="2" />
         </div>
-      </div>
-      <div class="row">
-        <button type="button" class="btn" data-structure aria-pressed="true">Hide the dots</button>
-        <button type="button" class="btn" data-shake>Shake</button>
       </div>`;
   }
 

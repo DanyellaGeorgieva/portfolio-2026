@@ -62,13 +62,13 @@
 .vtw .swatch span { position: absolute; inset: 5px; border-radius: 50%; }
 .vtw .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
 .vtw .seg button {
-    font: inherit; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
     background: none; color: var(--muted); border: 0; border-radius: 999px;
     padding: 5px 14px; cursor: pointer;
   }
 .vtw .seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
 .vtw .btn {
-    font: inherit; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+    font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
     background: none; color: var(--text); border: 1px solid var(--line); border-radius: 999px;
     padding: 6px 14px; cursor: pointer;
   }
