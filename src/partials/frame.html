@@ -119,156 +119,126 @@
        loop is free-running rather than started on hover, so what anyone
        actually sees is a random point in it, and the length of the cycle is
        really the length of the wait before they see a blink at all. -->
-  <symbol id="icon-eye" viewBox="0 0 21.9 21.9">
-    <!-- Stroke weight is measured off the reference rather than picked: there,
-         a stroke is about a nineteenth of the eye's width. It matters more than
-         it looks, because it sets whether a short lash reads as a capsule or as
-         a blob — at 1.6 these lashes were wider than they were long once the
-         caps were counted. -->
-    <!-- The art is laid out around an eye centred at (12, 14); this shifts that
-         layout onto a zero-origin viewBox. It has to be zero-origin: <use>
-         resolves its viewport at (0, 0), so a viewBox starting anywhere else
-         renders the symbol offset by exactly that origin and clips whatever
-         falls outside — which showed up as the top lashes being sliced off.
+  <symbol id="icon-eye" viewBox="0 0 36.2425 44.1213">
+    <!-- Drawn to the Figma frame one-for-one: this viewBox is that frame, and
+         every coordinate below is its own, so nothing is shifted or rescaled on
+         the way in. The eye is centred at (18.1212, 22).
 
-         Square since the lower lashes arrived: they mirror the upper ones
-         across y 14, so the box grows by the same margin below as above, and
-         the eye's centre is now the middle of the viewBox. -->
-    <g transform="translate(-1.05 -3.05)"
-       fill="none" stroke="currentColor" stroke-width="1.2"
+         Stroke 2 throughout, which is what the lid is drawn at and what the
+         lashes are as well — each is a 2-wide rectangle with fully rounded ends,
+         which is exactly a round-capped line of weight 2. -->
+    <g fill="none" stroke="currentColor" stroke-width="2"
        stroke-linecap="round" stroke-linejoin="round">
 
-      <!-- Lashes, sitting on the lid's own normals rather than radiating from a
-           single point. Both arrangements look alike on a shallow eye; on this
-           rounder one they do not, because the lid's steepness changes along its
-           length. Spaced at equal steps along the upper curve and each one
-           square to it, the outer pair ends up lower and splayed wider than the
-           middle — which is the eye's own shape reading back out of them.
+      <!-- Lashes: five above, five below, each written from its end at the lid
+           to its end away from it — so the dash retracting from the start
+           draws them back out of the lid, toward their tips. Centre ones 6
+           long, the next pair 4 at 30 degrees, the outer pair 2 at 45 degrees:
+           each line is its rectangle's length less the two round ends.
 
-           Short enough that the round caps are most of each one: measured off
-           the reference, a lash is about a sixth of the eye's width and the
-           round ends are what give it its shape, so it reads as a stroke of a
-           brush rather than as a line.
+           The lower five are not a strict mirror of the upper five: in the
+           design they sit 0.1213 lower than that, and are kept there.
 
            They belong to the open eye, so they go with the iris when the lid
            comes down. -->
       <!-- pathLength="1" makes the dash pattern length-independent, so one
            inherited stroke-dashoffset retracts all ten identically. -->
       <g stroke-dasharray="1 1">
-        <line x1="3.68" y1="9.64" x2="2.35" y2="7.89" pathLength="1" />
-        <line x1="7.71" y1="7.36" x2="6.93" y2="5.30" pathLength="1" />
-        <line x1="12.00" y1="6.55" x2="12.00" y2="4.35" pathLength="1" />
-        <line x1="16.29" y1="7.36" x2="17.07" y2="5.30" pathLength="1" />
-        <line x1="20.32" y1="9.64" x2="21.65" y2="7.89" pathLength="1" />
-        <!-- The lower five: the upper five mirrored across the eye's centre
-             line (y 14), so each sits square to the lower lid the way its
-             partner sits square to the upper one. Same group, so the same
-             dashoffset retracts them on the same beat. -->
-        <line x1="3.68" y1="18.36" x2="2.35" y2="20.11" pathLength="1" />
-        <line x1="7.71" y1="20.64" x2="6.93" y2="22.70" pathLength="1" />
-        <line x1="12.00" y1="21.45" x2="12.00" y2="23.65" pathLength="1" />
-        <line x1="16.29" y1="20.64" x2="17.07" y2="22.70" pathLength="1" />
-        <line x1="20.32" y1="18.36" x2="21.65" y2="20.11" pathLength="1" />
+        <line x1="18.1212" y1="7" x2="18.1212" y2="1" pathLength="1" />
+        <line x1="10.1211" y1="8.7321" x2="8.1211" y2="5.268" pathLength="1" />
+        <line x1="26.121" y1="8.7321" x2="28.121" y2="5.268" pathLength="1" />
+        <line x1="2.8286" y1="13.707" x2="1.4144" y2="12.2928" pathLength="1" />
+        <line x1="33.4141" y1="13.7071" x2="34.8283" y2="12.2929" pathLength="1" />
+        <line x1="18.1212" y1="37.1213" x2="18.1212" y2="43.1213" pathLength="1" />
+        <line x1="10.1214" y1="35.3893" x2="8.1214" y2="38.8534" pathLength="1" />
+        <line x1="26.1215" y1="35.3893" x2="28.1215" y2="38.8534" pathLength="1" />
+        <line x1="2.8284" y1="30.4143" x2="1.4142" y2="31.8285" pathLength="1" />
+        <line x1="33.4139" y1="30.4143" x2="34.8281" y2="31.8285" pathLength="1" />
         <animate attributeName="stroke-dashoffset"
                  values="0;
-                                 0;
-                                 -1;
-                                 -1;
-                                 -1;
-                                 -1;
-                                 -1;
-                                 -1;
-                                 -1;
-                                 -1;
-                                 0;
-                                 0"
+                         0;
+                         -1;
+                         -1;
+                         -1;
+                         -1;
+                         -1;
+                         -1;
+                         -1;
+                         -1;
+                         0;
+                         0"
                  keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
                  dur="3.2s" repeatCount="indefinite" />
       </g>
 
-      <!-- Iris as one solid disc. The reference separates iris from pupil with
-           colour, which a monochrome drawing cannot do — so rather than spend
-           two rings on a distinction that has nothing left to carry it, this is
-           a single filled circle.
-
-           Sized against the opening rather than copied across: at 3.5 it leaves
-           a little under a unit of clearance inside the lid, so it reads as
-           filling the eye without touching it. -->
+      <!-- Iris as one solid disc, radius 7, as the design has it. -->
       <g>
-        <circle cx="12" cy="14" r="3.5" fill="currentColor" stroke="none" />
+        <circle cx="18.1212" cy="22" r="7" fill="currentColor" stroke="none" />
         <animate attributeName="opacity"
                  values="1;
-                                 1;
-                                 1;
-                                 0;
-                                 0;
-                                 0;
-                                 0;
-                                 0;
-                                 0;
-                                 0;
-                                 1;
-                                 1"
+                         1;
+                         1;
+                         0;
+                         0;
+                         0;
+                         0;
+                         0;
+                         0;
+                         0;
+                         1;
+                         1"
                  keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
                  dur="3.2s" repeatCount="indefinite" />
       </g>
 
-      <!-- The lid, as two separate arcs rather than one path that turns the
-           corner. A single path joins at the corners, and a join between two
-           curves meeting at a shallow angle draws out to a point however the
-           linejoin is set. Two arcs each end in a round cap instead, so the
-           corners are the blunt rounded tips the reference has — and the closed
-           eye gets the same rounded ends, because it is these two arcs lying on
-           top of each other.
+      <!-- The lid, as two separate halves rather than the one closed outline the
+           design draws. It is that outline cut at its two tips, where it runs
+           vertically through y 22 — so the halves meet end to end on the same
+           tangent and their round caps close the join invisibly, and the closed
+           eye is these two halves lying on top of each other.
 
-           19 wide by 10 tall, where it was 19 by 7: rounder, without going so
-           round that it stops reading as an eye.
+           Each half is six cubics with the same command structure in every
+           keyframe, so the blink is a morph of the d attribute: the upper half
+           comes down onto the lower one to close the eye.
 
-           Both arcs animate, and they have to. The upper one comes down onto
-           the lower one to close the eye — but the spring that follows is the
-           closed arch moving, and a closed arch is these two curves lying on
-           top of each other. If only one of them sprang they would separate and
-           the single line would split into two.
-
-           The spring is a damped oscillation of the control point about its
-           rest at 24: past it to 25.9, back through to 23.0, then 24.6, 23.8
-           and home, with each swing smaller and quicker than the last. The
-           swings are one set of numbers scaled together, so the decay keeps its
-           shape whatever the throw is set to. Written
-           out as keyframes rather than reached for as an easing function,
-           because SMIL has no spring and the overshoot needs to be in the
-           values themselves. -->
-      <path d="M2.5 14 Q12 24 21.5 14">
+           Both halves then spring, and they have to — a closed eye is the two
+           of them lying together, and if only one sprang the single line would
+           split in two. The spring is the lower curve's depth below y 22 scaled
+           by 1.19, 0.90, 1.06, 0.98 and home: the same damped swings the
+           previous drawing used, as ratios, so the decay has the same shape.
+           Written out as keyframes because SMIL has no spring and the overshoot
+           has to be in the values themselves. -->
+      <path d="M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22">
         <animate attributeName="d"
-                 values="M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 25.9 21.5 14;
-                                 M2.5 14 Q12 23.0 21.5 14;
-                                 M2.5 14 Q12 24.6 21.5 14;
-                                 M2.5 14 Q12 23.8 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14"
+                 values="M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1978 1.5966 22.3957 1.7062 22.566 C2.8102 24.2815 5.0295 27.4426 7.9445 30.1649 C10.8732 32.9002 14.3939 35.09 18.1212 35.09 C21.8486 35.09 25.3693 32.9002 28.298 30.1649 C31.213 27.4426 33.4323 24.2815 34.5363 22.566 C34.6459 22.3957 34.7006 22.1978 34.7006 22;
+                         M1.5418 22 C1.5418 22.1496 1.5966 22.2993 1.7062 22.428 C2.8102 23.7255 5.0295 26.1162 7.9445 28.1752 C10.8732 30.2438 14.3939 31.9 18.1212 31.9 C21.8486 31.9 25.3693 30.2438 28.298 28.1752 C31.213 26.1162 33.4323 23.7255 34.5363 22.428 C34.6459 22.2993 34.7006 22.1496 34.7006 22;
+                         M1.5418 22 C1.5418 22.1762 1.5966 22.3525 1.7062 22.5041 C2.8102 24.0322 5.0295 26.848 7.9445 29.273 C10.8732 31.7094 14.3939 33.66 18.1212 33.66 C21.8486 33.66 25.3693 31.7094 28.298 29.273 C31.213 26.848 33.4323 24.0322 34.5363 22.5041 C34.6459 22.3525 34.7006 22.1762 34.7006 22;
+                         M1.5418 22 C1.5418 22.1629 1.5966 22.3258 1.7062 22.4661 C2.8102 23.8789 5.0295 26.4821 7.9445 28.7241 C10.8732 30.9766 14.3939 32.78 18.1212 32.78 C21.8486 32.78 25.3693 30.9766 28.298 28.7241 C31.213 26.4821 33.4323 23.8789 34.5363 22.4661 C34.6459 22.3258 34.7006 22.1629 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22"
                  keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
                  dur="3.2s" repeatCount="indefinite" />
       </path>
-      <path d="M2.5 14 Q12 4 21.5 14">
+      <path d="M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22">
         <animate attributeName="d"
-                 values="M2.5 14 Q12 4 21.5 14;
-                                 M2.5 14 Q12 4 21.5 14;
-                                 M2.5 14 Q12 4 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 25.9 21.5 14;
-                                 M2.5 14 Q12 23.0 21.5 14;
-                                 M2.5 14 Q12 24.6 21.5 14;
-                                 M2.5 14 Q12 23.8 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 24 21.5 14;
-                                 M2.5 14 Q12 4 21.5 14;
-                                 M2.5 14 Q12 4 21.5 14"
+                 values="M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22;
+                         M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22;
+                         M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1978 1.5966 22.3957 1.7062 22.566 C2.8102 24.2815 5.0295 27.4426 7.9445 30.1649 C10.8732 32.9002 14.3939 35.09 18.1212 35.09 C21.8486 35.09 25.3693 32.9002 28.298 30.1649 C31.213 27.4426 33.4323 24.2815 34.5363 22.566 C34.6459 22.3957 34.7006 22.1978 34.7006 22;
+                         M1.5418 22 C1.5418 22.1496 1.5966 22.2993 1.7062 22.428 C2.8102 23.7255 5.0295 26.1162 7.9445 28.1752 C10.8732 30.2438 14.3939 31.9 18.1212 31.9 C21.8486 31.9 25.3693 30.2438 28.298 28.1752 C31.213 26.1162 33.4323 23.7255 34.5363 22.428 C34.6459 22.2993 34.7006 22.1496 34.7006 22;
+                         M1.5418 22 C1.5418 22.1762 1.5966 22.3525 1.7062 22.5041 C2.8102 24.0322 5.0295 26.848 7.9445 29.273 C10.8732 31.7094 14.3939 33.66 18.1212 33.66 C21.8486 33.66 25.3693 31.7094 28.298 29.273 C31.213 26.848 33.4323 24.0322 34.5363 22.5041 C34.6459 22.3525 34.7006 22.1762 34.7006 22;
+                         M1.5418 22 C1.5418 22.1629 1.5966 22.3258 1.7062 22.4661 C2.8102 23.8789 5.0295 26.4821 7.9445 28.7241 C10.8732 30.9766 14.3939 32.78 18.1212 32.78 C21.8486 32.78 25.3693 30.9766 28.298 28.7241 C31.213 26.4821 33.4323 23.8789 34.5363 22.4661 C34.6459 22.3258 34.7006 22.1629 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22;
+                         M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22;
+                         M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22"
                  keyTimes="0; 0.7187; 0.7687; 0.8094; 0.8375; 0.8625; 0.8844; 0.9031; 0.9187; 0.9469; 0.9781; 1"
                  dur="3.2s" repeatCount="indefinite" />
       </path>
@@ -287,24 +257,23 @@
        it. This is the second.
        
        The geometry is the open state of #icon-eye, copied exactly: same
-       viewBox, same translate, same stroke, the same ten lash coordinates and
-       the same two lid arcs at their resting control points. If the drawing up
+       viewBox, same stroke, the same ten lash coordinates and the same two
+       lid halves at rest. If the drawing up
        there is ever retuned, retune it here too — these are one eye in two
        states, and nothing in the build checks that they still agree. -->
-  <symbol id="icon-eye-still" viewBox="0 0 21.9 21.9">
-    <g transform="translate(-1.05 -3.05)"
-       fill="none" stroke="currentColor" stroke-width="1.2"
+  <symbol id="icon-eye-still" viewBox="0 0 36.2425 44.1213">
+    <g fill="none" stroke="currentColor" stroke-width="2"
        stroke-linecap="round" stroke-linejoin="round">
-      <line x1="3.68" y1="9.64" x2="2.35" y2="7.89" />
-      <line x1="7.71" y1="7.36" x2="6.93" y2="5.30" />
-      <line x1="12.00" y1="6.55" x2="12.00" y2="4.35" />
-      <line x1="16.29" y1="7.36" x2="17.07" y2="5.30" />
-      <line x1="20.32" y1="9.64" x2="21.65" y2="7.89" />
-      <line x1="3.68" y1="18.36" x2="2.35" y2="20.11" />
-      <line x1="7.71" y1="20.64" x2="6.93" y2="22.70" />
-      <line x1="12.00" y1="21.45" x2="12.00" y2="23.65" />
-      <line x1="16.29" y1="20.64" x2="17.07" y2="22.70" />
-      <line x1="20.32" y1="18.36" x2="21.65" y2="20.11" />
+      <line x1="18.1212" y1="7" x2="18.1212" y2="1" />
+      <line x1="10.1211" y1="8.7321" x2="8.1211" y2="5.268" />
+      <line x1="26.121" y1="8.7321" x2="28.121" y2="5.268" />
+      <line x1="2.8286" y1="13.707" x2="1.4144" y2="12.2928" />
+      <line x1="33.4141" y1="13.7071" x2="34.8283" y2="12.2929" />
+      <line x1="18.1212" y1="37.1213" x2="18.1212" y2="43.1213" />
+      <line x1="10.1214" y1="35.3893" x2="8.1214" y2="38.8534" />
+      <line x1="26.1215" y1="35.3893" x2="28.1215" y2="38.8534" />
+      <line x1="2.8284" y1="30.4143" x2="1.4142" y2="31.8285" />
+      <line x1="33.4139" y1="30.4143" x2="34.8281" y2="31.8285" />
 
       <!-- Offset by three custom properties rather than by anything written
            here, because custom properties inherit THROUGH a <use> shadow tree
@@ -317,12 +286,12 @@
            back to the text when the scrolling stops wants the opposite. So JS
            sets this to 0s while rolling and to a real duration to settle, and
            the same transform serves both. -->
-      <circle cx="12" cy="14" r="3.5" fill="currentColor" stroke="none"
+      <circle cx="18.1212" cy="22" r="7" fill="currentColor" stroke="none"
               style="transform: translate(var(--iris-x, 0px), var(--iris-y, 0px));
                      transition: transform var(--iris-ease, 0s) ease-out" />
 
-      <path d="M2.5 14 Q12 24 21.5 14" />
-      <path d="M2.5 14 Q12 4 21.5 14" />
+      <path d="M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22" />
+      <path d="M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22" />
     </g>
   </symbol>
 
@@ -340,7 +309,7 @@
 
      Held back through the first paint by the guard at the top of this file —
      see the note there for why it needs one. -->
-<svg class="page__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false">
+<svg class="page__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false">
   <use href="#icon-eye-still" />
 </svg>
 
@@ -349,15 +318,15 @@
      and the eye stays aria-hidden decoration on top of it. -->
 <header class="site-header">
   <a href="/"><span class="site-header__label">Dani Paneva</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
 
   <nav class="main-nav" aria-label="Primary">
     <a href="/work/"><span class="site-header__label">work</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
     <a href="/about/"><span class="site-header__label">about</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
     <a href="/contact/"><span class="site-header__label">contact</span>
-    <svg class="site-header__eye" viewBox="0 0 21.9 21.9" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+    <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
   </nav>
 </header>
 

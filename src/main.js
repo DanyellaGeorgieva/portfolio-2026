@@ -108,14 +108,15 @@ document.addEventListener('pointerover', (event) => {
 // scrolling stops.
 //
 // How far the iris may travel from the centre of the eye, in the symbol's own
-// viewBox units. The opening is about 19 wide and 10 tall and the iris has a
-// radius of 3.5, which leaves roughly one and a half units of clearance inside
-// the lid: past these the disc crosses the lid's stroke and the eye stops
+// viewBox units. The opening is about 33 wide and 22 tall and the iris has a
+// radius of 7, which leaves a unit or two of clearance inside the lid at these
+// reaches: past them the disc crosses the lid's stroke and the eye stops
 // reading as an eye. Asymmetric for the same reason the opening is — which also
 // means the "circle" the iris rolls in is really that same ellipse, so the path
-// stays inside the lid all the way round.
-const IRIS_REACH_X = 2.4;
-const IRIS_REACH_Y = 1.1;
+// stays inside the lid all the way round. (Twice what they were on the previous
+// drawing, which was drawn at half this scale in its own units.)
+const IRIS_REACH_X = 4.8;
+const IRIS_REACH_Y = 2.2;
 
 // Scroll distance for one full turn of the iris. Driven by scroll POSITION
 // rather than by a timer, so the roll is tied to the page moving: it turns at
