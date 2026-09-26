@@ -249,7 +249,7 @@ class JarJelly extends JarDemo {
     const note =
       match?.[0] === 'original' ? 'the Review jar’s settings' : match ? `${match[0]} preset` : 'custom';
     this.readout.innerHTML =
-      `${state.dots} dots · ${state.dots * 3} constraints<br>` +
+      `${state.dots} dots · ${state.dots * 3} constraints · ` +
       `tether ${fmt(state.tether)} · shape ${fmt(state.shape)} · ${note}`;
   }
 

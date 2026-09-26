@@ -1206,6 +1206,42 @@ ndc-micro {
   color: var(--ink);
 }
 
+// The Melba jars sit on the column's centre line: the jar, its controls and its
+// readout. The caption stays on the column's left edge with the copy it
+// belongs to. The readout is one line — the parts joined with " · " rather than
+// broken — so it only needs one line of height; on a phone it can wrap, and
+// there the second line is held for it so a hover never shifts the page.
+jar-skin,
+jar-jelly {
+  justify-items: center;
+
+  .controls {
+    justify-items: center;
+  }
+
+  .row {
+    justify-content: center;
+  }
+
+  .readout {
+    min-height: 1.5em;
+    text-align: center;
+  }
+
+  .caption {
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  jar-skin,
+  jar-jelly {
+    .readout {
+      min-height: 3em;
+    }
+  }
+}
+
 // --- Next-DC ------------------------------------------------------------------
 
 // Two copies, one window. Each row is exactly as tall as the site's: its

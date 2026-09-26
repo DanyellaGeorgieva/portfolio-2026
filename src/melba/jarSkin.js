@@ -109,7 +109,7 @@ class JarSkin extends JarDemo {
       const pts = it.outline ? `, ${it.outline.length}-point outline` : '';
       detail = `${name}${pts}: ${parts} convex part${parts > 1 ? 's' : ''}, mass ${this.hovered.mass.toFixed(1)}`;
     }
-    this.readout.innerHTML = `${base}<br>${detail}`;
+    this.readout.textContent = `${base} · ${detail}`;
   }
 
   frame(ink) {
