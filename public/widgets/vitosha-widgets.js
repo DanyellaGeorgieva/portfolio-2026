@@ -316,6 +316,15 @@ function startVitosha() {
     const dh = Math.round(natH * w / natW * vs);
     const { ctx } = prep(cv, dh + 28);
     const t = tinted(c.img, w * DPR(), dh * DPR(), theme.text);
+    // HOST PATCH (portfolio): drawn thicker than the SVG's own hairline stroke,
+    // which at this width is well under a pixel. The source image is left alone
+    // (the scan measures its line), so the weight is added here: the tinted line
+    // stamped round a small ring of offsets, which widens it by twice the radius.
+    const SRC_WEIGHT = 1; // css px either side of the line
+    for (let a = 0; a < 16; a++) {
+      const r = (a / 16) * Math.PI * 2;
+      ctx.drawImage(t, Math.cos(r) * SRC_WEIGHT, Math.sin(r) * SRC_WEIGHT, w, dh);
+    }
     ctx.drawImage(t, 0, 0, w, dh);
     ctx.font = mono; ctx.fillStyle = theme.text; ctx.textBaseline = "top";
     ctx.globalAlpha = 0.6; ctx.textAlign = "center";

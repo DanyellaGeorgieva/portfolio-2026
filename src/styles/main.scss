@@ -1931,6 +1931,35 @@ ndc-micro {
   }
 }
 
+// Cut marks: a dashed rule at each end of a cloth that runs off the edges of
+// its box, so the ends read as a crop of a longer panorama rather than as the
+// cloth's own edge. Drawn with a gradient rather than a dashed border so the
+// dash length is ours and not the browser's. The box must be positioned.
+@mixin cut-marks {
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: repeating-linear-gradient(
+      to bottom,
+      currentColor 0 3px,
+      transparent 3px 5px
+    );
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+  }
+
+  &::after {
+    right: 0;
+  }
+}
+
 // The diagrams. They are drawn in currentColor and inlined into the page (see
 // inlineDiagrams in vite.config.js), so they take the palette's ink and change
 // with it — which is also why they carry no background of their own. Wider than
@@ -1950,6 +1979,11 @@ ndc-micro {
 
 .diagram__figure {
   margin: 0;
+}
+
+// A drawing cropped out of the panorama, marked the way the live cloth is.
+.diagram--cut {
+  @include cut-marks;
 }
 
 // Names on a still drawing, the way they ride the live one at the top of the
@@ -2036,6 +2070,8 @@ vitosha-ridge {
   &.is-dragging canvas {
     cursor: grabbing;
   }
+
+  @include cut-marks;
 }
 
 // The place names, riding the cloth. HTML rather than painted into the canvas:
@@ -2091,13 +2127,12 @@ vitosha-ridge {
 }
 
 // The places at the mountain's foot are ON the cloth, just inside its hem, the
-// way the teaser prints them — and in the cloth's own light rather than the
-// page's ink, which on a shape filled with ink would be invisible. Below the
-// hem was the other option and a worse one: there is only a tenth of the
-// element's height down there, so the names were clipped by its edge.
+// way the teaser prints them. In the page's ink like the peaks above them: the
+// cloth is drawn translucent, so the names still read on it. Below the hem was
+// the other option and a worse one: there is only a tenth of the element's
+// height down there, so the names were clipped by its edge.
 .vitosha-ridge__marker--place {
   translate: -50% -100%;
-  color: rgb(255 255 255 / 0.92);
 }
 
 .vitosha-ridge__dot {
