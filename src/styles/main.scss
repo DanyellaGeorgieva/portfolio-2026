@@ -83,6 +83,48 @@ body {
   transition: color 1.2s ease;
 }
 
+// =============================================================================
+// LEGEND AND METADATA TYPE — one scale for every case study
+// =============================================================================
+// Everything that labels, measures or annotates — the credits under a title,
+// the names on a diagram, the controls and readouts of a demo — is set from
+// these four, and the Vitosha widget kit (public/widgets) restates the same
+// values in plain CSS. Nothing in them is dimmed: a 64–70% ink failed AA
+// contrast on the saturated parts of the field, so hierarchy is carried by
+// size, weight and case alone.
+
+// A name for what follows: RASTER, ROLE, ALPHA THRESHOLD, CHERNI VRAH.
+@mixin type-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+// The thing a label names: 1024 × 81 px, Creative Development, 37.
+@mixin type-value {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+// A live sentence that reports on a demo. Tabular, so a changing number never
+// changes the width around it.
+@mixin type-readout {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+// A note on how to read the thing above it.
+@mixin type-caption {
+  font-size: 14px;
+  font-weight: 500;
+}
+
 // Links follow the ink like everything else. Without this they fall back to the
 // browser's blue: the rules that used to set each one explicitly are gone, and
 // there is no reset stylesheet to carry it.
@@ -839,12 +881,14 @@ body:has(#swup[data-page="detail"]) .page__eye {
   font-weight: 800;
   text-transform: uppercase;
   text-decoration: none;
-  opacity: 0.75;
-  transition: opacity 0.35s ease;
+  // Full ink at rest — the old 0.75 fell under AA contrast on the saturated
+  // parts of the field — so the hover is an underline rather than a brighten.
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 2px;
 
   &:hover,
   &:focus-visible {
-    opacity: 1;
+    text-decoration-line: underline;
   }
 }
 
@@ -874,12 +918,13 @@ body:has(#swup[data-page="detail"]) .page__eye {
   font-size: 0.95rem;
   font-weight: 800;
   text-decoration: none;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+  // Full ink at rest for contrast; the hover is an underline, as on .back.
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 2px;
 
   &:hover,
   &:focus-visible {
-    opacity: 1;
+    text-decoration-line: underline;
   }
 }
 
@@ -893,10 +938,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 }
 
 .page__exit-label {
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  opacity: 0.7;
+  @include type-label;
 }
 
 // Same underline-grow as .contact__email, anchored right so it opens from the
@@ -927,10 +969,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 // letterspaced — because it is metadata the eye should skip, not a deck.
 .page__eyebrow {
   margin: 0 0 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  opacity: 0.7;
+  @include type-label;
 }
 
 // Credits and links share one component: a two-column list where the term is a
@@ -943,22 +982,18 @@ body:has(#swup[data-page="detail"]) .page__eye {
   gap: 0.6rem 2rem;
   margin: 2.5rem 0 3rem;
   max-width: var(--measure);
-  font-size: 0.95rem;
   line-height: 1.55;
 
   dt {
     // Nudged down so the cap height of the label lines up with the first line
     // of its sentence rather than sitting above it.
-    padding-top: 0.25em;
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    opacity: 0.7;
+    padding-top: 0.15em;
+    @include type-label;
   }
 
   dd {
     margin: 0;
-    opacity: 0.9;
+    @include type-value;
   }
 }
 
@@ -1030,7 +1065,6 @@ ndc-grid,
 ndc-labels,
 ndc-theme,
 ndc-micro {
-  --muted: color-mix(in srgb, var(--ink) 64%, transparent);
   --line: color-mix(in srgb, var(--ink) 18%, transparent);
 
   display: grid;
@@ -1083,18 +1117,14 @@ ndc-micro {
     label {
       display: flex;
       justify-content: space-between;
+      align-items: baseline;
       gap: 12px;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
+      @include type-label;
     }
 
     output {
       color: var(--ink);
-      letter-spacing: 0;
-      text-transform: none;
-      font-variant-numeric: tabular-nums;
+      @include type-value;
     }
   }
 
@@ -1117,7 +1147,7 @@ ndc-micro {
       letter-spacing: 0.06em;
       text-transform: uppercase;
       background: none;
-      color: var(--muted);
+      color: var(--ink);
       border: 0;
       border-radius: 999px;
       padding: 5px 14px;
@@ -1160,17 +1190,20 @@ ndc-micro {
     margin: 0;
     // Two lines, always, so the caption doesn't jump as the text changes.
     min-height: 3em;
-    font-size: 12.5px;
-    line-height: 1.5;
-    font-variant-numeric: tabular-nums;
+    @include type-readout;
   }
 
   .caption {
     margin: 0;
     max-width: var(--measure);
-    font-size: 12px;
-    color: var(--muted);
   }
+}
+
+// Every caption, in the demos and the widget kit alike: one size, weight and
+// colour, so none of them reads as a different kind of note from the others.
+.caption {
+  @include type-caption;
+  color: var(--ink);
 }
 
 // --- Next-DC ------------------------------------------------------------------
@@ -1244,8 +1277,7 @@ ndc-roll {
     }
 
     figcaption {
-      font-size: 11px;
-      color: var(--muted);
+      @include type-label;
     }
   }
 }
@@ -1275,9 +1307,14 @@ ndc-curtain {
     height: auto;
   }
 
+  // The diagram's own legend, on the label scale. In SVG units, so it scales
+  // with the drawing: 7.6 is the label's 12px at the 520px the curtain is shown
+  // at on a desktop. Any larger and "600 px of scroll" overruns the 84-unit
+  // page map on a phone, where the drawing renders near 1:1.
   .curtain__title {
-    font-size: 9px;
-    fill: var(--muted);
+    font-size: 7.6px;
+    font-weight: 500;
+    fill: var(--ink);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
@@ -1288,8 +1325,9 @@ ndc-curtain {
   }
 
   .curtain__small {
-    font-size: 7.5px;
-    fill: var(--muted);
+    font-size: 7.6px;
+    font-weight: 500;
+    fill: var(--ink);
   }
 
   .curtain__on-ink {
@@ -1737,8 +1775,7 @@ ndc-micro {
   }
 
   .micro__note {
-    font-size: 10px;
-    color: var(--muted);
+    @include type-label;
     text-align: center;
   }
 
@@ -2008,10 +2045,7 @@ ndc-micro {
     gap: 0.25rem;
     translate: -50% -100%;
     width: max-content;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    @include type-label;
     white-space: nowrap;
   }
 
@@ -2104,10 +2138,7 @@ vitosha-ridge {
   align-items: center;
   gap: 0.3rem;
   width: max-content;
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  @include type-label;
   white-space: nowrap;
   opacity: 0;
   // Only ever transformed and faded, both of which the compositor handles.
@@ -2197,8 +2228,7 @@ vitosha-ridge {
 .page__note {
   margin: 3rem 0 0;
   max-width: var(--measure);
-  font-size: 0.95rem;
-  opacity: 0.6;
+  @include type-caption;
 }
 
 .page__body strong,
@@ -2208,13 +2238,11 @@ vitosha-ridge {
 
 // File extensions and API names set inline. No box or tint behind them — the
 // ground is a live shader, so any fill would be a hole punched in it. Same face
-// as the copy, slightly smaller and at a lower opacity: enough to read as "this
-// is a literal".
+// as the copy and slightly smaller — not dimmed, which cost it contrast.
 .page__body code,
 .page__list code {
   font-family: inherit;
   font-size: 0.9em;
-  opacity: 0.8;
 }
 
 // Links inside running copy need to be findable without a colour to spend —
@@ -2225,7 +2253,6 @@ vitosha-ridge {
   text-decoration: underline;
   text-underline-offset: 0.18em;
   text-decoration-thickness: 1px;
-  opacity: 0.9;
 
   &:hover,
   &:focus-visible {

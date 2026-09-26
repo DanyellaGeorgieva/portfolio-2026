@@ -12,7 +12,6 @@
     color-scheme: dark;
     --bg: #071B24;
     --text: #AFDFF9;
-    --muted: color-mix(in srgb, var(--text) 64%, var(--bg));
     --faint: color-mix(in srgb, var(--text) 38%, var(--bg));
     --line: color-mix(in srgb, var(--text) 18%, var(--bg));
     --panel: color-mix(in srgb, var(--text) 5%, var(--bg));
@@ -35,23 +34,28 @@
 .vtw .mk__star svg { display: block; width: 100%; height: 100%; }
 .vtw .mk__label {
     position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
-    font-size: 10px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+    font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
   }
 .vtw .mk--chip .mk__label { background: color-mix(in srgb, var(--bg) 82%, transparent); padding: 3px 4px; }
 .vtw .stage__hint {
-    position: absolute; right: 12px; top: 10px; font-size: 11px; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--muted); pointer-events: none;
+    position: absolute; right: 12px; top: 10px; font-size: 12px; font-weight: 500; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text); pointer-events: none;
   }
 .vtw .controls {
     display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center;
     padding-block: 14px 4px;
   }
 .vtw .ctl { display: grid; gap: 4px; min-width: 0; }
+/* Type: the portfolio's legend scale, restated here because this file is plain
+   CSS and cannot take its mixins (src/styles/main.scss, "LEGEND AND METADATA
+   TYPE"). Label 12px/500, upper case, .08em; value 14px/600, tabular; readout
+   14px/400; caption 14px/500 (set on the host page). Nothing is dimmed — a 64%
+   ink failed AA contrast on the saturated parts of the field. */
 .vtw .ctl label, .vtw .ctl .lbl {
-    font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
-    display: flex; justify-content: space-between; gap: 12px;
+    font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--text);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
   }
-.vtw .ctl output { color: var(--text); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.vtw .ctl output { color: var(--text); font-weight: 600; letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .vtw input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--text); }
 .vtw .swatches { display: flex; gap: 8px; }
 .vtw .swatch {
@@ -63,7 +67,7 @@
 .vtw .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
 .vtw .seg button {
     font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
-    background: none; color: var(--muted); border: 0; border-radius: 999px;
+    background: none; color: var(--text); border: 0; border-radius: 999px;
     padding: 5px 14px; cursor: pointer;
   }
 .vtw .seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
@@ -75,23 +79,39 @@
 .vtw .btn:hover { border-color: var(--text); }
 .vtw button:focus-visible, .vtw input:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
 .vtw .badge {
-    font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
-    padding: 4px 10px; border-radius: 999px; border: 1px dashed var(--faint); color: var(--muted);
+    font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; border: 1px dashed var(--faint); color: var(--text);
   }
 .vtw .badge.custom { border-style: solid; border-color: var(--text); color: var(--text); }
 .vtw .viz { display: grid; gap: 10px; }
 .vtw .viz canvas { display: block; width: 100%; }
 .vtw .scan canvas, .vtw .tex canvas, .vtw #blurOv { cursor: crosshair; touch-action: none; }
+/* Readouts hold still: the script breaks each one into two fixed lines, and two
+   lines of height are reserved, so a value growing a digit can't rewrap the
+   text and shove the widget. In a row, a readout takes a line of its own —
+   beside the sliders its width, and so its wrapping, followed the numbers. */
 .vtw .readout {
-    font-size: 12.5px; color: var(--text);
-    font-variant-numeric: tabular-nums; min-height: 1.6em; margin: 0;
+    font-size: 14px; line-height: 1.5; color: var(--text); white-space: pre-line;
+    font-variant-numeric: tabular-nums; min-height: 3em; margin: 0;
   }
-.vtw .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 0; list-style: none; }
-.vtw .stats li { font-size: 12px; color: var(--muted); }
-.vtw .stats b { font-weight: 400; color: var(--text); font-variant-numeric: tabular-nums; }
+.vtw .row .readout { flex-basis: 100%; }
+/* Stats on a grid of equal cells, label over value, so the layout depends on
+   the widget's width alone — never on how long this frame's numbers are. */
+.vtw .stats {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+    gap: 10px 22px; margin: 0; padding: 0; list-style: none;
+  }
+.vtw .stats li {
+    display: flex; flex-direction: column; gap: 2px;
+    font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--text);
+  }
+.vtw .stats b {
+    font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    color: var(--text); font-variant-numeric: tabular-nums;
+  }
 .vtw .row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: end; }
 .vtw .loupe-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 760px) {
   .vtw .loupe-wrap { grid-template-columns: 1fr; }
 }
-.vtw .caption { font-size: 12px; color: var(--muted); margin: 0; }
+.vtw .caption { margin: 0; }

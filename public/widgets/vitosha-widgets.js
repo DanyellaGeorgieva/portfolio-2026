@@ -257,6 +257,26 @@ function startVitosha() {
       c.final = boxBlur(c.blended, settings.radius, settings.passes);
       c.bytes = pack(c.final);
       if (c.tex) { c.tex.image.data.set(c.bytes); c.tex.needsUpdate = true; }
+
+      // HOST PATCH (portfolio): each step's widget gets a pipeline of its own.
+      // On the artifact the steps fed one another on purpose — the hero at the
+      // top rendered the combined result, so a threshold moved in step 02 was
+      // meant to show up in the blur and the texture. This page has no hero and
+      // reads as separate steps, so that coupling looked like a bug: moving one
+      // slider redrew every graph, and a high threshold could leave the later
+      // ones in a state their own text never explains. So each graph now takes
+      // production values for every stage but its own. The combined pipeline
+      // above is still what the hero and its markers read.
+      //   scan    — its own threshold (the first stage, so c.raw / c.topYs)
+      //   seam    — production threshold, its own blend width
+      //   blur    — production threshold and blend, its own radius and passes
+      //   texture — production throughout
+      const prodRaw = PROD.threshold === settings.threshold ? c.raw : extract(c.raster, PROD.threshold).heights;
+      const seam = loopBlend(prodRaw, settings.blend);
+      c.seam = { raw: prodRaw, blended: seam.heights, blendCols: seam.blendCols };
+      const prodBlended = loopBlend(prodRaw, PROD.blend).heights;
+      c.blur = { blended: prodBlended, final: boxBlur(prodBlended, settings.radius, settings.passes) };
+      c.texBytes = pack(boxBlur(prodBlended, PROD.radius, PROD.passes));
     }
     const custom = Object.keys(PROD).some((k) => PROD[k] !== settings[k]);
     const badge = $("#heroBadge");
@@ -287,7 +307,7 @@ function startVitosha() {
     ctx.fillRect(0, 0, cv.width, cv.height);
     return cv;
   }
-  const mono = '11px Satoshi, sans-serif';
+  const mono = '12px Satoshi, sans-serif';
   const vScaleFor = (natH, dispW, natW) => Math.max(1, Math.ceil(64 / (natH * dispW / natW)));
   function yRange(arrs, from, to) {
     let lo = Infinity, hi = -Infinity;
@@ -301,7 +321,7 @@ function startVitosha() {
     ticks.forEach((v) => {
       const y = bottom - (v - lo) / (hi - lo) * (bottom - top);
       ctx.globalAlpha = 0.18; ctx.fillStyle = theme.text; ctx.fillRect(x, Math.round(y), w, 1);
-      ctx.globalAlpha = 0.6; ctx.fillText(v.toFixed(2), 0, y);
+      ctx.globalAlpha = 1; ctx.fillText(v.toFixed(2), 0, y);
     });
     ctx.globalAlpha = 1;
   }
@@ -327,7 +347,7 @@ function startVitosha() {
     }
     ctx.drawImage(t, 0, 0, w, dh);
     ctx.font = mono; ctx.fillStyle = theme.text; ctx.textBaseline = "top";
-    ctx.globalAlpha = 0.6; ctx.textAlign = "center";
+    ctx.textAlign = "center";
     ctx.fillText(vs > 1 ? `the full panorama · shown ×${vs} vertically` : "the full panorama", w / 2, dh + 10);
     ctx.textAlign = "left"; ctx.globalAlpha = 1;
     // HOST PATCH (portfolio): the filename is dropped. On the artifact it told
@@ -336,8 +356,8 @@ function startVitosha() {
     // has no way to choose, see or care about.
     $("#srcStats").innerHTML =
       `<li>viewBox <b>${natW} × ${natH}</b></li>` +
-      `<li>Paths <b>1</b>, <b>fill="none"</b></li>` +
-      `<li>Measured in <b>1,024</b> columns</li>`;
+      `<li>Paths <b>1, fill="none"</b></li>` +
+      `<li>Measured <b>1,024 columns</b></li>`;
   }
 
   // ---------------------------------------------------------- 02 scan
@@ -387,12 +407,12 @@ function startVitosha() {
     drawLoupe(col);
     const ty = c.topYs[col];
     $("#scanOut").textContent = ty >= height
-      ? `column ${col}: no pixel above alpha ${settings.threshold} → height 0`
-      : `column ${col}: first alpha > ${settings.threshold} at row ${ty} of ${height} → 1 − ${ty}/${height} = ${c.raw[col].toFixed(3)}`;
+      ? `column ${col}: no pixel above alpha ${settings.threshold}\n→ height 0`
+      : `column ${col}: first alpha > ${settings.threshold}\nat row ${ty} of ${height} → 1 − ${ty}/${height} = ${c.raw[col].toFixed(3)}`;
     const levels = new Set(c.topYs).size;
     let misses = 0; for (let x = 0; x < width; x++) if (c.topYs[x] >= height) misses++;
     $("#scanStats").innerHTML =
-      `<li>Raster <b>${width} × ${height}</b> px</li>` +
+      `<li>Raster <b>${width} × ${height} px</b></li>` +
       `<li>Distinct heights <b>${levels}</b></li>` +
       `<li>Empty columns <b>${misses}</b></li>`;
   }
@@ -454,16 +474,16 @@ function startVitosha() {
     const cv = $("#seamCv");
     const { ctx, w, h } = prep(cv, 210);
     const K = 190;
-    const raw = [...c.raw.slice(WIDTH - K), ...c.raw.slice(0, K)];
-    const bl = [...c.blended.slice(WIDTH - K), ...c.blended.slice(0, K)];
+    const raw = [...c.seam.raw.slice(WIDTH - K), ...c.seam.raw.slice(0, K)];
+    const bl = [...c.seam.blended.slice(WIDTH - K), ...c.seam.blended.slice(0, K)];
     const [lo, hi] = yRange([raw, bl], 0, 2 * K);
     const L = 40, top = 14, bottom = h - 26, pw = w - L;
     const X = (i) => L + (i + 0.5) / (2 * K) * pw;
     const Y = (v) => bottom - (v - lo) / (hi - lo) * (bottom - top);
     yAxis(ctx, lo, hi, top, bottom, L, pw);
-    if (c.blendCols) {
+    if (c.seam.blendCols) {
       ctx.fillStyle = theme.text; ctx.globalAlpha = 0.07;
-      const bc = Math.min(c.blendCols, K);
+      const bc = Math.min(c.seam.blendCols, K);
       ctx.fillRect(X(K - bc) - pw / (4 * K), top, X(K + bc - 1) - X(K - bc) + pw / (2 * K), bottom - top);
       ctx.globalAlpha = 1;
     }
@@ -481,16 +501,16 @@ function startVitosha() {
     ctx.font = mono; ctx.fillStyle = theme.text; ctx.textBaseline = "top";
     ctx.textAlign = "right"; ctx.fillText("… col 1023", L + pw / 2 - 6, bottom + 8);
     ctx.textAlign = "left"; ctx.fillText("col 0 …", L + pw / 2 + 6, bottom + 8);
-    const jr = Math.abs(c.raw[WIDTH - 1] - c.raw[0]);
-    const jb = Math.abs(c.blended[WIDTH - 1] - c.blended[0]);
+    const jr = Math.abs(c.seam.raw[WIDTH - 1] - c.seam.raw[0]);
+    const jb = Math.abs(c.seam.blended[WIDTH - 1] - c.seam.blended[0]);
     let moved = 0;
-    for (let i = 0; i < c.blendCols; i++) {
-      moved = Math.max(moved, Math.abs(c.blended[i] - c.raw[i]),
-                       Math.abs(c.blended[WIDTH - 1 - i] - c.raw[WIDTH - 1 - i]));
+    for (let i = 0; i < c.seam.blendCols; i++) {
+      moved = Math.max(moved, Math.abs(c.seam.blended[i] - c.seam.raw[i]),
+                       Math.abs(c.seam.blended[WIDTH - 1 - i] - c.seam.raw[WIDTH - 1 - i]));
     }
     $("#seamOut").textContent = jr < 0.0005
-      ? `ends already level (${c.raw[0].toFixed(3)} and ${c.raw[WIDTH - 1].toFixed(3)}) · easing still reshapes ${c.blendCols} columns per end, by up to ${moved.toFixed(3)}`
-      : `gap between the ends: ${jr.toFixed(3)} → ${jb.toFixed(3)} · eased over ${c.blendCols} columns per end`;
+      ? `ends already level (${c.seam.raw[0].toFixed(3)} and ${c.seam.raw[WIDTH - 1].toFixed(3)})\neasing still reshapes ${c.seam.blendCols} columns per end, by up to ${moved.toFixed(3)}`
+      : `gap between the ends: ${jr.toFixed(3)} → ${jb.toFixed(3)}\neased over ${c.seam.blendCols} columns per end`;
   }
 
   // ---------------------------------------------------------- 04 blur
@@ -514,10 +534,10 @@ function startVitosha() {
     {
       const cv = $("#blurOv");
       const { ctx, w, h } = prep(cv, 54);
-      const [lo, hi] = yRange([c.final], 0, WIDTH);
+      const [lo, hi] = yRange([c.blur.final], 0, WIDTH);
       ctx.strokeStyle = theme.text; ctx.lineWidth = 1.25; ctx.beginPath();
       for (let x = 0; x < WIDTH; x++) {
-        const px = x / (WIDTH - 1) * w, py = h - 4 - (c.final[x] - lo) / (hi - lo) * (h - 8);
+        const px = x / (WIDTH - 1) * w, py = h - 4 - (c.blur.final[x] - lo) / (hi - lo) * (h - 8);
         x ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
       }
       ctx.stroke();
@@ -530,7 +550,7 @@ function startVitosha() {
     const cv = $("#blurCv");
     const { ctx, w, h } = prep(cv, 230);
     const s = blurStart[contourKey];
-    const [lo, hi] = yRange([c.blended, c.final], s, s + WIN);
+    const [lo, hi] = yRange([c.blur.blended, c.blur.final], s, s + WIN);
     const L = 40, top = 12, bottom = h - 24, pw = w - L;
     const X = (i) => L + (i - s + 0.5) / WIN * pw;
     const Y = (v) => bottom - (v - lo) / (hi - lo) * (bottom - top);
@@ -540,24 +560,24 @@ function startVitosha() {
     ctx.globalAlpha = 0.45; ctx.lineWidth = 1;
     ctx.beginPath();
     for (let i = s; i < s + WIN; i++) {
-      const y = Y(c.blended[i]);
+      const y = Y(c.blur.blended[i]);
       ctx.moveTo(X(i) - pw / WIN / 2, y); ctx.lineTo(X(i) + pw / WIN / 2, y);
     }
     ctx.stroke();
     ctx.globalAlpha = 0.8;
-    for (let i = s; i < s + WIN; i++) { ctx.beginPath(); ctx.arc(X(i), Y(c.blended[i]), 2.2, 0, Math.PI * 2); ctx.fill(); }
+    for (let i = s; i < s + WIN; i++) { ctx.beginPath(); ctx.arc(X(i), Y(c.blur.blended[i]), 2.2, 0, Math.PI * 2); ctx.fill(); }
     // blurred result
     ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.beginPath();
-    for (let i = s; i < s + WIN; i++) (i === s ? ctx.moveTo(X(i), Y(c.final[i])) : ctx.lineTo(X(i), Y(c.final[i])));
+    for (let i = s; i < s + WIN; i++) (i === s ? ctx.moveTo(X(i), Y(c.blur.final[i])) : ctx.lineTo(X(i), Y(c.blur.final[i])));
     ctx.stroke();
-    ctx.font = mono; ctx.textBaseline = "top"; ctx.globalAlpha = 0.7;
+    ctx.font = mono; ctx.textBaseline = "top";
     ctx.fillText(`col ${s}`, L, bottom + 8);
     ctx.textAlign = "right"; ctx.fillText(`col ${s + WIN - 1}`, w, bottom + 8); ctx.textAlign = "left";
     ctx.globalAlpha = 1;
     let pRaw = 0, pFin = 0, d = 0;
-    for (let i = 0; i < WIDTH; i++) { pRaw = Math.max(pRaw, c.blended[i]); pFin = Math.max(pFin, c.final[i]); }
-    for (let i = s; i < s + WIN; i++) d = Math.max(d, Math.abs(c.final[i] - c.blended[i]));
-    $("#blurOut").textContent = `tallest peak ${pRaw.toFixed(3)} → ${pFin.toFixed(3)} (${((pFin / pRaw - 1) * 100).toFixed(1)}%) · largest shift in view ${d.toFixed(3)}`;
+    for (let i = 0; i < WIDTH; i++) { pRaw = Math.max(pRaw, c.blur.blended[i]); pFin = Math.max(pFin, c.blur.final[i]); }
+    for (let i = s; i < s + WIN; i++) d = Math.max(d, Math.abs(c.blur.final[i] - c.blur.blended[i]));
+    $("#blurOut").textContent = `tallest peak ${pRaw.toFixed(3)} → ${pFin.toFixed(3)} (${((pFin / pRaw - 1) * 100).toFixed(1)}%)\nlargest shift in view ${d.toFixed(3)}`;
   }
 
   // ---------------------------------------------------------- 05 texture
@@ -568,15 +588,15 @@ function startVitosha() {
     const { ctx, w, h } = prep(cv, 64);
     const cw = w / WIDTH;
     for (let x = 0; x < WIDTH; x++) {
-      const b = c.bytes[x * 4];
+      const b = c.texBytes[x * 4];
       ctx.fillStyle = `rgb(${b},${b},${b})`;
       ctx.fillRect(x * cw, 0, cw + 0.6, h);
     }
     ctx.fillStyle = theme.text; ctx.fillRect(Math.floor(texHover * cw), 0, 1, h);
-    const b = c.bytes[texHover * 4];
-    $("#texOut").textContent = `texel ${texHover}: byte ${b} → texture2D().r = ${(b / 255).toFixed(3)} → − 0.5 = ${(b / 255 - 0.5 >= 0 ? "+" : "")}${(b / 255 - 0.5).toFixed(3)}`;
+    const b = c.texBytes[texHover * 4];
+    $("#texOut").textContent = `texel ${texHover}: byte ${b}\n→ texture2D().r = ${(b / 255).toFixed(3)} → − 0.5 = ${(b / 255 - 0.5 >= 0 ? "+" : "")}${(b / 255 - 0.5).toFixed(3)}`;
     $("#texStats").innerHTML =
-      `<li>Size <b>1024 × 1</b> RGBA</li><li>Memory <b>4,096</b> bytes</li>` +
+      `<li>Size <b>1024 × 1 RGBA</b></li><li>Memory <b>4,096 bytes</b></li>` +
       `<li>Filter <b>Linear</b></li><li>Wrap S <b>Repeat</b></li>`;
   }
 
