@@ -3,8 +3,7 @@
 @font-face {
   font-family: "Satoshi";
   src:
-    url("../assets/fonts/Satoshi-Variable.woff2") format("woff2"),
-    format("truetype");
+    url("../assets/fonts/Satoshi-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-display: swap;
 }
@@ -76,9 +75,10 @@ $inks: (
 }
 
 body {
-  // The fallback is for glyphs Satoshi doesn't have — Cyrillic, in the Vitosha
-  // case study. With no fallback those dropped to the browser's default serif.
-  font-family: "Satoshi", system-ui, sans-serif;
+  // Satoshi is the only face on the site; everything else inherits it from here.
+  // The generic fallback is for glyphs Satoshi doesn't have — Cyrillic, in the
+  // Vitosha case study. With none those dropped to the browser's default serif.
+  font-family: "Satoshi", sans-serif;
   color: var(--ink);
   transition: color 1.2s ease;
 }
@@ -500,11 +500,9 @@ html:has(#swup[data-page="top"]) {
 // from the next — a gentle 22 → 19 → 17 would read as an accident rather than a
 // decision, and the reader would have to work out the order for themselves.
 //
-// The tiers change face as well as size, which is the part that does most of
-// the work: Cabinet Grotesk is the display face used by the titles, Satoshi is
-// the reading face. So the lead belongs visibly to the same family as the work
-// titles, and the paragraphs under it read as prose rather than as a smaller
-// heading.
+// One face throughout, so the tiers are told apart by size, weight and
+// tracking alone: the lead is set heavy and tight like the work titles, and the
+// paragraphs under it read as prose rather than as a smaller heading.
 
 // The opening statement. Display face, tight, and held to a short measure — it
 // is a thing to be taken in at a glance, not read across.
@@ -513,7 +511,6 @@ html:has(#swup[data-page="top"]) {
   // Short enough that the line breaks land where the sense does, rather than
   // wherever the column happens to run out.
   max-width: 34ch;
-  font-family: "Cabinet Grotesk", system-ui, sans-serif;
   font-size: var(--fs-lead);
   font-weight: 700;
   line-height: 1.15;
@@ -528,7 +525,6 @@ html:has(#swup[data-page="top"]) {
   // display headline, so it sits in the same voice as the rest of the site copy.
   margin: 0 0 1rem;
   max-width: var(--measure);
-  font-family: "Satoshi", system-ui, sans-serif;
   font-size: var(--fs-body);
   font-weight: 400;
   line-height: 1.65;
@@ -578,10 +574,10 @@ html:has(#swup[data-page="top"]) {
 // The track number's column, in one place so the title's number and the blurb's
 // indent can't drift apart.
 //
-// It needs a fixed width because Cabinet Grotesk has no tabular figures — asking
-// for font-variant-numeric: tabular-nums changes nothing, measured. "01." sets
-// 28.54px against "05." at 36.67px, so without this the titles start up to 8px
-// apart down the list and the gap after each number reads differently. 2.4rem
+// It needs a fixed width because the figures are proportional — measured under
+// the previous display face, "01." set 28.54px against "05." at 36.67px, so
+// without this the titles start up to 8px apart down the list and the gap after
+// each number reads differently. 2.4rem
 // clears the widest of 00.–09.; the number is set flush right inside it, so its
 // full stop lands on one edge and the gap to the title is the same every row.
 // The column the track number sits in, and the gap after it. Used by the
@@ -724,7 +720,6 @@ html:has(#swup[data-page="top"]) {
 .contact__email {
   // Treat the email as a title-like action, in the same voice as the case study
   // titles rather than as ordinary paragraph text.
-  font-family: "Cabinet Grotesk", system-ui, sans-serif;
   font-size: var(--fs-heading);
   font-weight: 800;
   line-height: 1.1;
@@ -972,10 +967,9 @@ body:has(#swup[data-page="detail"]) .page__eye {
 // version used to be its own smaller, tracked, upper-case treatment that had to
 // be re-tuned by hand whenever this one moved.
 //
-// Satoshi rather than Cabinet Grotesk, and no letter-spacing — the weight and
-// the size carry it. That is a deliberate difference from .section__lead, which
-// is display face: the lead is a statement to be caught at a glance, these are
-// signposts inside running copy.
+// No letter-spacing — the weight and the size carry it. That is a deliberate
+// difference from .section__lead, which is set tight: the lead is a statement to
+// be caught at a glance, these are signposts inside running copy.
 .page__heading,
 .section__label {
   // Large space above, small below — the gap belongs to the section starting,
@@ -1038,7 +1032,6 @@ ndc-theme,
 ndc-micro {
   --muted: color-mix(in srgb, var(--ink) 64%, transparent);
   --line: color-mix(in srgb, var(--ink) 18%, transparent);
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   display: grid;
   gap: 10px;
@@ -1099,7 +1092,6 @@ ndc-micro {
 
     output {
       color: var(--ink);
-      font-family: var(--mono);
       letter-spacing: 0;
       text-transform: none;
       font-variant-numeric: tabular-nums;
@@ -1166,7 +1158,6 @@ ndc-micro {
     margin: 0;
     // Two lines, always, so the caption doesn't jump as the text changes.
     min-height: 3em;
-    font-family: var(--mono);
     font-size: 12.5px;
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
@@ -1251,7 +1242,6 @@ ndc-roll {
     }
 
     figcaption {
-      font-family: var(--mono);
       font-size: 11px;
       color: var(--muted);
     }
@@ -1269,7 +1259,6 @@ ndc-theme,
 ndc-micro {
   --accent: #ff5e5e;
   --paper: color-mix(in oklab, var(--ink) 6%, white);
-  --serif: "EB Garamond", Garamond, "Cormorant Garamond", Baskerville, "Times New Roman", serif;
   // Next-DC's easings, from its _easing.scss.
   --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-in-out-quad: cubic-bezier(0.455, 0.03, 0.515, 0.955);
@@ -1282,7 +1271,6 @@ ndc-curtain {
     width: 100%;
     max-width: 520px;
     height: auto;
-    font-family: var(--mono);
   }
 
   .curtain__title {
@@ -1293,7 +1281,6 @@ ndc-curtain {
   }
 
   .curtain__label {
-    font-family: var(--serif);
     font-size: 15px;
     fill: var(--ink);
   }
@@ -1469,7 +1456,6 @@ ndc-labels {
     position: absolute;
     right: 12px;
     bottom: 8px;
-    font-family: var(--serif);
     font-size: 30px;
     font-weight: 300;
     line-height: 1;
@@ -1561,7 +1547,6 @@ ndc-labels {
     clip-path: inset(100% 0 0 0);
 
     b {
-      font-family: var(--serif);
       font-weight: 400;
       font-size: 13px;
       opacity: 0.7;
@@ -1617,7 +1602,6 @@ ndc-theme {
   }
 
   .thm__title {
-    font-family: var(--serif);
     font-size: clamp(26px, 5vw, 36px);
     font-weight: 300;
     line-height: 1;
@@ -1751,7 +1735,6 @@ ndc-micro {
   }
 
   .micro__note {
-    font-family: var(--mono);
     font-size: 10px;
     color: var(--muted);
     text-align: center;
@@ -1856,19 +1839,17 @@ ndc-micro {
   .m-title {
     font-size: 24px;
     text-transform: uppercase;
-    // Clipped top and bottom only: the Garamond twin is wider than the word
-    // it replaces, and a plain overflow: hidden cut its last letter off.
+    // Clipped top and bottom only: the twin can be wider than the word it
+    // replaces, and a plain overflow: hidden would cut its last letter off.
     overflow: visible;
     clip-path: inset(0 -100%);
 
-    // The twin is another typeface altogether, centred on the word it
-    // replaces.
+    // The twin is centred on the word it replaces.
     &::after {
       left: 50%;
       right: auto;
       translate: -50% 0;
       white-space: nowrap;
-      font-family: var(--serif);
       color: var(--accent);
     }
   }
@@ -2189,10 +2170,12 @@ vitosha-ridge {
 }
 
 // File extensions and API names set inline. No box or tint behind them — the
-// ground is a live shader, so any fill would be a hole punched in it. A slightly
-// smaller monospace at a lower opacity is enough to read as "this is a literal".
+// ground is a live shader, so any fill would be a hole punched in it. Same face
+// as the copy, slightly smaller and at a lower opacity: enough to read as "this
+// is a literal".
 .page__body code,
 .page__list code {
+  font-family: inherit;
   font-size: 0.9em;
   opacity: 0.8;
 }

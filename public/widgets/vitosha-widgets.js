@@ -287,7 +287,7 @@ function startVitosha() {
     ctx.fillRect(0, 0, cv.width, cv.height);
     return cv;
   }
-  const mono = '11px "JetBrains Mono", ui-monospace, monospace';
+  const mono = '11px Satoshi, sans-serif';
   const vScaleFor = (natH, dispW, natW) => Math.max(1, Math.ceil(64 / (natH * dispW / natW)));
   function yRange(arrs, from, to) {
     let lo = Infinity, hi = -Infinity;

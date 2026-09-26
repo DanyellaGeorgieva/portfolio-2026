@@ -78,8 +78,8 @@ override the two variables:
 [data-vitosha] { --bg: #101418; --text: #E7EDF1; }
 ```
 
-The widgets inherit your fonts except for readouts and numbers, which use a
-monospace stack (`--mono`).
+The widgets inherit your fonts throughout; the canvas labels are set in
+Satoshi.
 
 ## Regenerating
 

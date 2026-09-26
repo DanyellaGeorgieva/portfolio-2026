@@ -18,7 +18,7 @@ export function createDebugPanel(scene) {
     'padding:12px 14px',
     'background:rgba(0,0,0,0.55)',
     'color:#fff',
-    'font:12px/1.6 system-ui,sans-serif',
+    'font:12px/1.6 Satoshi,sans-serif',
     'border-radius:8px',
     'backdrop-filter:blur(6px)',
     'min-width:200px',
@@ -74,7 +74,7 @@ export function createDebugPanel(scene) {
     const button = document.createElement('button');
     button.textContent = `${i + 1}·${name}`;
     button.style.cssText =
-      'flex:1;cursor:pointer;padding:4px 6px;border:0;border-radius:4px;font:11px system-ui';
+      'flex:1;cursor:pointer;padding:4px 6px;border:0;border-radius:4px;font:11px Satoshi,sans-serif';
     button.addEventListener('click', () => scene.setPalette(name));
     buttons.append(button);
   });

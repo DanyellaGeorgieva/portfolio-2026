@@ -4,7 +4,7 @@
 //
 //   VIEW        the eye's V slides out and I, E, W fade in 50 ms apart
 //   MENU?       the label rolls over into its data-replace twin
-//   Title       the twin is a different typeface: red Garamond
+//   Title       the label rolls over into a red, centred twin
 //   LET'S TALK  the X from the logo rolls over into the K
 //   Pagination  the current page's pill widens
 //   Star        spins while hovered, 0.8 s a turn
@@ -36,7 +36,7 @@ const SPECIMENS = [
   {
     name: 'title',
     html: '<span class="m-swap m-title" data-replace="Internal"><span>Internal</span></span>',
-    note: 'the twin is Garamond',
+    note: 'a red twin, centred',
   },
   {
     name: 'talk',

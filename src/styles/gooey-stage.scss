@@ -9,8 +9,8 @@
 @use "reset";
 
 @font-face {
-  font-family: "Cabinet Grotesk";
-  src: url("../assets/fonts/CabinetGrotesk-Variable.woff2") format("woff2");
+  font-family: "Satoshi";
+  src: url("../assets/fonts/Satoshi-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-display: swap;
 }
@@ -87,7 +87,7 @@
   transform-origin: center;
 
   margin: 0;
-  font-family: "Cabinet Grotesk", system-ui, sans-serif;
+  font-family: "Satoshi", sans-serif;
   font-size: var(--goo-text);
   font-weight: 800;
   line-height: 1;
@@ -124,7 +124,7 @@
 body {
   min-height: 100vh;
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: "Satoshi", sans-serif;
   color: var(--goo-ink);
   background: var(--goo-paper);
 }

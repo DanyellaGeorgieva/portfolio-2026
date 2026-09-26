@@ -295,7 +295,7 @@ function drawStandIn(ctx, it, ink) {
     ctx.fillStyle = ink;
     // The lettering fills its box: the type size follows the collider's height.
     const size = Math.round((it.opts.h || 28) * 0.9);
-    ctx.font = `800 ${size}px "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif`;
+    ctx.font = `800 ${size}px Satoshi, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(it.opts.text, 0, 1, it.opts.w);

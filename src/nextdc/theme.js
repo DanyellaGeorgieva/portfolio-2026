@@ -2,7 +2,7 @@
 // colours: hover the sun in the corner and html.dark goes on, Tailwind's
 // class-based dark mode takes over, and every section fades its background
 // over 0.3 s. The light hero goes dark while the dark work section goes light,
-// the red Garamond headline turns green and "empower" turns brown.
+// the red headline turns green and "empower" turns brown.
 //
 // The header over the work is the case the site needed an extra rule for:
 // it takes the section's colour, so under html.dark it has to invert too.

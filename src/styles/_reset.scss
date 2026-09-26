@@ -68,6 +68,60 @@ textarea {
   color: inherit;
 }
 
+// Range inputs, drawn by hand everywhere. accent-color tints the thumb but
+// can't reach the track, and taking the native look off to set the track takes
+// the thumb with it — so both are drawn here. The thumb is currentColor, which
+// the form-control rule above makes the surrounding text colour.
+input[type="range"] {
+  --track-height: 4px;
+  --thumb-size: 18px;
+
+  height: var(--thumb-size);
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+
+  &::-webkit-slider-runnable-track {
+    height: var(--track-height);
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.7);
+  }
+
+  &::-moz-range-track {
+    height: var(--track-height);
+    border-radius: 999px;
+    background: rgb(0 0 0 / 0.7);
+  }
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    // WebKit sits the thumb on the track's top edge; this centres it.
+    margin-top: calc((var(--track-height) - var(--thumb-size)) / 2);
+    border: 0;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &::-moz-range-thumb {
+    width: var(--thumb-size);
+    height: var(--thumb-size);
+    border: 0;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+
+// Code-ish elements default to the browser's monospace; the site has one face.
+code,
+kbd,
+pre,
+samp {
+  font-family: inherit;
+}
+
 // Long words and URLs break instead of pushing a column wider than its measure.
 p,
 h1,

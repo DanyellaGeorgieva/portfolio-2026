@@ -16,9 +16,6 @@
     --faint: color-mix(in srgb, var(--text) 38%, var(--bg));
     --line: color-mix(in srgb, var(--text) 18%, var(--bg));
     --panel: color-mix(in srgb, var(--text) 5%, var(--bg));
-    --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
-    --body: "Manrope", "Helvetica Neue", Arial, sans-serif;
-    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
 .vtw[data-textile="t1"] { --bg: #241228; --text: #F29FC5; }
 .vtw[data-textile="t3"] { --bg: #1E1F16; --text: #E6E783; }
@@ -54,7 +51,7 @@
     font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
     display: flex; justify-content: space-between; gap: 12px;
   }
-.vtw .ctl output { color: var(--text); font-family: var(--mono); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
+.vtw .ctl output { color: var(--text); letter-spacing: 0; text-transform: none; font-variant-numeric: tabular-nums; }
 .vtw input[type="range"] { width: 200px; max-width: 100%; accent-color: var(--text); }
 .vtw .swatches { display: flex; gap: 8px; }
 .vtw .swatch {
@@ -86,12 +83,12 @@
 .vtw .viz canvas { display: block; width: 100%; }
 .vtw .scan canvas, .vtw .tex canvas, .vtw #blurOv { cursor: crosshair; touch-action: none; }
 .vtw .readout {
-    font-family: var(--mono); font-size: 12.5px; color: var(--text);
+    font-size: 12.5px; color: var(--text);
     font-variant-numeric: tabular-nums; min-height: 1.6em; margin: 0;
   }
 .vtw .stats { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; padding: 0; list-style: none; }
 .vtw .stats li { font-size: 12px; color: var(--muted); }
-.vtw .stats b { font-family: var(--mono); font-weight: 400; color: var(--text); font-variant-numeric: tabular-nums; }
+.vtw .stats b { font-weight: 400; color: var(--text); font-variant-numeric: tabular-nums; }
 .vtw .row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: end; }
 .vtw .loupe-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 760px) {
