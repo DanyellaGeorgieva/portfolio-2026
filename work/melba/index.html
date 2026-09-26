@@ -20,11 +20,11 @@
         <p class="page__eyebrow">
           Melba Sofia Design Festival · Website · 2021
         </p>
-        <h1 class="page__title">MELBA 2021</h1>
+        <h1 class="page__title">MELBA Design Festival 2021</h1>
 
         <p class="page__lead">
-          A website of 19 interactive jars for the 4th Melba Sofia Design
-          Festival, 11–21 November 2021.
+          A responsive web platform featuring 19 physics-driven digital
+          containers engineered for the 4th Melba Sofia Design Festival.
         </p>
 
         <dl class="page__meta">
@@ -52,12 +52,9 @@
         </p>
         <p class="page__body">
           My job was to make those containers interactive. Every section of the
-          site lives inside its own jar—the menu, the line-up, the speakers, and
-          the about page. Each one holds illustrated produce (peaches, carrots,
-          broccoli, pinecones), soft wobbling jelly blobs, and the section name
-          broken into floating typographic pieces. When a user passes their
-          cursor over the layout, the physics engine takes over—everything
-          drifts, bumps into its neighbors, and slowly settles back into place.
+          site lives in a jar, filled with illustrated produce, wobbling jelly
+          and its own name in floating pieces. Hover, and it all drifts, bumps
+          and slowly settles, like a jar someone just set down.
         </p>
 
         <h2 class="page__heading">The Ancestral Method</h2>
@@ -68,60 +65,64 @@
           YouTube tutorials and getting lost in the docs.
         </p>
 
-        <h2 class="page__heading">Under the Lid</h2>
+        <h2 class="page__heading">Inside the Physics</h2>
         <ol class="steps">
           <li class="step">
-            <h3 class="page__subheading">Invisible walls</h3>
+            <h3 class="page__subheading">Invisible glass walls</h3>
             <p class="page__body">
               Each jar is its own Matter.js world, sealed by six invisible
               static walls. The jar you see is the illustrator's drawing,
               layered over the canvas, with the walls hand-placed to match its
-              outline. The physics and the drawing never touch; they just agree
-              on where the glass is.
+              outline. The physics engine and the artwork never directly touch;
+              they simply share a unified coordinate system representing the
+              boundary of the glass.
             </p>
           </li>
 
           <li class="step">
-            <h3 class="page__subheading">Gravity: weightless, not falling</h3>
+            <h3 class="page__subheading">Syrup gravity</h3>
             <p class="page__body">
-              Gravity is off, so everything floats as if suspended in syrup.
-              Every object is five times Matter's default weight and has zero
-              bounce, so collisions land softly rather than springily.
+              Standard gravity is deactivated. Objects float weightlessly as if
+              suspended in thick syrup. To eliminate elastic bouncing, every
+              object is assigned a mass five times heavier than Matter.js
+              defaults, combined with a restitution value of zero. This forces
+              all vector collisions to land softly and deliberately rather than
+              springily.
             </p>
           </li>
 
           <li class="step">
-            <h3 class="page__subheading">Shapes: collider and skin</h3>
+            <h3 class="page__subheading">Convex vs. concave outlines</h3>
             <p class="page__body">
-              Matter.js can only collide convex polygons; even its circles are
-              polygons. The festival's illustrations are crescents, fans and
-              spiky leaves. So every object has two layers: a collider the
-              engine simulates, and a skin visitors see.
+              Matter.js natively calculates collisions exclusively for convex
+              polygons, whereas the festival illustrations feature complex,
+              organic curves. To maintain performance, every object uses a
+              dual-layer architecture: a hidden mathematical collider simulated
+              by the engine, and a visible graphic skin rendered to the user.
             </p>
             <p class="page__body">
-              The collider is a hidden SVG in the page: a simplified,
-              straight-edged outline of the illustration. At load, Matter reads
-              it into points. It samples curves pixel by pixel but straight
-              edges only at their corners, so a straight-edged outline keeps the
-              shape light. A peach becomes 11 points instead of hundreds.
+              <strong>Collider:</strong> A simplified, straight-edged SVG vector outline. While
+              scanning a smooth curve pixel-by-pixel demands hundreds of points,
+              reducing the shape to sharp corners allows a complex asset like a
+              peach to be represented by just 11 points. Minimizing the vertex
+              count drastically drops the number of collision checks required
+              per frame, keeping all 19 jars running at a locked frame rate.
             </p>
             <p class="page__body">
-              Concave outlines are the catch. The engine can't collide them
-              directly, and without help Matter quietly falls back to the
-              outline's convex hull, so a leaf would collide as a solid lump,
-              bumping into the air between its blades.
-              <code>poly-decomp</code> solves it by cutting each concave outline
-              into convex pieces, which Matter welds into one compound body.
-              Reading the SVGs also needed the <code>pathseg</code> polyfill,
-              because Chrome had removed the browser API Matter uses for it.
+              <strong>Concave shapes:</strong> Complex shapes like leaves cannot be processed as
+              a single convex hull without losing their empty inner gaps. We
+              used poly-decomp to automatically slice concave paths into
+              separate convex pieces, which are then welded into a single
+              composite rigid body. A pathseg polyfill handles the path
+              segmentation layer directly in the browser.
             </p>
             <p class="page__body">
-              The skin comes in two kinds. Illustrated produce gets a PNG sprite
-              drawn over its body, each with its own scale factor so the drawing
-              lines up with the collider. One peach outline, reused at four
-              sizes and rotations, gives the Symposium jar six peaches. Flat
-              shapes like leaves skip the sprite: the collider polygon is the
-              drawing, filled with a single colour.
+              <strong>Skin:</strong> Illustrated assets receive a standard PNG sprite precisely
+              scaled and anchored to match the underlying collider geometry. To
+              optimize memory, matching items (such as six identical peaches in
+              one jar) share the exact same mathematical vector outline. Flat
+              geometric elements like leaves skip image assets entirely,
+              rendering the vector collider path directly as the visual artwork.
             </p>
             <!-- Live: src/melba/jarSkin.js. Loaded by main.js only on a page
                  that has one; the caption below is kept under what it builds. -->
@@ -139,28 +140,35 @@
           <li class="step">
             <h3 class="page__subheading">How the jelly blobs work</h3>
             <p class="page__body">
-              The soft blobs aren't rigid bodies at all. Each one is a ring of
-              invisible physics dots (between 16 and 44, depending on the blob),
-              and every dot has three connections:
+              Each liquid blob is engineered as a circular ring of independent,
+              rigid particles bound together by structural constraints.
+              Individually they are solid; collectively they wobble. A single
+              ring contains between 16 and 44 invisible coordinate nodes
+              depending on the blob size, with each node maintaining three
+              distinct mathematical connections:
             </p>
             <ul class="page__list">
               <li>
-                a rigid link to its neighbour, so the ring keeps its length
+                A rigid structural link to its immediate neighbor to maintain
+                overall ring circumference.
               </li>
               <li>
-                a loose spring to the dot two places along, so the ring can't
-                fold in on itself
+                A secondary, looser constraint to the node two positions ahead
+                to prevent the shape from folding in on itself.
               </li>
               <li>
-                a weak tether to its starting point, so the blob always drifts
-                home
+                A weak anchor tether dragging the node back to its original
+                baseline coordinate, ensuring the blob always drifts home.
               </li>
             </ul>
             <p class="page__body">
-              A second canvas, drawn with Paper.js, runs a smooth curve through
-              the dots every frame, so a handful of points reads as one
-              continuous, wobbling shape. When a peach bumps into the ring, the
-              dots give way, then the tethers pull them back.
+              A secondary canvas running Paper.js loops through these coordinate
+              nodes every frame, drawing a smooth vector spline through the
+              points so a small cluster of floating tracking dots reads as a
+              single, continuous, organic shape. When a rigid asset like a peach
+              collides with the perimeter, the tracking points give way
+              dynamically before the anchor tethers pull them back into
+              formation.
             </p>
             <!-- Live: src/melba/jarJelly.js. -->
             <jar-jelly>
@@ -174,76 +182,17 @@
           </li>
 
           <li class="step">
-            <h3 class="page__subheading">Every speaker, preserved</h3>
+            <h3 class="page__subheading">Experience It Live</h3>
             <p class="page__body">
-              Each of the six symposium speakers got their own jar, with their
-              name floating inside as physics pieces that link to their page. In
-              four of them, the speaker's portrait is sealed inside the jelly:
-              the photo is clipped to the blob's shape, so when something bumps
-              into it, the face wobbles along with it. Each speaker's page then
-              repeats the trick at full scale, with one giant jar framing the
-              whole profile.
-            </p>
-          </li>
-
-          <li class="step">
-            <h3 class="page__subheading">A nudge, not a click</h3>
-            <p class="page__body">
-              The interaction is hover only. When the cursor passes over an
-              object, it gets a push in a random direction, scaled by its own
-              mass, so a heavy peach and a light dot react comparably. Each jar
-              has its own tuning, gentler in some and livelier in others. The
-              name pieces are links, so the menu is still a menu, just one that
-              moves.
-            </p>
-          </li>
-
-          <li class="step">
-            <h3 class="page__subheading">Nineteen worlds, one idle state</h3>
-            <p class="page__body">
-              Running this many physics simulations is a real cost, so each jar
-              puts itself to sleep: once every object has come to rest, it stops
-              drawing entirely, and the next hover wakes it. The layout is also
-              scaled with CSS at different screen sizes, so every jar corrects
-              the mouse position for that scale and the hover stays precise.
-            </p>
-          </li>
-
-          <li class="step">
-            <h3 class="page__subheading">
-              One class per jar, one class per shape
-            </h3>
-            <p class="page__body">
-              The code is object-oriented, built from ES6 modules and classes.
-              Each of the 19 jars is its own class that owns its engine,
-              renderer, walls, contents and interaction. A shared particles
-              module defines seven shape classes (<code>Rectangle</code>,
-              <code>Circle</code>, <code>Boundary</code>, <code>Polygon</code>,
-              <code>Trapezoid</code>, <code>Svg</code> and
-              <code>SvgTexture</code>), each packaging the physics settings
-              every object needs: weight, zero bounce, and its sprite skin.
-              Filling a jar is mostly a list of
-              <code>new SvgTexture('peach', …)</code> calls. A shared config
-              holds each illustration's sprite scale, so a peach looks the same
-              in every jar it appears in.
+              Together, the rigid geometries, invisible boundaries, and
+              structural spring blobs form an interconnected system of 19
+              independent worlds that remain fully operational today. Because
+              physics layouts are best understood through physical touch, open
+              the live platform on a desktop screen and run your cursor through
+              the jars.
             </p>
           </li>
         </ol>
-
-        <h2 class="page__heading">Behind the jars</h2>
-        <p class="page__body">
-          <strong>19 jars · 824 physics bodies · 1,130 constraints</strong>
-        </p>
-        <p class="page__body">
-          Six jars on the homepage, six on the symposium page, one framing every
-          speaker's page, and one on About. Together they hold 326 floating
-          objects and 15 jelly blobs.
-        </p>
-        <p class="page__body">
-          If I rebuilt it today, I'd push the object-oriented approach one step
-          further: a shared base jar class for the engine, hover and sleep logic
-          that all 19 currently repeat.
-        </p>
 
         <dl class="page__meta">
           <dt>Live site</dt>
