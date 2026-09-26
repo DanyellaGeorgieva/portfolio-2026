@@ -1244,8 +1244,9 @@ jar-jelly {
 
 // --- Next-DC ------------------------------------------------------------------
 
-// Two copies, one window. Each row is exactly as tall as the site's: its
-// window 32/36 of a line (h-8 on text-3xl), its copies a full line each.
+// Two copies, one window. The window is one full line, the distance each copy
+// travels. The site's was a little shorter (h-8 on text-3xl, 32/36 of a line),
+// which suited Neue Haas but cut Satoshi's descenders off.
 ndc-roll {
   .demo__stage {
     display: flex;
@@ -1255,14 +1256,16 @@ ndc-roll {
   }
 
   .roll {
-    --line: 1.2em;
+    // Room for Satoshi's descenders inside each line: at 1.2 the parked copy's
+    // g and p reached below their own line and showed at the window's top edge.
+    --line: 1.4em;
     font-size: var(--fs-lead);
     line-height: var(--line);
   }
 
   .roll__row {
     position: relative;
-    height: calc(var(--line) * 32 / 36);
+    height: var(--line);
   }
 
   .roll__window {
@@ -1462,9 +1465,7 @@ ndc-grid {
   .grid__still {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(135deg, transparent 48%, color-mix(in oklab, var(--ink) 30%, transparent) 49% 51%, transparent 52%),
-      color-mix(in oklab, var(--ink) 14%, transparent);
+    background: color-mix(in oklab, var(--ink) 14%, transparent);
     transition: transform 0.5s var(--ease-in-out-quad);
   }
 
@@ -1477,7 +1478,7 @@ ndc-grid {
     aspect-ratio: 16 / 9;
     translate: -50% -50%;
     display: none;
-    background: var(--accent);
+    background: rgb(0 0 0 / 0.6);
 
     i {
       position: absolute;
@@ -1522,22 +1523,9 @@ ndc-labels {
     height: 260px;
     max-width: 520px;
     overflow: hidden;
-    border: 1px solid var(--line);
     background: var(--paper);
     cursor: none;
     touch-action: pan-y;
-  }
-
-  .lbl__hero-word {
-    position: absolute;
-    right: 12px;
-    bottom: 8px;
-    font-size: 30px;
-    font-weight: 300;
-    line-height: 1;
-    text-transform: uppercase;
-    color: var(--accent);
-    opacity: 0.55;
   }
 
   .lbl__target {
@@ -1648,7 +1636,6 @@ ndc-theme {
 
     max-width: 520px;
     overflow: hidden;
-    border-radius: 6px;
     // Every section fades its colours the way the site's did.
     * {
       transition:
@@ -1658,35 +1645,37 @@ ndc-theme {
     }
   }
 
+  // The homepage as it is now: the red headline up on the left, and the
+  // line with the sun beside it down on the right.
   .thm__hero {
-    position: relative;
-    display: grid;
-    align-content: end;
-    gap: 2px;
-    height: 170px;
-    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 190px;
+    padding: 18px 16px 14px;
     background: var(--light);
     color: var(--black);
     text-transform: uppercase;
   }
 
-  .thm__logo {
-    position: absolute;
-    left: 16px;
-    top: 12px;
-    font-weight: 800;
-  }
-
   .thm__title {
-    font-size: clamp(26px, 5vw, 36px);
+    font-size: clamp(24px, 4.6vw, 34px);
     font-weight: 300;
-    line-height: 1;
+    line-height: 0.95;
     color: var(--red);
   }
 
+  .thm__line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
   .thm__sub {
-    font-size: clamp(16px, 3vw, 22px);
-    line-height: 1.1;
+    font-size: clamp(14px, 2.6vw, 19px);
+    line-height: 1.05;
+    text-align: right;
 
     em {
       font-style: normal;
@@ -1695,10 +1684,8 @@ ndc-theme {
   }
 
   .thm__switch {
-    position: absolute;
-    right: 14px;
-    bottom: 14px;
-    padding: 4px;
+    flex: none;
+    padding: 2px;
     border: 0;
     background: none;
     color: var(--brown);
@@ -1719,7 +1706,7 @@ ndc-theme {
   // The header over the work section: #header.dark.
   .thm__bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: 9px 0;
     border-bottom: 1px solid color-mix(in srgb, #fff 40%, transparent);
     color: #fff;

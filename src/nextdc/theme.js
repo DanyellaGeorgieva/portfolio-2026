@@ -1,8 +1,9 @@
-// <ndc-theme> — dark mode on hover. The top of the homepage in Next-DC's own
-// colours: hover the sun in the corner and html.dark goes on, Tailwind's
+// <ndc-theme> — the dark mode. The top of the homepage in Next-DC's own
+// colours: click the sun in the corner and html.dark goes on, Tailwind's
 // class-based dark mode takes over, and every section fades its background
 // over 0.3 s. The light hero goes dark while the dark work section goes light,
-// the red headline turns green and "empower" turns brown.
+// the red headline turns green and "guide" turns brown. The copy is the
+// homepage's current one.
 //
 // The header over the work is the case the site needed an extra rule for:
 // it takes the section's colour, so under html.dark it has to invert too.
@@ -24,15 +25,16 @@ const SUN = `
 class NdcTheme extends Demo {
   stage() {
     return `
-      <div class="thm" role="img" aria-label="The Next-DC homepage in light mode. Hovering the sun in the corner flips it to dark: the hero goes dark, the work section goes light, and the headline turns from red to green.">
+      <div class="thm" role="img" aria-label="The Next-DC homepage in light mode. Clicking the sun in the corner flips it to dark: the hero goes dark, the work section goes light, and the headline turns from red to green.">
         <div class="thm__hero">
-          <span class="thm__logo">X</span>
-          <span class="thm__title">eclectic practices</span>
-          <span class="thm__sub">that <em>empower</em> brands</span>
-          <button type="button" class="thm__switch" aria-label="Hover or tap to switch dark mode">${SUN}</button>
+          <span class="thm__title">in a world of<br>constant change</span>
+          <span class="thm__line">
+            <button type="button" class="thm__switch" aria-label="Switch dark mode">${SUN}</button>
+            <span class="thm__sub">we <em>guide</em> businesses<br>through cultural currents.</span>
+          </span>
         </div>
         <div class="thm__work">
-          <div class="thm__bar"><span>X</span><span>work · dna · services · team</span></div>
+          <div class="thm__bar"><span>work · dna · services · team</span></div>
           <div class="thm__tiles"><i></i><i></i><i></i></div>
         </div>
       </div>`;
@@ -40,15 +42,9 @@ class NdcTheme extends Demo {
 
   build() {
     this.frame = this.querySelector('.thm');
-    const sw = this.querySelector('.thm__switch');
-    // The site's own trigger: over the sun is dark, off it is light.
-    sw.addEventListener('mouseover', () => this.set(true, true));
-    sw.addEventListener('mouseout', () => this.set(false, true));
-    // A tap has no "off", so on touch it toggles.
-    sw.addEventListener('click', (e) => {
-      if (e.pointerType === 'mouse') return;
-      this.set(!this.dark, true);
-    });
+    // A click on the sun flips it, and flips it back. The first click also
+    // stops the autoplay, so the page stays the way it was left.
+    this.querySelector('.thm__switch').addEventListener('click', () => this.set(!this.dark, true));
 
     this.t = 0;
     this.loop = frameLoop((now, ms) => {

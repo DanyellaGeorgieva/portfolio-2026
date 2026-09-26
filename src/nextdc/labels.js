@@ -35,7 +35,6 @@ class NdcLabels extends Demo {
         .join(' ');
     return `
       <div class="lbl" aria-label="A hero with a video, a project and a blog post. The cursor's label changes to whatever it is over.">
-        <span class="lbl__hero-word" aria-hidden="true">eclectic practices</span>
         ${TARGETS.map(
           (t, i) => `
           <div class="lbl__target ${t.cls}" data-i="${i}" ${data(t)}

@@ -46,7 +46,7 @@ class NdcCurtain extends Demo {
       <svg class="curtain" viewBox="0 0 330 240" role="img"
         aria-label="The homepage scrolling: the work slides over a pinned hero, and at the end lifts off a footer pinned underneath it. Beside it, a map of the page showing the footer painted one footer-height above its own slot.">
         <defs>
-          <clipPath id="${this.uid}-clip"><rect x="${VIEW.x}" y="${VIEW.y}" width="${VIEW.w}" height="${VIEW.h}" rx="6"/></clipPath>
+          <clipPath id="${this.uid}-clip"><rect x="${VIEW.x}" y="${VIEW.y}" width="${VIEW.w}" height="${VIEW.h}"/></clipPath>
         </defs>
 
         <text class="curtain__title" x="${VIEW.x}" y="12">what you see</text>
@@ -65,13 +65,13 @@ class NdcCurtain extends Demo {
             ${[0, 1, 2, 3, 4, 5]
               .map(
                 (i) =>
-                  `<rect class="is-tile" x="${VIEW.x + 12 + (i % 2) * 66}" y="${24 + Math.floor(i / 2) * 150 + (i % 2) * 40}" width="60" height="80" rx="2"/>`,
+                  `<rect class="is-tile" x="${VIEW.x + 12 + (i % 2) * 66}" y="${24 + Math.floor(i / 2) * 150 + (i % 2) * 40}" width="60" height="80"/>`,
               )
               .join('')}
             <text class="curtain__on-ink" x="${VIEW.x + 10}" y="16">the work</text>
           </g>
         </g>
-        <rect class="curtain__frame" x="${VIEW.x}" y="${VIEW.y}" width="${VIEW.w}" height="${VIEW.h}" rx="6"/>
+        <rect class="curtain__frame" x="${VIEW.x}" y="${VIEW.y}" width="${VIEW.w}" height="${VIEW.h}"/>
 
         <text class="curtain__title" x="${MAP.x}" y="12">what the page is</text>
         <rect class="is-hero" x="${MAP.x}" y="${my(0)}" width="${MAP.w}" height="${my(HERO) - my(0)}"/>
@@ -84,7 +84,7 @@ class NdcCurtain extends Demo {
         <text class="curtain__small" x="${MAP.x + 4}" y="${my(HERO + CONTENT) + 22}">600 px of scroll</text>
         <path class="curtain__arrow" d="M ${MAP.x + MAP.w + 6} ${my(HERO + CONTENT + F / 2)} C ${MAP.x + MAP.w + 18} ${my(HERO + CONTENT + F / 2)} ${MAP.x + MAP.w + 18} ${my(HERO + CONTENT - F / 2)} ${MAP.x + MAP.w + 6} ${my(HERO + CONTENT - F / 2)}"/>
         <text class="curtain__small" x="${MAP.x + MAP.w + 8}" y="${my(HERO + CONTENT) + 3}" transform="rotate(90 ${MAP.x + MAP.w + 22} ${my(HERO + CONTENT)})">bottom: 600px</text>
-        <rect class="curtain__window" data-window x="${MAP.x - 3}" y="${my(0)}" width="${MAP.w + 6}" height="${my(V) - my(0)}" rx="3"/>
+        <rect class="curtain__window" data-window x="${MAP.x - 3}" y="${my(0)}" width="${MAP.w + 6}" height="${my(V) - my(0)}"/>
         <text class="curtain__small" x="${MAP.x - 7}" y="${my(V / 2)}" text-anchor="end" data-window-label>viewport</text>
       </svg>`;
   }
