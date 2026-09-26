@@ -52,6 +52,7 @@ class JarJelly extends JarDemo {
           <button type="button" data-preset="original" aria-pressed="true">Original</button>
           <button type="button" data-preset="rubber" aria-pressed="false">Rubber</button>
           <button type="button" data-preset="stone" aria-pressed="false">Stone</button>
+          <button type="button" data-custom aria-pressed="false">Custom</button>
         </div>
       </div>
       <div class="row">
@@ -69,7 +70,7 @@ class JarJelly extends JarDemo {
         </div>
       </div>
       <div class="row">
-        <button type="button" class="btn" data-structure aria-pressed="false">Show the dots</button>
+        <button type="button" class="btn" data-structure aria-pressed="true">Hide the dots</button>
         <button type="button" class="btn" data-shake>Shake</button>
       </div>`;
   }
@@ -100,7 +101,7 @@ class JarJelly extends JarDemo {
       .forEach(([x, y, color]) => addProp('dot', x, y, { r: 7, color }));
     this.propBodies = this.props.map((p) => p.body);
 
-    this.state = { tether: 0.009, shape: 0.04, dots: 16, structure: false };
+    this.state = { tether: 0.009, shape: 0.04, dots: 16, structure: true };
     this.nodes = [];
     this.links = [];
     this.tethers = [];
@@ -144,6 +145,23 @@ class JarJelly extends JarDemo {
         this.poke(C.x - 40, C.y - 30, 0.06);
       }),
     );
+
+    // Custom is lit whenever the sliders match none of the presets, and holds
+    // the last such tuning — so after trying a preset, pressing it goes back to
+    // what you had dialled in. Until something has been dialled in there is
+    // nothing to go back to, and it does nothing.
+    this.querySelector('[data-custom]').addEventListener('click', () => {
+      if (!this.custom) return;
+      const { tether, shape, dots } = this.custom;
+      this.state.tether = tether;
+      this.state.shape = shape;
+      if (dots !== this.state.dots) {
+        this.state.dots = dots;
+        this.buildRing();
+      }
+      this.sync();
+      this.poke(C.x - 40, C.y - 30, 0.06);
+    });
 
     const structure = this.querySelector('[data-structure]');
     structure.addEventListener('click', () => {
@@ -228,6 +246,8 @@ class JarJelly extends JarDemo {
       ([, p]) => near(p[0], state.tether) && near(p[1], state.shape) && p[2] === state.dots,
     );
     this.press('[data-preset]', (b) => !!match && b.dataset.preset === match[0]);
+    this.press('[data-custom]', () => !match);
+    if (!match) this.custom = { tether: state.tether, shape: state.shape, dots: state.dots };
     const note =
       match?.[0] === 'original' ? 'the Review jar’s settings' : match ? `${match[0]} preset` : 'custom';
     this.readout.innerHTML =

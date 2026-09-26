@@ -25,8 +25,8 @@ class JarSkin extends JarDemo {
     return `
       <div class="row">
         <div class="seg" role="group" aria-label="View">
-          <button type="button" data-view="skin" aria-pressed="true">Skins</button>
-          <button type="button" data-view="both" aria-pressed="false">Both</button>
+          <button type="button" data-view="skin" aria-pressed="false">Skins</button>
+          <button type="button" data-view="both" aria-pressed="true">Both</button>
           <button type="button" data-view="collider" aria-pressed="false">Colliders</button>
         </div>
         <button type="button" class="btn" data-shake>Shake</button>
@@ -66,7 +66,7 @@ class JarSkin extends JarDemo {
     add('dot', 56, 190, { r: 18, color: 'green' });
 
     this.bodies = this.items.map((i) => i.body);
-    this.view = 'skin';
+    this.view = 'both';
     this.hovered = null;
     this.nParts = this.items.reduce((a, it) => a + partCount(it.body), 0);
     this.concave = this.items.filter((it) => it.body.parts.length > 2).length;
