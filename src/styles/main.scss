@@ -1006,7 +1006,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 .page__meta {
   display: grid;
   grid-template-columns: minmax(7rem, max-content) 1fr;
-  gap: 0.6rem 2rem;
+  gap: 0.6rem 1rem;
   margin: 2.5rem 0 3rem;
   max-width: var(--measure);
 
@@ -1084,6 +1084,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 // listed here with the jars; what is their own follows below.
 jar-skin,
 jar-jelly,
+vitosha-textiles,
 ndc-roll,
 ndc-curtain,
 ndc-grid,
@@ -1237,7 +1238,8 @@ ndc-micro {
 // broken — so it only needs one line of height; on a phone it can wrap, and
 // there the second line is held for it so a hover never shifts the page.
 jar-skin,
-jar-jelly {
+jar-jelly,
+vitosha-textiles {
   justify-items: center;
 
   .controls {
@@ -1264,6 +1266,93 @@ jar-jelly {
     .readout {
       min-height: 3em;
     }
+  }
+}
+
+// The Vitosha end screens, one textile at a time. The three images share one
+// box; the rounded frame is part of each image, so the stage adds none.
+//
+// A change is a sweep, not a fade. The incoming textile is revealed from the
+// left by a mask — a slanted gradient three times the image's width, black
+// giving way to transparent over a soft band — slid across it, so the edge
+// travels like cloth being drawn over the one before. It arrives a little
+// blurred and oversaturated and settles as it lands; the one it covers softens
+// away underneath. Nothing moves until the first change (.is-live), so the
+// page opens on a still image.
+vitosha-textiles {
+  .textiles__stage {
+    position: relative;
+    justify-self: stretch;
+    aspect-ratio: 2560 / 768;
+    // Clipped to the frame drawn into the images (a ~58px corner on 2560 ×
+    // 768), so the blur of a change stays inside it instead of haloing out.
+    overflow: hidden;
+    border-radius: 2.3% / 7.7%;
+  }
+
+  .textiles__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    visibility: hidden;
+
+    &.is-current {
+      z-index: 2;
+      visibility: visible;
+    }
+
+    &.is-leaving {
+      z-index: 1;
+      visibility: visible;
+    }
+  }
+
+  .is-live .is-current {
+    -webkit-mask-image: linear-gradient(100deg, #000 42%, transparent 58%);
+    mask-image: linear-gradient(100deg, #000 42%, transparent 58%);
+    -webkit-mask-size: 300% 100%;
+    mask-size: 300% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    animation: textile-in 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  .is-live .is-leaving {
+    animation: textile-out 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .is-live .is-current,
+    .is-live .is-leaving {
+      animation: none;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+  }
+}
+
+@keyframes textile-in {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+    filter: blur(8px) saturate(1.6);
+  }
+
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes textile-out {
+  from {
+    filter: blur(0);
+  }
+
+  to {
+    filter: blur(6px);
   }
 }
 

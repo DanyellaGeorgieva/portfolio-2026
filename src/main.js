@@ -4,8 +4,9 @@ import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
 import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
 import { paletteNames } from './webgl/palettes.js';
-// Defines <vitosha-ridge>, used by the Vitosha case study.
+// Define <vitosha-ridge> and <vitosha-textiles>, used by the Vitosha case study.
 import './vitoshaRidge.js';
+import './vitoshaTextiles.js';
 import vitoshaWidgets from './vitoshaWidgets.js';
 
 // Declared before the scene because Scene calls onPalette from its own

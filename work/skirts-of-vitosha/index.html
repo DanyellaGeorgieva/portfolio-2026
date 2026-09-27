@@ -83,7 +83,30 @@
           line of the mountain.
         </p>
 
-        <vitosha-ridge data-opacity="0.4"></vitosha-ridge>
+        <!-- The end screen on each of the three textiles, crossfading, with
+             controls under it. src/vitoshaTextiles.js stacks the images and
+             builds the controls; without it they simply stand in a column. -->
+        <vitosha-textiles>
+          <img
+            src="./assets/1.png"
+            width="2560"
+            height="768"
+            alt="The end screen on the first textile: a soft olive-and-lilac cloth risen into the Vitosha ridge on a deep plum ground, with Kamen Del, Bistrishko Branishte, Simeonovo and Boyana marked in pink" />
+          <img
+            src="./assets/2.png"
+            width="2560"
+            height="768"
+            alt="The end screen on the second textile: a crumpled rust-red cloth risen into the ridge on a near-black ground, with the same four places marked in pale yellow" />
+          <img
+            src="./assets/3.png"
+            width="2560"
+            height="768"
+            alt="The end screen on the third textile: an iridescent, heavily melted cloth in bronze and rainbow streaks on a dark navy ground, with the places marked in pale blue" />
+          <p class="caption">
+            The end screen on each of the three textiles. Every visit to the
+            live site lands on one at random, never the same one twice in a row.
+          </p>
+        </vitosha-textiles>
 
         <h2 class="page__heading">The “prompt engineer” tax:</h2>
         <p class="page__body">
@@ -255,6 +278,12 @@
           colour variants, each tuned differently; you'll land on one at random,
           and never the same one twice in a row.
         </p>
+
+        <!-- The cloth drifting sideways: the teaser's silhouette in the
+             palette's ink. Moved here from the top, where the end screens now
+             open the story. -->
+        <vitosha-ridge data-opacity="0.4"></vitosha-ridge>
+
         <p class="page__body">
           Curious which one you'll get? Scan the QR code below, disable your
           rotation lock, and turn your phone sideways. I promise the visual is
