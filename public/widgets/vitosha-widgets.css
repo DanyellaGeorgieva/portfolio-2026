@@ -88,13 +88,14 @@
 .vtw .scan canvas, .vtw .tex canvas, .vtw #blurOv { cursor: crosshair; touch-action: none; }
 /* Readouts hold still: the script breaks each one into two fixed lines, and two
    lines of height are reserved, so a value growing a digit can't rewrap the
-   text and shove the widget. In a row, a readout takes a line of its own —
-   beside the sliders its width, and so its wrapping, followed the numbers. */
+   text and shove the widget. In a row, a readout sits beside the sliders on a
+   fixed basis rather than its content's width, so whether it fits there or
+   drops below depends on the widget's width alone, never on the numbers. */
 .vtw .readout {
     font-size: 14px; line-height: 1.5; color: var(--text); white-space: pre-line;
     font-variant-numeric: tabular-nums; min-height: 3em; margin: 0;
   }
-.vtw .row .readout { flex-basis: 100%; }
+.vtw .row .readout { flex: 1 1 16rem; min-width: 0; }
 /* Stats on a grid of equal cells, label over value, so the layout depends on
    the widget's width alone — never on how long this frame's numbers are. */
 .vtw .stats {
@@ -111,6 +112,9 @@
   }
 .vtw .row { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: end; }
 .vtw .loupe-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+/* Room between the strip and the loupe under it, so the two read as separate
+   views rather than one crowded block. */
+.vtw .scan .loupe-wrap { margin-top: 22px; }
 @media (max-width: 760px) {
   .vtw .loupe-wrap { grid-template-columns: 1fr; }
 }

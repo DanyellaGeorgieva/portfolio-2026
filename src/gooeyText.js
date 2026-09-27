@@ -118,10 +118,14 @@ const TITLE_HOLD = 850;
 // standing head and its numbered findings, and leaving them out would have the
 // prose arrive around two blocks that were simply already there.
 //
-// Deliberately NOT in the list: .back and .page__exit. Those are ways out, not
-// copy — the escape hatch has its own show-on-scroll-up behaviour to stay out
-// of, and the exit nav is below the fold on every case study anyway.
-const TEXT = ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__email)';
+// .back is in it too, though it is a way out rather than copy: it is set in
+// the eyebrow's type on the eyebrow's line, and arriving before the rest of
+// the page it read as a leftover from the last one. Small, so it fades, on the
+// same beat as the eyebrow beside it.
+//
+// Deliberately NOT in the list: .page__exit, the way out at the foot. It is
+// below the fold on every case study, so there is nothing to reveal.
+const TEXT = ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__email, .back)';
 
 // Cubic ease-out — 1 - (1 - t)³ — the curve the shader eases its own uniforms
 // on, so the copy settles at the pace the field does.

@@ -405,8 +405,32 @@ body:has(#swup[data-page="detail"]) {
   // alone. Widened from 40% so the copy can actually reach its measure: at 40%
   // the column was 576px, which caps body text at ~58ch however high its
   // max-width is set. The column is what binds, so the measure is budgeted here.
-  --panel-width: 44%;
+  //
+  // In vw rather than %, so it means the same thing in a vertical calc as in a
+  // horizontal one: the case-study eye's height is worked out from it (below),
+  // and a % inside `top` would be a share of the viewport's height.
+  --panel-width: 44vw;
   --panel-pad: 24px;
+
+  // The case-study column's top padding: where the eyebrow's line starts. Named
+  // because the fixed Back link sits on that same line, and the eye is placed
+  // down from it.
+  --column-top: 8rem;
+
+  // The case-study eye's box, stated once because two things are placed from
+  // it: the eye itself, and the Back link above it. Centre line, right edge and
+  // width — see .page__eye for why each is what it is. Drawn at 0.6 of the size
+  // the gutter would allow, and 1.25rem off the column: a mark beside the
+  // title, not a second headline.
+  --eye-gap: 1.25rem;
+  --eye-center: calc(var(--column-top) + 1.75rem + var(--title-size) / 2);
+  --eye-right: calc(50% + var(--panel-width) / 2 + var(--eye-gap));
+  --eye-width: calc(
+    min(
+      clamp(1.75rem, 3.8vw, 4.5rem),
+      calc((100vw - var(--panel-width)) / 2 - 4rem)
+    ) * 0.6
+  );
 
   // The readable measure for running text. Anything longer and the eye loses
   // its place returning to the next line.
@@ -788,7 +812,7 @@ html:has(#swup[data-page="top"]) {
   margin-inline: auto;
   // Top padding clears the nav, which now runs across the top of this column
   // rather than down the side of it.
-  padding: 8rem var(--panel-pad) 4rem;
+  padding: var(--column-top) var(--panel-pad) 4rem;
 }
 
 // The eye that watches a case study. Big, fixed, and parked in the empty gutter
@@ -806,10 +830,10 @@ html:has(#swup[data-page="top"]) {
   // the pair), then half the title — so it is stated rather than measured at
   // runtime, and it follows --title-size if the title is ever resized.
   // Measured against the rendered page: 180px, which is what this computes.
-  top: calc(8rem + 1.75rem + var(--title-size) / 2);
+  top: var(--eye-center);
   // The column is centred, so its content starts at 50% - half its width; this
   // puts the eye's right edge there, then pushes it clear by the gap.
-  right: calc(50% + var(--panel-width) / 2 + 2rem);
+  right: var(--eye-right);
   // Centred on the title by its box, which is now the same as centring it by
   // its iris: with lashes above and below, the eye is symmetric in its viewBox.
   // (With the upper lashes alone the iris sat 60.165% of the way down, and this
@@ -825,10 +849,7 @@ html:has(#swup[data-page="top"]) {
   // Width rather than height because width is the axis under pressure: with the
   // height fixed and the width capped, the cap would squash the drawing instead
   // of scaling it. Height follows from the viewBox's own ratio.
-  width: min(
-    clamp(1.75rem, 3.8vw, 4.5rem),
-    calc((100% - var(--panel-width)) / 2 - 4rem)
-  );
+  width: var(--eye-width);
   height: auto;
   // Every line, the iris and the pupil are currentColor, so the eye inherits
   // the palette's ink from <body> and cross-fades with it on a palette change.
@@ -864,22 +885,33 @@ body:has(#swup[data-page="detail"]) .page__eye {
   display: block;
 }
 
-// The way out of a case study, pinned top left and always there. It used to
-// fade in on a scroll up and out again on the way down, which meant the way out
-// was missing at the moment of wanting it.
+// The way out of a case study, fixed and always there. It used to fade in on a
+// scroll up and out again on the way down, which meant the way out was missing
+// at the moment of wanting it.
 //
-// Words alone, set like a nav link — same weight, same case — because it is the
-// same kind of thing: a way to another page, not a button. It has carried an
-// arrow, a moon and a pyramid at various points; none of them said anything the
-// word does not.
+// The word, led by a chevron that says which way it goes. The chevron is
+// hidden from assistive tech, so it is announced as "back" and nothing more.
+//
+// It stands over the case-study eye: fixed in the same gutter, on the
+// eyebrow's line and in the eyebrow's type — so the way out is always in one
+// place, and reads as a label on the page rather than as a second navigation.
+// Placed from --column-top and the eye's box (--eye-*). Set flush to the eye's
+// right edge rather than centred on it: "← back" is wider than the eye, and
+// centred it overhung to within a few pixels of the eyebrow. Flush, it keeps
+// the eye's own gap from the column and overhangs to the left instead.
 .back {
   position: fixed;
-  top: 1.5rem;
-  left: var(--content-left);
+  // On the eyebrow's own line: the column's top padding, with the same inherited
+  // line height, so the two share a line box exactly at the top of the page.
+  top: var(--column-top);
+  right: var(--eye-right);
   z-index: 10;
-  font-size: 1.1rem;
-  font-weight: 800;
-  text-transform: uppercase;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4em;
+  width: var(--eye-width);
+  white-space: nowrap;
+  @include type-label;
   text-decoration: none;
   // Full ink at rest — the old 0.75 fell under AA contrast on the saturated
   // parts of the field — so the hover is an underline rather than a brighten.
@@ -890,6 +922,21 @@ body:has(#swup[data-page="detail"]) .page__eye {
   &:focus-visible {
     text-decoration-line: underline;
   }
+}
+
+// Drawn rather than typed: a ‹ glyph at 12px is a faint hairline. Stroked in
+// the text colour at the label's weight, and sized to its cap height.
+.back__chevron {
+  flex: none;
+  align-self: center;
+  width: auto;
+  height: 0.7em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
 }
 
 // --- End of a case study ---------------------------------------------------
@@ -994,6 +1041,12 @@ body:has(#swup[data-page="detail"]) .page__eye {
   dd {
     margin: 0;
     @include type-value;
+  }
+
+  // A value that should outrank its neighbours, like an award. An explicit
+  // weight, because the browser's `bolder` from 600 would jump to 900.
+  strong {
+    font-weight: 800;
   }
 }
 
@@ -2381,7 +2434,8 @@ vitosha-ridge {
   // the top where a way back belongs; the exit at the foot is the other one.
   .back {
     position: static;
-    display: inline-block;
+    display: inline-flex;
+    width: auto;
     margin-bottom: 1.75rem;
   }
 

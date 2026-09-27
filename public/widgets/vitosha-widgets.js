@@ -20,7 +20,7 @@
   const MARKUP = {
   "hero": "<div class=\"stage\" id=\"stage\" aria-label=\"Live WebGL render of the textile, displaced by the Vitosha heightmaps. Drag horizontally to pan.\">\n    <canvas id=\"gl\"></canvas>\n    <div class=\"markers\" id=\"markers\" aria-hidden=\"true\"></div>\n    <span class=\"stage__hint\">Drag to pan</span>\n  </div>\n<div class=\"controls\">\n    <div class=\"ctl\">\n      <span class=\"lbl\">Textile</span>\n      <div class=\"swatches\" id=\"swatches\" role=\"group\" aria-label=\"Textile theme\"></div>\n    </div>\n    <div class=\"ctl\">\n      <label for=\"intensity\">Mountain height <output id=\"intensityOut\">1.00</output></label>\n      <input type=\"range\" id=\"intensity\" min=\"0\" max=\"1\" step=\"0.01\" value=\"1\">\n    </div>\n    <div class=\"ctl\">\n      <label for=\"pos\">Panorama position <output id=\"posOut\">0.000</output></label>\n      <input type=\"range\" id=\"pos\" min=\"0\" max=\"1\" step=\"0.001\" value=\"0\">\n    </div>\n    <div class=\"ctl\">\n      <span class=\"lbl\">Heightmap</span>\n      <span class=\"badge\" id=\"heroBadge\">Production settings</span>\n    </div></div>",
   "line": "<div class=\"viz\">\n      <canvas id=\"srcCv\" aria-label=\"The designer's SVG contour line\"></canvas>\n      <ul class=\"stats\" id=\"srcStats\"></ul>\n    </div>",
-  "scan": "<div class=\"viz scan\">\n      <canvas id=\"scanCv\" aria-label=\"Rasterised contour with detected ridge per column\"></canvas>\n      <div class=\"loupe-wrap\">\n        <canvas id=\"loupeCv\" aria-label=\"Magnified pixel grid around the inspected column\"></canvas>\n        <div style=\"display:grid; gap:14px;\">\n          <p class=\"readout\" id=\"scanOut\" aria-live=\"polite\"></p>\n          <ul class=\"stats\" id=\"scanStats\"></ul>\n          <div class=\"row\">\n            <div class=\"ctl\">\n              <label for=\"thr\">Alpha threshold <output id=\"thrOut\">20</output></label>\n              <input type=\"range\" id=\"thr\" min=\"1\" max=\"250\" step=\"1\" value=\"20\">\n            </div>\n            <button type=\"button\" class=\"btn\" id=\"replay\">Replay scan</button>\n          </div>\n          <p class=\"caption\">Loupe: each cell is one pixel, shaded by its alpha. A ringed cell is where the scan stopped in that column. The centre column is the one you\u2019re inspecting.</p>\n        </div>\n      </div>\n    </div>",
+  "scan": "<div class=\"viz scan\">\n      <canvas id=\"scanCv\" aria-label=\"Rasterised contour with detected ridge per column\"></canvas>\n      <div class=\"loupe-wrap\">\n        <canvas id=\"loupeCv\" aria-label=\"Magnified pixel grid around the inspected column\"></canvas>\n        <div style=\"display:grid; gap:14px;\">\n          <p class=\"readout\" id=\"scanOut\" aria-live=\"polite\"></p>\n          <ul class=\"stats\" id=\"scanStats\"></ul>\n          <div class=\"row\">\n            <div class=\"ctl\">\n              <label for=\"thr\">Alpha threshold <output id=\"thrOut\">20</output></label>\n              <input type=\"range\" id=\"thr\" min=\"1\" max=\"250\" step=\"1\" value=\"20\">\n            </div>\n            <button type=\"button\" class=\"btn\" id=\"replay\">Replay scan</button>\n          </div>\n        </div>\n      </div>\n      <p class=\"caption\">Loupe: each cell is one pixel, shaded by its alpha. A ringed cell is where the scan stopped in that column. The centre column is the one you\u2019re inspecting.</p>\n    </div>",
   "seam": "<div class=\"viz\">\n      <canvas id=\"seamCv\" aria-label=\"Heights either side of the loop seam, before and after blending\"></canvas>\n      <div class=\"row\">\n        <div class=\"ctl\">\n          <label for=\"blend\">Blend width <output id=\"blendOut\">8%</output></label>\n          <input type=\"range\" id=\"blend\" min=\"0\" max=\"0.2\" step=\"0.01\" value=\"0.08\">\n        </div>\n        <p class=\"readout\" id=\"seamOut\" aria-live=\"polite\"></p>\n      </div>\n      <p class=\"caption\">Dashed line: the raw scan. Solid line: after the easing. The shaded bands are the columns it reshapes; the vertical rule marks where column 1,023 wraps to column 0.</p>\n    </div>",
   "blur": "<div class=\"viz\">\n      <canvas id=\"blurOv\" aria-label=\"Whole profile; drag to move the zoom window\"></canvas>\n      <canvas id=\"blurCv\" aria-label=\"Zoomed profile, stair-stepped scan against blurred result\"></canvas>\n      <div class=\"row\">\n        <div class=\"ctl\">\n          <label for=\"radius\">Radius <output id=\"radiusOut\">1</output></label>\n          <input type=\"range\" id=\"radius\" min=\"0\" max=\"12\" step=\"1\" value=\"1\">\n        </div>\n        <div class=\"ctl\">\n          <label for=\"passes\">Passes <output id=\"passesOut\">1</output></label>\n          <input type=\"range\" id=\"passes\" min=\"0\" max=\"4\" step=\"1\" value=\"1\">\n        </div>\n        <p class=\"readout\" id=\"blurOut\" aria-live=\"polite\"></p>\n      </div>\n      <p class=\"caption\">Top: the whole profile. Drag across it to move the zoom window. Bottom: 48 columns zoomed in, with the stepped scan as dots and the blurred result as a line.</p>\n    </div>",
   "texture": "<div class=\"viz tex\">\n      <canvas id=\"texCv\" aria-label=\"The heightmap texture, one texel per column, stretched vertically\"></canvas>\n      <p class=\"readout\" id=\"texOut\" aria-live=\"polite\"></p>\n      <ul class=\"stats\" id=\"texStats\"></ul>\n    </div>",
@@ -413,8 +413,8 @@ function startVitosha() {
     let misses = 0; for (let x = 0; x < width; x++) if (c.topYs[x] >= height) misses++;
     $("#scanStats").innerHTML =
       `<li>Raster <b>${width} × ${height} px</b></li>` +
-      `<li>Distinct heights <b>${levels}</b></li>` +
-      `<li>Empty columns <b>${misses}</b></li>`;
+      `<li>Heights <b>${levels}</b></li>` +
+      `<li>Empty <b>${misses}</b></li>`;
   }
 
   function drawLoupe(col) {
@@ -422,10 +422,20 @@ function startVitosha() {
     const { width, height, pixels } = c.raster;
     const cv = $("#loupeCv");
     const cols = 21;
-    const rows = Math.min(11, height);
     const cw = cv.clientWidth;
     const cell = Math.max(8, Math.min(26, Math.floor(cw / cols)));
-    const { ctx } = prep(cv, rows * cell + 2);
+    // HOST PATCH (portfolio): side by side with the readout column, the loupe
+    // spans that column's height — as many rows as fit at this cell size, the
+    // spare height shared out evenly between them — so the two halves end on
+    // one line. The column holds its height (the readout reserves two lines,
+    // the stats sit on a fixed grid), so the row count holds too. Stacked on a
+    // phone there is nothing to match, and it keeps its eleven rows.
+    const side = cv.nextElementSibling;
+    const beside = side && side.offsetTop <= cv.offsetTop + 1;
+    const cssH = beside ? Math.max(side.offsetHeight, 3 * cell + 2) : Math.min(11, height) * cell + 2;
+    const rows = beside ? Math.min(height, Math.floor((cssH - 2) / cell)) : Math.min(11, height);
+    const pitch = beside ? (cssH - 2) / rows : cell;
+    const { ctx } = prep(cv, cssH);
     const x0 = Math.max(0, Math.min(width - cols, col - (cols >> 1)));
     const anchorY = c.topYs[col] >= height ? height - 1 : c.topYs[col];
     const y0 = Math.max(0, Math.min(height - rows, anchorY - (rows >> 1)));
@@ -435,7 +445,7 @@ function startVitosha() {
       for (let j = 0; j < rows; j++) {
         const y = y0 + j;
         const a = pixels[(y * width + x) * 4 + 3];
-        const px = ox + i * cell, py = 1 + j * cell;
+        const px = ox + i * cell, py = 1 + j * pitch + (pitch - cell) / 2;
         ctx.fillStyle = theme.text;
         ctx.globalAlpha = 0.06;
         ctx.fillRect(px + 1, py + 1, cell - 2, cell - 2);
@@ -450,7 +460,7 @@ function startVitosha() {
     // bracket the inspected column
     const bx = ox + (col - x0) * cell;
     ctx.strokeStyle = theme.text; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
-    ctx.strokeRect(bx + 0.5, 0.5, cell - 1, rows * cell + 1);
+    ctx.strokeRect(bx + 0.5, 0.5, cell - 1, rows * pitch + 1);
     ctx.setLineDash([]);
   }
 
