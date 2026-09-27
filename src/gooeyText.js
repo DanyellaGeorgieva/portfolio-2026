@@ -79,7 +79,7 @@ const START_RATIO = 0.35;
 // of page, at the narrow end of every clamp:
 //
 //   goo    .page__title 33 · .project__title 22 · .page__heading 21.6 ·
-//          .page__exit-title 21.6 · .page__lead 20
+//          .page__exit-title 22 · .page__lead 20
 //   fade   .project__blurb 16–18.4 · .page__body 16–18.4 · .page__meta 14 ·
 //          .page__eyebrow 12
 //

@@ -792,8 +792,10 @@ html:has(#swup[data-page="top"]) {
   width: var(--panel-width);
   margin-inline: auto;
   // Top padding clears the nav, which now runs across the top of this column
-  // rather than down the side of it.
-  padding: var(--column-top) var(--panel-pad) 4rem;
+  // rather than down the side of it. The bottom is generous on purpose: the
+  // live-site link is the last thing on the page, and it should end with room
+  // under it rather than on the window's edge.
+  padding: var(--column-top) var(--panel-pad) 10rem;
 }
 
 // The eye that watches a case study. Big, fixed, and parked in the empty gutter
@@ -923,17 +925,17 @@ body:has(#swup[data-page="detail"]) .page__eye {
 }
 
 // --- End of a case study ---------------------------------------------------
-// Two moves, weighted: the way back out is small and quiet, the next project is
-// the one with pull. Someone at the bottom of Melba is warm — the useful thing
-// to offer them is another case study, not the index.
+// Where the reader is sent once the story is done: out to the thing itself.
+// Each item is a label over a large link — the live site, and on Vitosha,
+// whose site only opens on a phone, a QR code beside the festival's page. The
+// way back to the index is Back, fixed at the top the whole way down.
 .page__exit {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1.5rem 2rem;
+  align-items: flex-start;
+  gap: 2rem 4rem;
   margin: 5rem 0 0;
-  padding-top: 1.25rem;
+  padding-top: 1.75rem;
   max-width: var(--measure);
   // No colour named: a border with none falls back to currentColor, so this
   // line is simply the text colour and follows --ink with nothing in between.
@@ -944,49 +946,44 @@ body:has(#swup[data-page="detail"]) .page__eye {
   transition: border-color 1.2s ease;
 }
 
-.page__exit-back {
-  font-size: var(--fs-small);
-  font-weight: 800;
-  text-decoration: none;
-  // Full ink at rest for contrast; the hover is an underline, as on .back.
-  text-underline-offset: 0.2em;
-  text-decoration-thickness: 2px;
-
-  &:hover,
-  &:focus-visible {
-    text-decoration-line: underline;
-  }
-}
-
-.page__exit-next {
+.page__exit-item {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
-  text-align: right;
-  text-decoration: none;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .page__exit-label {
   @include type-label;
 }
 
-// An underline that grows from the right edge, so it opens from the
-// edge the text is set against.
+// An underline that grows from the left on hover, the edge the text is set
+// against.
 .page__exit-title {
-  font-size: var(--fs-heading);
+  font-size: var(--fs-lead);
   font-weight: 800;
   line-height: var(--lh-tight);
+  text-decoration: none;
+  // A URL is one long unbreakable token; let it wrap rather than push out of
+  // the column on a narrow screen.
+  overflow-wrap: anywhere;
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
-  background-position: 100% 100%;
+  background-position: 0 100%;
   background-size: 0% 2px;
   transition: background-size 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 2px;
+  }
 }
 
-.page__exit-next:hover .page__exit-title,
-.page__exit-next:focus-visible .page__exit-title {
-  background-size: 100% 2px;
+.page__exit-qr {
+  display: block;
+  width: 8rem;
+  height: auto;
+  border-radius: 0.25rem;
 }
 
 // --- Case study ------------------------------------------------------------
@@ -2368,7 +2365,7 @@ vitosha-ridge {
     margin-inline: var(--content-left);
     // Less top padding than the desktop's 8rem, because the pinned way out
     // below is no longer pinned and no longer needs clearing.
-    padding: 2.5rem 0 3rem;
+    padding: 2.5rem 0 6rem;
   }
 
   // On a desktop this sits in the gutter beside the column. A phone has no

@@ -261,46 +261,23 @@
           worth it.
         </p>
 
-        <dl class="page__meta">
-          <dt>Live site</dt>
-          <dd>
+        <footer class="page__exit">
+          <div class="page__exit-item">
+            <span class="page__exit-label">Live site</span>
             <!-- Deliberately not a link. The teaser only runs on a phone held
                  sideways, so the only way in from here is scanning the QR —
                  the same refusal the site itself makes. -->
             <img
+              class="page__exit-qr"
               src="/src/assets/qr-code.png"
               alt="QR code for the live site — scan it with your phone to open it"
-              loading="lazy"
-              style="
-                display: block;
-                width: 8rem;
-                height: auto;
-                border-radius: 0.25rem;
-              " />
-          </dd>
-
-          <dt>Festival</dt>
-          <dd>
-            <a
-              href="https://europeandesign.org/festivals/sofia-2026"
-              target="_blank"
-              rel="noopener"
-              >europeandesign.org/festivals/sofia-2026</a
-            >
-          </dd>
-        </dl>
-
-        <!-- The real exit. Someone who has read this far has finished the story,
-             so this is where the way out belongs — and where the next one gets
-             its chance. The pinned "back" at the top left is only the escape
-             hatch. -->
-        <nav class="page__exit" aria-label="More work">
-          <a class="page__exit-back" href="/work/">← WORK</a>
-          <a class="page__exit-next" href="/work/next-dc/">
-            <span class="page__exit-label">Next project</span>
-            <span class="page__exit-title">Next-DC Agency Site</span>
-          </a>
-        </nav>
+              loading="lazy" />
+          </div>
+          <div class="page__exit-item">
+            <span class="page__exit-label">Festival</span>
+            <a class="page__exit-title" href="https://europeandesign.org/festivals/sofia-2026" target="_blank" rel="noopener">europeandesign.org</a>
+          </div>
+        </footer>
       </article>
     </main>
 
