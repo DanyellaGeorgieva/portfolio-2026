@@ -1,0 +1,16 @@
+// Cloudflare Workers deploy: the site is fully static — `npm run build` writes
+// every page to dist/ — so the Worker is nothing but its assets. Declaring
+// that here also stops `wrangler deploy` from auto-configuring the project,
+// which means rewriting vite.config.js to add Cloudflare's Vite plugin, and
+// fails on parsing it.
+//
+// Pages are folders with an index.html (/work/melba/ → dist/work/melba/
+// index.html); the default html_handling serves those at their clean URLs.
+{
+  // Must match the Worker's name in the Cloudflare dashboard.
+  "name": "portfolio-2026",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
