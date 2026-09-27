@@ -79,6 +79,9 @@ body {
   // The generic fallback is for glyphs Satoshi doesn't have — Cyrillic, in the
   // Vitosha case study. With none those dropped to the browser's default serif.
   font-family: "Satoshi", sans-serif;
+  // A stated default rather than the font's `normal`, so anything that sets
+  // no leading of its own — labels, UI, the eyebrow — gets a known one.
+  line-height: 1.5;
   color: var(--ink);
   transition: color 1.2s ease;
 }
@@ -95,7 +98,7 @@ body {
 
 // A name for what follows: RASTER, ROLE, ALPHA THRESHOLD, CHERNI VRAH.
 @mixin type-label {
-  font-size: 12px;
+  font-size: var(--fs-label);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -103,7 +106,7 @@ body {
 
 // The thing a label names: 1024 × 81 px, Creative Development, 37.
 @mixin type-value {
-  font-size: 14px;
+  font-size: var(--fs-small);
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
@@ -113,7 +116,7 @@ body {
 // A live sentence that reports on a demo. Tabular, so a changing number never
 // changes the width around it.
 @mixin type-readout {
-  font-size: 14px;
+  font-size: var(--fs-small);
   font-weight: 400;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
@@ -121,7 +124,7 @@ body {
 
 // A note on how to read the thing above it.
 @mixin type-caption {
-  font-size: 14px;
+  font-size: var(--fs-small);
   font-weight: 500;
 }
 
@@ -187,7 +190,7 @@ body:has(#swup[data-page="detail"]) {
   // works because .picker__link below takes its baseline from its number.
   align-items: baseline;
   gap: 0.6rem;
-  font-size: 0.75rem;
+  font-size: var(--fs-label);
   text-transform: uppercase;
 
   // main.js hides this with the `hidden` attribute whenever a section is up.
@@ -272,7 +275,7 @@ body:has(#swup[data-page="detail"]) {
   z-index: 10;
   display: flex;
   justify-content: space-between;
-  font-size: 1.1rem;
+  font-size: var(--fs-body);
   text-transform: uppercase;
   padding: 24px;
 }
@@ -398,7 +401,7 @@ body:has(#swup[data-page="detail"]) {
 
 :root {
   --content-left: 36px;
-  --title-size: 48px;
+  --title-size: 3rem;
   --title-gap: 24px; // breathing room between the title and the copy below
 
   // A case study's column. Home is full width now, so this is .page's geometry
@@ -423,7 +426,16 @@ body:has(#swup[data-page="detail"]) {
   // the gutter would allow, and 1.25rem off the column: a mark beside the
   // title, not a second headline.
   --eye-gap: 1.25rem;
-  --eye-center: calc(var(--column-top) + 1.75rem + var(--title-size) / 2);
+  // The eyebrow's line (its size at the body's 1.5 leading) and the 0.75rem
+  // under it, then half the title's first line at its own leading — which is
+  // the line box's centre — then down to the centre of the capitals. Satoshi's
+  // caps sit a touch low in their line: ascent 1.01, descent 0.24, cap height
+  // 0.7355 (measured in the browser), so their centre is (1.01 − 0.24 −
+  // 0.7355) / 2 = 0.0172em below the box's. The eye reads against the letters.
+  --eye-center: calc(
+    var(--column-top) + var(--fs-label) * 1.5 + 0.75rem +
+      var(--title-size) * (var(--lh-tight) / 2 + 0.0172)
+  );
   --eye-right: calc(50% + var(--panel-width) / 2 + var(--eye-gap));
   --eye-width: calc(
     min(
@@ -446,12 +458,23 @@ body:has(#swup[data-page="detail"]) {
   // size means the measure changes with the window while the type doesn't. The
   // min is the phone size, the max is where growth stops being readable.
   --fs-lead: clamp(1.375rem, 2.1vw, 1.875rem);
-  // Section headings, and the address on the contact page — the one thing on
-  // that page you are meant to act on is a heading in every sense.
+  // Section headings.
   --fs-heading: clamp(1.35rem, 2vw, 1.7rem);
   --fs-deck: clamp(1.25rem, 1.6vw, 1.5rem);
   --fs-body: clamp(1rem, 1.25vw, 1.15rem);
-  --fs-meta: clamp(0.8rem, 0.9vw, 0.9rem);
+  // The legend steps, fixed rather than fluid: a label is read at a glance and
+  // should not grow with the window. In rem, so a reader's own default size
+  // still reaches them.
+  --fs-small: 0.875rem;
+  --fs-label: 0.75rem;
+
+  // Leading, four steps. Display lines sit tight; headings a little looser;
+  // a deck is sentences, so it opens up; body copy is set for reading.
+  // Everything else — labels, UI, readouts — takes the body element's 1.5.
+  --lh-tight: 1.1;
+  --lh-heading: 1.25;
+  --lh-deck: 1.45;
+  --lh-body: 1.65;
 
   // The text colour before JS has run, and the fallback for any palette not
   // listed in $inks below. Set to the same value as skyOrchid's so the first
@@ -537,17 +560,18 @@ html:has(#swup[data-page="top"]) {
 }
 
 // --- Typography -------------------------------------------------------------
+// One set of text roles for every page — case studies, About and Contact
+// alike: .page__eyebrow, __title, __lead, __heading, __subheading, __body,
+// __list and __note. A page is not its own typographic system; it picks the
+// roles it needs. .section and .page are layout only.
 .page__title {
   margin: 0 0 var(--title-gap);
   font-size: var(--title-size);
   font-weight: 800;
-  line-height: 1;
+  line-height: var(--lh-tight);
 }
 
-// The deck under a case study's title. It used to share a rule with the home
-// sections' opening paragraphs, which meant the two couldn't be tuned
-// independently — retuning the home copy moved every case study with it. The
-// home sections run on .section__body now, so this is the deck alone.
+// The deck under a page's title.
 .page__lead {
   margin: 0 0 24px;
   // Was 40vw — a viewport measure, so the line length grew with the window
@@ -555,86 +579,23 @@ html:has(#swup[data-page="top"]) {
   max-width: var(--measure);
   font-size: var(--fs-deck);
   font-weight: 400;
-  // Was unset, so this inherited the browser's default — about 1.2 at the old
-  // flat 24px, the tightest running text on the site. A deck is read as
-  // sentences, so it gets sentence leading.
-  line-height: 1.45;
+  // A deck is read as sentences, so it gets sentence leading.
+  line-height: var(--lh-deck);
 }
 
-// --- Section copy: three tiers ----------------------------------------------
-// The statement, the story, the facts. Each step is deliberately a long way
-// from the next — a gentle 22 → 19 → 17 would read as an accident rather than a
-// decision, and the reader would have to work out the order for themselves.
-//
-// One face throughout, so the tiers are told apart by size, weight and
-// tracking alone: the lead is set heavy and tight like the work titles, and the
-// paragraphs under it read as prose rather than as a smaller heading.
-
-// The opening statement. Display face, tight, and held to a short measure — it
-// is a thing to be taken in at a glance, not read across.
-.section__lead {
-  margin: 0 0 1.75rem;
-  // Short enough that the line breaks land where the sense does, rather than
-  // wherever the column happens to run out.
-  max-width: 34ch;
-  font-size: var(--fs-lead);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  // Evens the line lengths instead of leaving one word stranded on the last
-  // line, which at this size is very visible.
-  text-wrap: balance;
-}
-
-.contact__lead {
-  // The intro on the contact page should read like ordinary prose rather than a
-  // display headline, so it sits in the same voice as the rest of the site copy.
-  margin: 0 0 1rem;
-  max-width: var(--measure);
-  font-size: var(--fs-body);
-  font-weight: 400;
-  line-height: 1.65;
-  letter-spacing: 0;
-}
-
-// Running prose. The reading face, a full measure, and leading generous enough
-// to hold the eye across a long line over a moving field.
-.section__body {
-  margin: 0 0 1.25rem;
-  max-width: var(--measure);
-  font-size: var(--fs-body);
-  font-weight: 400;
-  line-height: 1.65;
-}
-
-// The quietest tier — standing facts rather than part of the argument. Set at
-// the quiet ink so it recedes without going transparent over the field.
-.section__meta {
-  margin: 2.5rem 0 0;
-  max-width: var(--measure);
-  font-size: var(--fs-meta);
-  line-height: 1.6;
-  color: var(--ink-quiet);
-}
-
-// .section__label is the same heading as a case study's — it shares
-// .page__heading's rule further down rather than restating it here, so the two
-// kinds of page cannot drift apart.
-
-// The one or two words in a tier worth catching first — her name, and where she
-// works. Weight rather than colour: the ink is palette-driven and every stop in
-// a palette is too light to read against the field.
-.section__lead strong,
-.section__body strong {
+// The one or two words in an opening line worth catching first. Weight rather
+// than colour: the ink is palette-driven and every stop in a palette is too
+// light to read against the field.
+.page__lead strong {
   font-weight: 800;
 }
 
 .page__body {
   margin: 0 0 1.25rem;
   max-width: var(--measure);
-  font-size: 1.05rem;
+  font-size: var(--fs-body);
   font-weight: 400;
-  line-height: 1.7;
+  line-height: var(--lh-body);
 }
 
 // The track number's column, in one place so the title's number and the blurb's
@@ -658,12 +619,15 @@ html:has(#swup[data-page="top"]) {
   --track-gap: 16px;
 }
 
+// Centred in the section. It was 80% wide and left-aligned, so at 1440 the
+// list ran 418–901px and its middle sat 60px left of the page's.
 .projects {
   list-style: none;
   padding: 0;
-  width: 100%;
+  /*width: 80%;*/
+  // A step below the paragraph that introduces it.
+  margin: 2.75rem auto 0;
   counter-reset: track;
-  width: 80%;
 }
 
 .project {
@@ -710,7 +674,7 @@ html:has(#swup[data-page="top"]) {
   &::before {
     counter-increment: track;
     content: counter(track, decimal-leading-zero) ".";
-    font-size: 2rem;
+    font-size: var(--fs-lead);
     font-weight: 400;
     width: var(--track-width);
     min-width: var(--track-width);
@@ -721,8 +685,9 @@ html:has(#swup[data-page="top"]) {
 }
 
 .project__title {
-  font-size: 2rem;
+  font-size: var(--fs-lead);
   font-weight: 800;
+  line-height: var(--lh-heading);
   text-transform: uppercase;
 
 }
@@ -766,34 +731,50 @@ html:has(#swup[data-page="top"]) {
 
 .project__blurb {
   padding-left: calc(var(--track-width) + var(--track-gap));
-  font-size: 1.2rem;
+  font-size: var(--fs-body);
 }
 
 // --- Say hi -----------------------------------------------------------------
-// The address is the whole section, so it is set at card-title weight rather
-// than left as body copy with a default link underline.
+// The ways to get in touch, one per item: a question set as a heading, and
+// under it the link that answers it. The questions carry the page; the links
+// are small and all alike, so they read as the same kind of thing.
 .contact {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1rem;
-  // Set apart from the statement above it. The two are only one step apart on
-  // the ramp and both are bold, so at the lead's own 1.75rem they read as two
-  // lines of one paragraph rather than as an invitation and the thing to act on.
+  display: grid;
+  gap: 2.25rem;
   margin-top: 2.75rem;
 }
 
-.contact__email {
-  // Treat the email as a title-like action, in the same voice as the case study
-  // titles rather than as ordinary paragraph text.
-  font-size: var(--fs-heading);
+.contact__item {
+  display: grid;
+  justify-items: start;
+  gap: 0.6rem;
+
+  // The page's own heading, without the room a heading leaves above itself
+  // in running copy — here the list's gap does that job.
+  .page__heading {
+    margin: 0;
+  }
+}
+
+.contact__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: var(--fs-small);
   font-weight: 800;
-  line-height: 1.1;
-  text-decoration: none;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  // The address is one long unbreakable token; let it wrap rather than push out
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 2px;
+  // An address is one long unbreakable token; let it wrap rather than push out
   // of the column on a narrow screen.
   overflow-wrap: anywhere;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration-line: underline;
+  }
 }
 
 // --- Detail page (project / lab item) ---------------------------------------
@@ -924,9 +905,11 @@ body:has(#swup[data-page="detail"]) .page__eye {
   }
 }
 
-// Drawn rather than typed: a ‹ glyph at 12px is a faint hairline. Stroked in
-// the text colour at the label's weight, and sized to its cap height.
-.back__chevron {
+// The chevron that leads a link — back on a case study, onward on Contact. The
+// direction is the path's; this is only how it is drawn. Drawn rather than
+// typed: a ‹ glyph at 12px is a faint hairline. Stroked in the text colour at
+// the label's weight, and sized to its cap height.
+.chevron {
   flex: none;
   align-self: center;
   width: auto;
@@ -962,7 +945,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 }
 
 .page__exit-back {
-  font-size: 0.95rem;
+  font-size: var(--fs-small);
   font-weight: 800;
   text-decoration: none;
   // Full ink at rest for contrast; the hover is an underline, as on .back.
@@ -988,12 +971,12 @@ body:has(#swup[data-page="detail"]) .page__eye {
   @include type-label;
 }
 
-// Same underline-grow as .contact__email, anchored right so it opens from the
+// An underline that grows from the right edge, so it opens from the
 // edge the text is set against.
 .page__exit-title {
-  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-size: var(--fs-heading);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: var(--lh-tight);
   background-image: linear-gradient(currentColor, currentColor);
   background-repeat: no-repeat;
   background-position: 100% 100%;
@@ -1029,7 +1012,6 @@ body:has(#swup[data-page="detail"]) .page__eye {
   gap: 0.6rem 2rem;
   margin: 2.5rem 0 3rem;
   max-width: var(--measure);
-  line-height: 1.55;
 
   dt {
     // Nudged down so the cap height of the label lines up with the first line
@@ -1050,23 +1032,16 @@ body:has(#swup[data-page="detail"]) .page__eye {
   }
 }
 
-// A section heading, on a case study and on the about page alike. One rule for
-// both: these are the same thing doing the same job, and the about page's
-// version used to be its own smaller, tracked, upper-case treatment that had to
-// be re-tuned by hand whenever this one moved.
-//
-// No letter-spacing — the weight and the size carry it. That is a deliberate
-// difference from .section__lead, which is set tight: the lead is a statement to
-// be caught at a glance, these are signposts inside running copy.
-.page__heading,
-.section__label {
+// A section heading, on every page. No letter-spacing — the weight and the
+// size carry it: these are signposts inside running copy.
+.page__heading {
   // Large space above, small below — the gap belongs to the section starting,
   // not to the heading, so the heading reads as attached to the copy under it.
   margin: 3.5rem 0 1.1rem;
   max-width: var(--measure);
   font-size: var(--fs-heading);
   font-weight: 800;
-  line-height: 1.25;
+  line-height: var(--lh-heading);
   text-wrap: balance;
 }
 
@@ -1195,9 +1170,9 @@ ndc-micro {
 
     button {
       font: inherit;
-      font-size: 12px;
+      font-size: var(--fs-label);
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       background: none;
       color: var(--ink);
@@ -1217,9 +1192,9 @@ ndc-micro {
 
   .btn {
     font: inherit;
-    font-size: 12px;
+    font-size: var(--fs-label);
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     background: none;
     color: var(--ink);
@@ -2261,38 +2236,15 @@ vitosha-ridge {
   max-width: var(--measure);
   font-size: var(--fs-body);
   font-weight: 800;
-  line-height: 1.35;
-}
-
-// Code blocks. The same rule as inline code below — no box or tint, because the
-// ground is a live shader and any fill would be a hole punched in it — so a
-// hairline in the ink marks the block's edge instead. Scrolls sideways rather
-// than wrapping: a wrapped line of GLSL or a wrapped diagram stops meaning what
-// it says.
-.page__code {
-  margin: 0 0 1.25rem;
-  // Not var(--measure): ch resolves against this block's own smaller type, so
-  // 65ch here came out ~120px narrower than the paragraphs around it and cut
-  // the GLSL mid-line. The column is the limit instead.
-  max-width: none;
-  padding: 0.25rem 0 0.25rem 1rem;
-  border-left: 1px solid currentColor;
-  overflow-x: auto;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  opacity: 0.8;
-
-  code {
-    font: inherit;
-  }
+  line-height: var(--lh-heading);
 }
 
 .page__list {
   margin: 0 0 1.25rem;
   padding-left: 1.2rem;
   max-width: var(--measure);
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
 
   li {
     margin-bottom: 0.6rem;
@@ -2355,7 +2307,7 @@ vitosha-ridge {
 
   .site-header {
     padding: 16px 20px;
-    font-size: 0.95rem;
+    font-size: var(--fs-small);
     // Below about 360px even the smaller type cannot hold one line. Rather than
     // shrink it further, the nav drops to its own line and stays hard right —
     // two short lines read better than one cramped one.
@@ -2374,7 +2326,6 @@ vitosha-ridge {
     // page's viewport meta to report anything but zero.
     bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     gap: 0.5rem;
-    font-size: 0.7rem;
   }
 
   .picker__list {
@@ -2406,14 +2357,6 @@ vitosha-ridge {
     margin-bottom: 2.25rem;
   }
 
-  .project__head::before,
-  .project__title {
-    font-size: 1.4rem;
-  }
-
-  .project__blurb {
-    font-size: 1rem;
-  }
 
   // --- A case study ---------------------------------------------------------
   // Same move as the work list: the reading column is a proportion of a desktop

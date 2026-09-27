@@ -78,14 +78,14 @@ const START_RATIO = 0.35;
 // in is real and the type scale keeps it that way — measured across both kinds
 // of page, at the narrow end of every clamp:
 //
-//   goo    .page__title 48 · .project__title 32 · .section__lead 22 ·
-//          .page__heading 21.6 · .section__label 21.6 · .page__lead 20
-//   fade   .project__blurb 19.2 · .section__body 18.4 · .page__body 16.8 ·
-//          .page__meta 15.2 · .section__meta 14.4 · .page__eyebrow 12
+//   goo    .page__title 33 · .project__title 22 · .page__heading 21.6 ·
+//          .page__exit-title 21.6 · .page__lead 20
+//   fade   .project__blurb 16–18.4 · .page__body 16–18.4 · .page__meta 14 ·
+//          .page__eyebrow 12
 //
-// Nothing lands on the wrong side of 20 at any viewport width, and the nearest
-// pair is 19.2 against 20. That is a narrow gap: move the type scale and this
-// wants re-checking against it.
+// Nothing lands on the wrong side of 20 at any viewport width: the largest
+// fading size is --fs-body at its 18.4 ceiling, the smallest melting one is
+// --fs-deck at its 20 floor. Move the type scale and this wants re-checking.
 const GOO_MIN_SIZE = 20;
 
 const DURATION = 1100;
@@ -125,7 +125,7 @@ const TITLE_HOLD = 850;
 //
 // Deliberately NOT in the list: .page__exit, the way out at the foot. It is
 // below the fold on every case study, so there is nothing to reveal.
-const TEXT = ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__email, .back)';
+const TEXT = ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__link, .back)';
 
 // Cubic ease-out — 1 - (1 - t)³ — the curve the shader eases its own uniforms
 // on, so the copy settles at the pace the field does.
