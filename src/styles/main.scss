@@ -1118,6 +1118,61 @@ body:has(#swup[data-page="detail"]) .page__eye {
   max-width: min(100%, 46rem);
   --text: var(--ink);
   --bg: transparent;
+
+  // Laid out like the Melba jars below: the figure spans the column, the
+  // controls, readout and stats sit on its centre line, and the caption stays
+  // on the left edge with the copy it belongs to. The kit's markup comes in
+  // that order (see the HOST PATCH over MARKUP in the kit).
+  .viz {
+    justify-items: center;
+    gap: 10px;
+
+    > canvas {
+      justify-self: stretch;
+    }
+  }
+
+  // The loupe is a close-up, not a second chart: at the column's full width
+  // its cells would be as big as buttons.
+  #loupeCv {
+    justify-self: center;
+    width: min(100%, 24rem);
+    margin-top: 12px;
+  }
+
+  .controls {
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    padding-block: 14px 4px;
+  }
+
+  .row {
+    justify-content: center;
+  }
+
+  .readout {
+    text-align: center;
+  }
+
+  // Fixed-width cells, so a value growing a digit never reflows the row.
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 22px;
+
+    li {
+      flex: 0 0 8rem;
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  .caption {
+    justify-self: stretch;
+    margin-top: 4px;
+  }
 }
 
 // The Melba jars (src/melba/). Built on the page rather than from the kit, so
