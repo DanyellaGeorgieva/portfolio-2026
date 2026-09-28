@@ -21,18 +21,16 @@
         </a>
 
         <p class="page__eyebrow">Next-DC · Agency site · 2023</p>
-        <h1 class="page__title">NEXT-DC AGENCY SITE</h1>
+        <h1 class="page__title">NEXT-DC'S WEBSITE</h1>
 
         <p class="page__lead">
-          The website of an independent creative agency working out of Sofia,
-          London and Amsterdam.
+          The website of an independent creative agency base in Sofia.
         </p>
 
         <dl class="page__meta">
           <dt>Role</dt>
           <dd>
-            Lead front-end developer. Every page except Team, which a colleague
-            completed after I went on leave.
+            Front-end developer
           </dd>
 
           <dt>Tech</dt>
@@ -73,7 +71,7 @@
               along.
             </p>
             <p class="page__body">
-              The footer is the hack. It’s <code>position: relative</code> with
+              <strong>The footer is the hack.</strong> It’s <code>position: relative</code> with
               <code>bottom</code> set to its own height and
               <code>z-index: -30</code>, so it paints 600 px higher, behind the
               last screen of content, while its own slot stays in the layout.
@@ -94,8 +92,7 @@
             <h3 class="page__subheading">The Drifting Project Grid</h3>
             <p class="page__body">
               To prevent the work grids from looking like a sterile, static
-              spreadsheet, the middle layout column—selected via
-              .preview:nth-child(3n - 1)—is scrubbed directly to the scroll
+              spreadsheet, the middle layout column is scrubbed directly to the scroll
               timeline, causing it to dynamically drift from -100px to +100px
               against the main scroll direction. Interacting with a project tile
               triggers a compound state transition: the static preview scales
@@ -133,7 +130,7 @@
             <h3 class="page__subheading">Text that rolls</h3>
             <p class="page__body">
               To achieve an elite, seamless typography rolling transition
-              without the fragility of text-splitting libraries, every animated
+              without the complication of text-splitting libraries, every animated
               string is written twice inside an explicit overflow-hidden
               container exactly one line tall.
             </p>
@@ -142,7 +139,7 @@
               customized easing curve (text-ease), staggered exactly 0.1s apart.
               The first text string rolls out of the top boundary while the
               second copy rolls in from the bottom. Because this relies on
-              native CSS text layout, any copy an editor types behaves
+              native CSS text layout, any copy that anyone types behaves
               flawlessly. If an administrator rewrites a subtitle to wrap across
               four lines instead of three, the structural translation loop
               executes without breaking the animation container.
@@ -196,7 +193,7 @@
           I built the site between February and April 2023 and handed it over
           when I went on maternity leave. In September 2026 it’s still running
           on next-dc.com: the curtains, the cursor, the rolling text and the sun
-          in the corner, now carrying content I never saw.
+          in the corner.
         </p>
 
         <footer class="page__exit">

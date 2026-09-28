@@ -26,7 +26,7 @@
         <h1 class="page__title">IN THE SKIRTS OF VITOSHA</h1>
 
         <p class="page__lead">
-          Interactive landscape experience for the European Design Festival,
+          An interactive landscape experience for the European Design Festival,
           Sofia 2026.
         </p>
 
@@ -84,9 +84,9 @@
 
         <h2 class="page__heading">The “prompt engineer” tax:</h2>
         <p class="page__body">
-          I'd be lying if I said ”make it better” never once left my keyboard,
-          but my goal was to avoid the trap of vague, repeated prompting that
-          spirals into spaghetti code. So instead of one-shot prompts, I wrote
+          I'd be lying if I said ”make it better” never left my keyboard.
+          However, my goal was to avoid the trap of vague, repeated prompting that
+          spirals into spaghetti code. Therefore instead of one-shot prompts, I wrote
           precise, plain-language specs describing the fabric's exact behavior,
           then made a point of actually understanding the resulting math rather
           than treating it as a black box, before manually orchestrating the
@@ -117,7 +117,7 @@
           <li class="step">
             <h3 class="page__subheading">Rasterise &amp; Scan each column</h3>
             <p class="page__body">
-              The SVG is drawn to an offscreen canvas 1,024 px wide, keeping its
+              The SVG is drawn to an offscreen canvas 1,024px wide, keeping its
               original aspect ratio. Then each column is scanned from top to
               bottom. The first pixel whose alpha is above the threshold marks
               the ridge, and its row becomes the column’s height:
@@ -143,7 +143,7 @@
               eases the outer 8% at each end toward a height the two ends share,
               on a <code>smoothstep</code> curve. The join is then exact by
               construction (the light blur afterwards doesn't reopen it),
-              whatever contour is dropped in — and in these files, where the
+              whatever contour is dropped in, where the
               ends already measure level, what the easing actually does is
               flatten those outer columns toward that shared height.
             </p>
@@ -157,8 +157,8 @@
               Because each column is snapped to a whole pixel row, the scan
               comes out as stair steps, which look like jitter once they’re
               stretched across a phone screen. A sliding-window box blur fixes
-              that and runs in <code>O(width)</code>, however large the radius.
-              Production uses a minimal blur: radius 1, one pass. It removes the
+              that and runs in <code>0 (width)</code>, however large the radius.
+              Production uses a minimal blur: radius 1. It removes the
               steps while keeping Vitosha’s sharp, angular peaks. Increase the
               radius and the mountain rounds off into rolling hills. You can see
               it change in the render at the top of the page.
@@ -171,11 +171,10 @@
             <h3 class="page__subheading">Pack a 1 × 1024 texture</h3>
             <p class="page__body">
               The 1,024 floats are stored as bytes in a texture one texel tall,
-              so each contour fits in 4 KB.
+              so each contour fits in just 4KB.
               <code>LinearFilter</code> blends smoothly between neighboring
               texels. <code>RepeatWrapping</code> lets the shader keep scrolling
-              past the right edge and wrap back to the start, and step 03
-              already made that join seamless.
+              past the right edge and wrap back to the start.
             </p>
             <!-- Hover any texel. -->
             <div class="widget" data-vitosha="texture"></div>
