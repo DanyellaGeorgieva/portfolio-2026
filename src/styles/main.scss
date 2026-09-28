@@ -210,7 +210,7 @@ body:has(#swup[data-page="detail"]) {
   z-index: 10;
   display: flex;
   justify-content: center;
-  // Baseline, so "mode:" and the numbers sit on one line of type. That only
+  // Baseline, so "palette:" and the numbers sit on one line of type. That only
   // works because .picker__link below takes its baseline from its number.
   align-items: baseline;
   gap: 0.6rem;
