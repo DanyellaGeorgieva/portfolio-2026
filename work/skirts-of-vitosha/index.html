@@ -157,7 +157,7 @@
               Because each column is snapped to a whole pixel row, the scan
               comes out as stair steps, which look like jitter once they’re
               stretched across a phone screen. A sliding-window box blur fixes
-              that and runs in <code>0 (width)</code>, however large the radius.
+              that and runs in <code>O(width)</code>, however large the radius.
               Production uses a minimal blur: radius 1. It removes the
               steps while keeping Vitosha’s sharp, angular peaks. Increase the
               radius and the mountain rounds off into rolling hills. You can see
