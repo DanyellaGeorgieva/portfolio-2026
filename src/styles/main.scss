@@ -1270,6 +1270,20 @@ ndc-micro {
   }
 }
 
+// A recording of the live site, closing a section the way the demos do: the
+// same top margin and the same widest measure.
+.page__video {
+  margin: 1.25rem 0 0;
+  max-width: min(100%, 46rem);
+
+  video {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+  }
+}
+
 // Every caption, in the demos and the widget kit alike: one size, weight and
 // colour, so none of them reads as a different kind of note from the others.
 .caption {
