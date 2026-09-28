@@ -1172,8 +1172,15 @@ body:has(#swup[data-page="detail"]) .page__eye {
     justify-content: center;
   }
 
+  // One line, like the jars' readouts; on a phone it can wrap, and the
+  // second line is held for it so a hover never shifts the page.
   .readout {
+    min-height: 1.5em;
     text-align: center;
+
+    @media (max-width: 760px) {
+      min-height: 3em;
+    }
   }
 
   // Fixed-width cells, so a value growing a digit never reflows the row.

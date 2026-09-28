@@ -388,6 +388,8 @@ function startVitosha() {
   }
   function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
 
+  // HOST PATCH (portfolio): every readout is one line, its parts joined with
+  // " · " the way the Melba jars' readouts are. The kit broke each in two.
   function drawScan() {
     const c = C[contourKey];
     const { width, height } = c.raster;
@@ -418,8 +420,8 @@ function startVitosha() {
     drawLoupe(col);
     const ty = c.topYs[col];
     $("#scanOut").textContent = ty >= height
-      ? `column ${col}: no pixel above alpha ${settings.threshold}\n→ height 0`
-      : `column ${col}: first alpha > ${settings.threshold}\nat row ${ty} of ${height} → 1 − ${ty}/${height} = ${c.raw[col].toFixed(3)}`;
+      ? `column ${col}: no pixel above alpha ${settings.threshold} · height 0`
+      : `column ${col}: first alpha > ${settings.threshold} · at row ${ty} of ${height} → 1 − ${ty}/${height} = ${c.raw[col].toFixed(3)}`;
     const levels = new Set(c.topYs).size;
     let misses = 0; for (let x = 0; x < width; x++) if (c.topYs[x] >= height) misses++;
     $("#scanStats").innerHTML =
@@ -529,8 +531,8 @@ function startVitosha() {
                        Math.abs(c.seam.blended[WIDTH - 1 - i] - c.seam.raw[WIDTH - 1 - i]));
     }
     $("#seamOut").textContent = jr < 0.0005
-      ? `ends already level (${c.seam.raw[0].toFixed(3)} and ${c.seam.raw[WIDTH - 1].toFixed(3)})\neasing still reshapes ${c.seam.blendCols} columns per end, by up to ${moved.toFixed(3)}`
-      : `gap between the ends: ${jr.toFixed(3)} → ${jb.toFixed(3)}\neased over ${c.seam.blendCols} columns per end`;
+      ? `ends already level (${c.seam.raw[0].toFixed(3)} and ${c.seam.raw[WIDTH - 1].toFixed(3)}) · easing still reshapes ${c.seam.blendCols} columns per end, by up to ${moved.toFixed(3)}`
+      : `gap between the ends: ${jr.toFixed(3)} → ${jb.toFixed(3)} · eased over ${c.seam.blendCols} columns per end`;
   }
 
   // ---------------------------------------------------------- 04 blur
@@ -597,7 +599,7 @@ function startVitosha() {
     let pRaw = 0, pFin = 0, d = 0;
     for (let i = 0; i < WIDTH; i++) { pRaw = Math.max(pRaw, c.blur.blended[i]); pFin = Math.max(pFin, c.blur.final[i]); }
     for (let i = s; i < s + WIN; i++) d = Math.max(d, Math.abs(c.blur.final[i] - c.blur.blended[i]));
-    $("#blurOut").textContent = `tallest peak ${pRaw.toFixed(3)} → ${pFin.toFixed(3)} (${((pFin / pRaw - 1) * 100).toFixed(1)}%)\nlargest shift in view ${d.toFixed(3)}`;
+    $("#blurOut").textContent = `tallest peak ${pRaw.toFixed(3)} → ${pFin.toFixed(3)} (${((pFin / pRaw - 1) * 100).toFixed(1)}%) · largest shift in view ${d.toFixed(3)}`;
   }
 
   // ---------------------------------------------------------- 05 texture
@@ -614,7 +616,7 @@ function startVitosha() {
     }
     ctx.fillStyle = theme.text; ctx.fillRect(Math.floor(texHover * cw), 0, 1, h);
     const b = c.texBytes[texHover * 4];
-    $("#texOut").textContent = `texel ${texHover}: byte ${b}\n→ texture2D().r = ${(b / 255).toFixed(3)} → − 0.5 = ${(b / 255 - 0.5 >= 0 ? "+" : "")}${(b / 255 - 0.5).toFixed(3)}`;
+    $("#texOut").textContent = `texel ${texHover}: byte ${b} · texture2D().r = ${(b / 255).toFixed(3)} → − 0.5 = ${(b / 255 - 0.5 >= 0 ? "+" : "")}${(b / 255 - 0.5).toFixed(3)}`;
     $("#texStats").innerHTML =
       `<li>Size <b>1024 × 1 RGBA</b></li><li>Memory <b>4,096 bytes</b></li>` +
       `<li>Filter <b>Linear</b></li><li>Wrap S <b>Repeat</b></li>`;
