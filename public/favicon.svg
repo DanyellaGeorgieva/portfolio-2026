@@ -1,0 +1,30 @@
+<!-- The site's eye as a favicon. The open state of #icon-eye-still in
+     src/partials/frame.html, copied exactly — retune one, retune the other.
+
+     Two changes for 16px: the viewBox is squared around the eye (centred on the
+     iris at 18.1212, 22), and the stroke is heavier, because 2 units of a 44-unit
+     drawing is under a pixel at tab size and the lashes vanish. The colour can't
+     be currentColor here — a favicon renders in isolation — so it is the site's
+     first-paint ink, lifted to a pale lavender on dark browser chrome. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-3.94 0 44.12 44.12">
+  <style>
+    g { color: #180e34; }
+    @media (prefers-color-scheme: dark) { g { color: #d8d2ec; } }
+  </style>
+  <g fill="none" stroke="currentColor" stroke-width="3"
+     stroke-linecap="round" stroke-linejoin="round">
+    <line x1="18.1212" y1="7" x2="18.1212" y2="1.5" />
+    <line x1="10.1211" y1="8.7321" x2="8.1211" y2="5.268" />
+    <line x1="26.121" y1="8.7321" x2="28.121" y2="5.268" />
+    <line x1="2.8286" y1="13.707" x2="1.4144" y2="12.2928" />
+    <line x1="33.4141" y1="13.7071" x2="34.8283" y2="12.2929" />
+    <line x1="18.1212" y1="37.1213" x2="18.1212" y2="42.6213" />
+    <line x1="10.1214" y1="35.3893" x2="8.1214" y2="38.8534" />
+    <line x1="26.1215" y1="35.3893" x2="28.1215" y2="38.8534" />
+    <line x1="2.8284" y1="30.4143" x2="1.4142" y2="31.8285" />
+    <line x1="33.4139" y1="30.4143" x2="34.8281" y2="31.8285" />
+    <circle cx="18.1212" cy="22" r="7" fill="currentColor" stroke="none" />
+    <path d="M1.5418 22 C1.5418 22.1662 1.5966 22.3325 1.7062 22.4756 C2.8102 23.9172 5.0295 26.5736 7.9445 28.8613 C10.8732 31.1598 14.3939 33 18.1212 33 C21.8486 33 25.3693 31.1598 28.298 28.8613 C31.213 26.5736 33.4323 23.9172 34.5363 22.4756 C34.6459 22.3325 34.7006 22.1662 34.7006 22" />
+    <path d="M1.5418 22 C1.5418 21.8338 1.5966 21.6675 1.7062 21.5244 C2.8102 20.0828 5.0295 17.4264 7.9445 15.1387 C10.8732 12.8402 14.3939 11 18.1212 11 C21.8486 11 25.3693 12.8402 28.298 15.1387 C31.213 17.4264 33.4323 20.0828 34.5363 21.5244 C34.6459 21.6675 34.7006 21.8338 34.7006 22" />
+  </g>
+</svg>
