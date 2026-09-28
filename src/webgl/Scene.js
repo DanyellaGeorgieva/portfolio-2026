@@ -97,6 +97,20 @@ const TWEEN_FADE = 1.8; // seconds
 // short enough that a pause of any length resumes rather than jumps.
 const MAX_STEP = 0.1;
 
+// The canvas resolution of a still — see applyResize.
+const STILL_RATIO = 0.5;
+
+// Renderers that draw on the CPU: Chrome's SwiftShader, Mesa's llvmpipe on
+// Linux, and Windows' fallback adapter. Matched by name, from the debug
+// extension where the browser exposes it and the plain RENDERER where not.
+const SOFTWARE = /swiftshader|llvmpipe|softpipe|software|basic render/i;
+
+function isSoftware(gl) {
+  const debug = gl.getExtension('WEBGL_debug_renderer_info');
+  const name = gl.getParameter(debug ? debug.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
+  return SOFTWARE.test(String(name));
+}
+
 /**
  * Full-screen animated gooey gradient background rendered with a Three.js
  * ShaderMaterial. All visual logic lives in background.frag; this class only sets
@@ -122,7 +136,36 @@ export default class Scene {
 
     // No antialias: the scene is a single full-screen quad with no polygon
     // edges, so MSAA buys nothing here and only adds fill-rate cost.
-    this.renderer = new WebGLRenderer({ canvas, antialias: false });
+    //
+    // --- Still mode: when there is no GPU ------------------------------------
+    // Asked for first with failIfMajorPerformanceCaveat, which the browser
+    // refuses when it could only give us a software context — no GPU, hardware
+    // acceleration off, a VM. There the field is drawn by the CPU on the main
+    // thread, and it is expensive: measured under Lighthouse's mobile profile
+    // with WebGL on SwiftShader, every frame was a ~200ms long task, the page
+    // spent 178s of main-thread time on them, and Total Blocking Time came to
+    // 64s. On a GPU the same frame is ~6ms.
+    //
+    // So without a GPU the field is a still: drawn once, and again only when
+    // something changes what it shows (a palette, the zoom of a detail page, a
+    // resize), straight at the new values with no easing in between. No loop,
+    // no hearts, no poke. A real field that holds still beats a moving one
+    // that freezes the page.
+    //
+    // The caveat is not enough on its own. Where SwiftShader is chosen outright
+    // rather than fallen back to — headless Chrome launched with
+    // --use-angle=swiftshader, which is how Lighthouse was measured here — the
+    // browser does not count it as a caveat and hands the context over. The
+    // renderer's own name is what gives it away, so that is asked too.
+    try {
+      this.renderer = new WebGLRenderer({ canvas, antialias: false, failIfMajorPerformanceCaveat: true });
+      this.still = isSoftware(this.renderer.getContext());
+    } catch {
+      // A refused request creates no context, so the canvas can be asked again.
+      this.renderer = new WebGLRenderer({ canvas, antialias: false });
+      this.still = true;
+    }
+    this.stillPending = null;
 
     // --- Why there is no syncFrame() here any more -------------------------
     // There used to be a syncFrame() calling gl.finish() every frame, on the
@@ -353,7 +396,7 @@ export default class Scene {
       return `canvas ${this.canvas.width}x${this.canvas.height} at ratio ${this.pixelRatio}`;
     };
 
-    this.renderer.setAnimationLoop(this.tick);
+    if (!this.still) this.renderer.setAnimationLoop(this.tick);
 
     // Announce the starting palette now the scene is built, so the page's ink
     // matches the very first frame.
@@ -391,6 +434,25 @@ export default class Scene {
     u.uColorE2.value.copy(e);
     u.uMix.value = 0;
     this.paletteMix = { start: this.realTime };
+
+    // A still has no frames to sweep the new palette out across.
+    if (this.still) {
+      this.commitPalette();
+      this.redrawStill();
+    }
+  }
+
+  /**
+   * Still mode only: draw once, on the next frame, with whatever the uniforms
+   * say now. Coalesced, so a navigation that changes the palette and the zoom
+   * together costs one draw, not two.
+   */
+  redrawStill() {
+    if (this.stillPending) return;
+    this.stillPending = requestAnimationFrame(() => {
+      this.stillPending = null;
+      this.drawFrame();
+    });
   }
 
   /** Fold the target palette into the base colours and end the transition. */
@@ -412,9 +474,11 @@ export default class Scene {
   tweenTo(name, target, { instant = false } = {}) {
     // Straight there, no ease: the first page of a visit, which should open on
     // its own field rather than be seen zooming into it.
-    if (instant) {
+    // A still does the same: it has no frames to ease across.
+    if (instant || this.still) {
       this.tweens.delete(name);
       this.material.uniforms[name].value = target;
+      if (this.still) this.redrawStill();
       return;
     }
     // Already there, or already heading there (setupPage() re-runs on every
@@ -621,7 +685,11 @@ export default class Scene {
     // scaled. __dpr(2) is kept below because it is the one switch known to
     // reproduce it on demand — useful for checking whether any future change
     // has pushed the frame back over whatever the real budget is.
-    const ratio = this.ratioOverride ?? 1;
+    //
+    // A still (no GPU) is drawn at half that: the CPU fills every pixel, so a
+    // quarter of the pixels is most of the cost of its one frame gone, and the
+    // browser's scale-up of a soft gradient is hard to see.
+    const ratio = this.ratioOverride ?? (this.still ? STILL_RATIO : 1);
     if (ratio !== this.pixelRatio) {
       this.pixelRatio = ratio;
       this.renderer.setPixelRatio(ratio);
@@ -649,14 +717,19 @@ export default class Scene {
     // The target matches the canvas exactly at ratio 1, so the copy is 1:1 and
     // nearest keeps it an exact copy rather than a resample. (At ratio 2 it
     // magnifies, and linear would be wanted — but ratio 2 is a test mode.)
-    this.target = new WebGLRenderTarget(w, h, {
+    // Below 1 it shrinks with the canvas, so the copy stays 1:1 and the field
+    // is only drawn at the smaller size — drawn at w × h, the saving is lost.
+    const scale = Math.min(ratio, 1);
+    const tw = Math.max(1, Math.round(w * scale));
+    const th = Math.max(1, Math.round(h * scale));
+    this.target = new WebGLRenderTarget(tw, th, {
       minFilter: NearestFilter,
       magFilter: NearestFilter,
       depthBuffer: false,
       stencilBuffer: false,
     });
     this.copyMaterial.uniforms.uTex.value = this.target.texture;
-    this.material.uniforms.uResolution.value.set(w, h);
+    this.material.uniforms.uResolution.value.set(tw, th);
     this.aspect = w / h; // uv.x spans 0..aspect — the floaters' horizontal range
 
     // Fill the new buffer in the same frame it was allocated, so there is no
@@ -693,7 +766,7 @@ export default class Scene {
       // the whole scene into the presented buffer at precisely the moment the
       // off-screen target exists to protect it.
       this.drawFrame();
-      this.renderer.setAnimationLoop(this.tick);
+      if (!this.still) this.renderer.setAnimationLoop(this.tick);
     }
   }
 
@@ -749,6 +822,7 @@ export default class Scene {
   dispose() {
     this.renderer.setAnimationLoop(null);
     cancelAnimationFrame(this.resizePending);
+    cancelAnimationFrame(this.stillPending);
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('keydown', this.onKeyDown);
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
