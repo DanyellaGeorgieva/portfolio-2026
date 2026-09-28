@@ -122,6 +122,30 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+// The underline of the small, letter-spaced links — Back and the ways to get
+// in touch. Drawn as a background so it can grow, from $from: the side the
+// link points to, so it runs the way the link goes.
+//
+// Fitted to the letters rather than the box. The box overhangs the ink by the
+// first letter's side bearing on the left and by the last one's plus the
+// trailing letter-spacing on the right, so each use sets --ink-left and
+// --ink-right to those, measured, and the line is exactly under the word. And
+// --underline-drop places it 2px under the baseline: at the bottom of the line
+// box it hung well below the caps and read as a rule, not an underline.
+//
+// The hover goes on the link, not on this element, so it is its own mixin.
+@mixin grown-underline($from) {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: $from var(--ink-#{$from}) bottom var(--underline-drop);
+  background-size: 0% 2px;
+  transition: background-size 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@mixin grown-underline-full {
+  background-size: calc(100% - var(--ink-left) - var(--ink-right)) 2px;
+}
+
 // A note on how to read the thing above it.
 @mixin type-caption {
   font-size: var(--fs-small);
@@ -765,16 +789,29 @@ html:has(#swup[data-page="top"]) {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
-  text-underline-offset: 0.2em;
-  text-decoration-thickness: 2px;
   // An address is one long unbreakable token; let it wrap rather than push out
   // of the column on a narrow screen.
   overflow-wrap: anywhere;
 
-  &:hover,
-  &:focus-visible {
-    text-decoration-line: underline;
+  // Back's underline, growing from the left: these point onward. Measured at
+  // --fs-small in this weight: D, L and I all start on a stem, so one left
+  // inset fits the three; LinkedIn and Instagram end on an N.
+  span {
+    --ink-left: 0.079em;
+    --ink-right: 0.159em;
+    --underline-drop: 0.107em;
+    @include grown-underline(left);
   }
+
+  &:hover span,
+  &:focus-visible span {
+    @include grown-underline-full;
+  }
+}
+
+// The address ends on a T, which sits closer to its edge than an N.
+.contact__link[href^="mailto:"] span {
+  --ink-right: 0.099em;
 }
 
 // --- Detail page (project / lab item) ---------------------------------------
@@ -898,12 +935,20 @@ body:has(#swup[data-page="detail"]) .page__eye {
   text-decoration: none;
   // Full ink at rest — the old 0.75 fell under AA contrast on the saturated
   // parts of the field — so the hover is an underline rather than a brighten.
-  text-underline-offset: 0.2em;
-  text-decoration-thickness: 2px;
+  //
+  // Grown from the right: Back is set flush right and points left, so the line
+  // runs toward where it goes. Measured at the label's size (12px): the B's
+  // bearing on the left, the K's plus the trailing letter-spacing on the right.
+  span {
+    --ink-left: 0.084em;
+    --ink-right: 0.1em;
+    --underline-drop: 0.04em;
+    @include grown-underline(right);
+  }
 
-  &:hover,
-  &:focus-visible {
-    text-decoration-line: underline;
+  &:hover span,
+  &:focus-visible span {
+    @include grown-underline-full;
   }
 }
 
