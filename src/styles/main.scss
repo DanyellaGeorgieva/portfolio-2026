@@ -1132,12 +1132,33 @@ body:has(#swup[data-page="detail"]) .page__eye {
     }
   }
 
-  // The loupe is a close-up, not a second chart: at the column's full width
-  // its cells would be as big as buttons.
+  // The scan's two views share one row: the strip, and beside it the loupe
+  // on the column under the cursor. The kit stretches the strip to the
+  // loupe's height. On a phone the loupe drops below, at a close-up's size,
+  // so its cells don't grow as big as buttons.
+  .scan {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    column-gap: 20px;
+
+    > :not(canvas) {
+      grid-column: 1 / -1;
+    }
+  }
+
   #loupeCv {
-    justify-self: center;
-    width: min(100%, 24rem);
-    margin-top: 12px;
+    justify-self: stretch;
+  }
+
+  @media (max-width: 760px) {
+    .scan {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    #loupeCv {
+      justify-self: center;
+      width: min(100%, 24rem);
+      margin-top: 12px;
+    }
   }
 
   .controls {

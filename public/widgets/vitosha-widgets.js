@@ -394,7 +394,13 @@ function startVitosha() {
     const cv = $("#scanCv");
     const w = cv.clientWidth;
     const vs = vScaleFor(height, w, width);
-    const dh = Math.round(height * w / width * vs);
+    // HOST PATCH (portfolio): with the loupe beside it, the strip stretches to
+    // the loupe's height so the two views make one even row. Everything below
+    // draws through sx and sy, so a taller strip is only a taller stretch.
+    const loupe = $("#loupeCv");
+    const beside = loupe.offsetTop <= cv.offsetTop + 1;
+    const natural = Math.round(height * w / width * vs);
+    const dh = beside ? Math.max(natural, loupeBox(loupe.clientWidth, height).cssH) : natural;
     const { ctx } = prep(cv, dh);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(rasterCanvas(contourKey), 0, 0, w, dh);
@@ -422,19 +428,23 @@ function startVitosha() {
       `<li>Empty <b>${misses}</b></li>`;
   }
 
+  // HOST PATCH (portfolio): the loupe keeps a fixed eleven rows, sized from
+  // its own width. drawScan() asks for the same box, to match its height.
+  const LOUPE_COLS = 21;
+  function loupeBox(cw, height) {
+    const cell = Math.max(8, Math.min(26, Math.floor(cw / LOUPE_COLS)));
+    const rows = Math.min(11, height);
+    return { cell, rows, cssH: rows * cell + 2 };
+  }
+
   function drawLoupe(col) {
     const c = C[contourKey];
     const { width, height, pixels } = c.raster;
     const cv = $("#loupeCv");
-    const cols = 21;
+    const cols = LOUPE_COLS;
     const cw = cv.clientWidth;
-    const cell = Math.max(8, Math.min(26, Math.floor(cw / cols)));
-    // HOST PATCH (portfolio): the loupe sits under the strip, a second view
-    // of the same column, so it keeps a fixed eleven rows. It used to share a
-    // row with the readout and stretch to that column's height; see MARKUP.
-    const rows = Math.min(11, height);
+    const { cell, rows, cssH } = loupeBox(cw, height);
     const pitch = cell;
-    const cssH = rows * cell + 2;
     const { ctx } = prep(cv, cssH);
     const x0 = Math.max(0, Math.min(width - cols, col - (cols >> 1)));
     const anchorY = c.topYs[col] >= height ? height - 1 : c.topYs[col];
