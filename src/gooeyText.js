@@ -123,9 +123,24 @@ const TITLE_HOLD = 850;
 // the page it read as a leftover from the last one. Small, so it fades, on the
 // same beat as the eyebrow beside it.
 //
+// <vitosha-textiles> is in it though it is pictures: it closes the Vitosha
+// Concept, right under the paragraphs, and sat there fully drawn while they
+// were still arriving. It fades with them as one block — images, controls and
+// caption — so nothing inside it is picked out on its own: its caption would
+// fade inside its own fade and land visibly later than the rest.
+//
+// .page__video likewise: the Melba recording, in the same place in its Concept.
+// It has no text, so it is let through the "has something to read" check by
+// name rather than being picked up by it (MEDIA below).
+//
 // Deliberately NOT in the list: .page__exit, the way out at the foot. It is
 // below the fold on every case study, so there is nothing to reveal.
-const TEXT = ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__link, .back)';
+const TEXT =
+  ':is(.section, .page) :is(h1, h2, h3, h4, p, dt, dd, li, .contact__link, .back, vitosha-textiles, .page__video):not(vitosha-textiles *)';
+
+// The pictures in that list. Copy with no text is skipped as empty; these are
+// not empty, they are pictures.
+const MEDIA = 'vitosha-textiles, .page__video';
 
 // Cubic ease-out — 1 - (1 - t)³ — the curve the shader eases its own uniforms
 // on, so the copy settles at the pace the field does.
@@ -160,7 +175,8 @@ export default class GooeyText {
     if (this.reduced || !template || !root) return;
 
     const elements = [...root.querySelectorAll(TEXT)].filter(
-      (el) => el.textContent.trim() && el.getBoundingClientRect().top < window.innerHeight,
+      (el) =>
+        (el.textContent.trim() || el.matches(MEDIA)) && el.getBoundingClientRect().top < window.innerHeight,
     );
 
     this.items = elements.map((el, i) => {
