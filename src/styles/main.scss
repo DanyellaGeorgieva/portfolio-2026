@@ -1118,12 +1118,6 @@ body:has(#swup[data-page="detail"]) .page__eye {
   max-width: min(100%, 46rem);
   --text: var(--ink);
   --bg: transparent;
-
-  // The canvases that take the keyboard (the kit makes them sliders).
-  canvas:focus-visible {
-    outline: 2px solid var(--ink);
-    outline-offset: 3px;
-  }
 }
 
 // The Melba jars (src/melba/). Built on the page rather than from the kit, so
@@ -1318,6 +1312,13 @@ ndc-micro {
     outline: 2px solid var(--ink);
     outline-offset: 3px;
   }
+}
+
+// The widget kit's canvases that take the keyboard (the kit makes them
+// sliders) ring like every other control on the page.
+.page .widget canvas:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
 }
 
 // Every caption, in the demos and the widget kit alike: one size, weight and
