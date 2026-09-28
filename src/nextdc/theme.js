@@ -25,11 +25,11 @@ const SUN = `
 class NdcTheme extends Demo {
   stage() {
     return `
-      <div class="thm" role="img" aria-label="The Next-DC homepage in light mode. Clicking the sun in the corner flips it to dark: the hero goes dark, the work section goes light, and the headline turns from red to green.">
+      <div class="thm" role="group" aria-label="The Next-DC homepage. The sun in the corner flips it to dark mode: the hero goes dark, the work section goes light, and the headline turns from red to green.">
         <div class="thm__hero">
           <span class="thm__title">in a world of<br>constant change</span>
           <span class="thm__line">
-            <button type="button" class="thm__switch" aria-label="Switch dark mode">${SUN}</button>
+            <button type="button" class="thm__switch" aria-label="Dark mode" aria-pressed="false">${SUN}</button>
             <span class="thm__sub">we <em>guide</em> businesses<br>through cultural currents.</span>
           </span>
         </div>
@@ -65,6 +65,7 @@ class NdcTheme extends Demo {
     if (byHand) this.handOn = true;
     this.dark = dark;
     this.frame.classList.toggle('is-dark', dark);
+    this.querySelector('.thm__switch').setAttribute('aria-pressed', String(dark));
     this.readout.innerHTML = dark
       ? '&lt;html class="dark"&gt; · hero #161616 · work #EBEBEB<br>html.dark #header.dark → light'
       : '&lt;html&gt; · hero #EBEBEB · work #161616<br>#header.dark';

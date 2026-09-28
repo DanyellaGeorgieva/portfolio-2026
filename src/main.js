@@ -1,5 +1,6 @@
 import './styles/main.scss';
 import Swup from 'swup';
+import SwupA11yPlugin from '@swup/a11y-plugin';
 import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
 import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
@@ -397,6 +398,24 @@ function setupPage() {
   // and swup gives it a new document to mount into on every arrival.
   vitoshaWidgets(main);
 
+  // A looping recording is motion that never ends, so each one gets a way to
+  // stop it, and with reduced motion asked for it never starts: it waits on its
+  // poster until someone presses Play.
+  main.querySelectorAll('.page__video').forEach((figure) => {
+    const video = figure.querySelector('video');
+    const toggle = figure.querySelector('.page__video-toggle');
+    if (!video || !toggle) return;
+    if (reducedMotion) {
+      video.autoplay = false;
+      video.pause();
+    }
+    const sync = () => (toggle.textContent = video.paused ? 'Play' : 'Pause');
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
+    toggle.addEventListener('click', () => (video.paused ? video.play() : video.pause()));
+    sync();
+  });
+
   // The Melba jars bring Matter.js and Paper.js with them, so only a page that
   // has one fetches them. Each module defines its element on arrival, and the
   // jars already on the page upgrade themselves.
@@ -417,7 +436,16 @@ function setupPage() {
 }
 
 // swup keeps the canvas alive by only ever replacing #swup. No await-animations.
-const swup = new Swup({ containers: ['#swup'], animationSelector: false });
+//
+// The a11y plugin does what a full page load does for free: it announces the
+// new page by its <h1> (or its title, on the front door, which has none) and
+// puts focus back at the top of the document, so the next Tab starts on the
+// new page. Without it, a screen reader says nothing after a link at all.
+const swup = new Swup({
+  containers: ['#swup'],
+  animationSelector: false,
+  plugins: [new SwupA11yPlugin()],
+});
 // The eye is in the shell, so it outlives the page it was opened on. Closing it
 // when the next page has already arrived is too late: for the length of the
 // fade it sits open over a case study that is still assembling itself. This

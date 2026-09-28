@@ -409,7 +409,11 @@ export class JarDemo extends HTMLElement {
       this.stage = document.createElement('div');
       this.stage.className = 'jar-demo__stage';
       this.stage.tabIndex = 0;
-      this.stage.setAttribute('aria-label', this.label);
+      // Focusable, and Enter or Space shakes it, so it is a button — which is
+      // also what lets it carry a label at all: aria-label on a plain div is
+      // ignored.
+      this.stage.setAttribute('role', 'button');
+      this.stage.setAttribute('aria-label', `${this.label} Press Enter to shake the jar.`);
       this.canvas = document.createElement('canvas');
       this.stage.append(this.canvas);
 

@@ -875,6 +875,44 @@ function startVitosha() {
   ov.addEventListener("pointermove", (e) => ovDrag && onOv(e));
   ov.addEventListener("pointerup", () => (ovDrag = false));
 
+  // HOST PATCH (portfolio): the three canvases you point at answer to the
+  // keyboard too, as sliders over the column they inspect. Arrows move one
+  // column (Shift: 16), Page Up / Down 64, Home / End to either end. What the
+  // column shows is read out by each widget's own live readout.
+  function keyed(cv, label, max, get, set) {
+    if (!cv.isConnected) return;
+    cv.tabIndex = 0;
+    cv.setAttribute("role", "slider");
+    cv.setAttribute("aria-label", label);
+    cv.setAttribute("aria-valuemin", "0");
+    const sync = () => {
+      cv.setAttribute("aria-valuemax", String(max()));
+      cv.setAttribute("aria-valuenow", String(get()));
+    };
+    sync();
+    cv.addEventListener("pointermove", sync);
+    cv.addEventListener("keydown", (e) => {
+      const step = e.shiftKey ? 16 : 1;
+      let v = get();
+      if (e.key === "ArrowLeft" || e.key === "ArrowDown") v -= step;
+      else if (e.key === "ArrowRight" || e.key === "ArrowUp") v += step;
+      else if (e.key === "PageDown") v -= 64;
+      else if (e.key === "PageUp") v += 64;
+      else if (e.key === "Home") v = 0;
+      else if (e.key === "End") v = max();
+      else return;
+      e.preventDefault();
+      set(Math.max(0, Math.min(max(), v)));
+      sync();
+    });
+  }
+  keyed(scanCv, "Column to inspect", () => WIDTH - 1, () => hoverCol,
+    (v) => { if (scanAnim) return; hoverCol = v; drawScan(); });
+  keyed(texCv, "Texel to inspect", () => WIDTH - 1, () => texHover,
+    (v) => { texHover = v; drawTex(); });
+  keyed(ov, "Zoom window position", () => WIDTH - WIN, () => blurStart[contourKey],
+    (v) => { blurStart[contourKey] = v; drawBlur(); });
+
   let rz = 0;
   new ResizeObserver(() => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => C.top.raster && drawAll()); }).observe(document.querySelector("[data-vitosha]") || document.body);
 

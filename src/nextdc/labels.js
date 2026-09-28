@@ -34,7 +34,7 @@ class NdcLabels extends Demo {
         .map(([k, v]) => `data-${k}="${v}"`)
         .join(' ');
     return `
-      <div class="lbl" aria-label="A hero with a video, a project and a blog post. The cursor's label changes to whatever it is over.">
+      <div class="lbl" role="img" aria-label="A hero with a video, a project and a blog post. The cursor's label changes to whatever it is over.">
         ${TARGETS.map(
           (t, i) => `
           <div class="lbl__target ${t.cls}" data-i="${i}" ${data(t)}
