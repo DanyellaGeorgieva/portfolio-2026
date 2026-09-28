@@ -212,7 +212,7 @@ if (picker) {
   const mode = document.createElement('span');
   mode.className = 'picker__mode';
   mode.id = 'picker-mode';
-  mode.textContent = 'mode:';
+  mode.textContent = 'palette:';
 
   const list = document.createElement('ul');
   list.className = 'picker__list';
