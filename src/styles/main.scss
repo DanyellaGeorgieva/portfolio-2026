@@ -2155,57 +2155,6 @@ ndc-micro {
   margin: 0;
 }
 
-// A drawing cropped out of the panorama, marked the way the live cloth is.
-.diagram--cut {
-  @include cut-marks;
-}
-
-// Names on a still drawing, the way they ride the live one at the top of the
-// page. Percentages of the drawing's own box, so they stay on their summits at
-// any width — the SVG scales, and so do they.
-.diagram__labels {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  pointer-events: none;
-
-  li {
-    position: absolute;
-    display: flex;
-    // The dot is last in this markup, so a plain column already puts it at the
-    // bottom of the box — which is the point being named. (The ridge's markers
-    // are the other way round, dot first, and reverse the column instead.)
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    translate: -50% -100%;
-    width: max-content;
-    @include type-label;
-    white-space: nowrap;
-  }
-
-  i {
-    width: 0.26rem;
-    height: 0.26rem;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  // The festival venues sit on the cloth rather than above it, so they take the
-  // cloth's light instead of the page's ink, and a star instead of a dot: they
-  // are the two places on this mountain you can walk into.
-  .is-venue {
-    color: rgb(255 255 255 / 0.92);
-  }
-
-  svg {
-    width: 0.56rem;
-    height: auto;
-  }
-}
-
 // A step down from .page__heading, for the parts inside a long section. Same
 // weight, body-ish size: it should read as a label on the copy under it, not as
 // a new section starting, so the space above is a fraction of the heading's.
@@ -2216,7 +2165,11 @@ vitosha-ridge {
   position: relative; // the markers are placed against it
   display: block;
   width: 100%;
-  height: clamp(200px, 32vw, 420px);
+  // Everything in the cloth scales with this height — its band, its hang and
+  // how much panorama fits across — so a shorter box is a zoomed-out view, not
+  // a cropped one. 0.8 of the old clamp(200px, 32vw, 420px), with the floor
+  // kept at 260: the height the phone rule below found a summit's name needs.
+  height: clamp(260px, 25.6vw, 336px);
   margin: 0 0 2rem;
   color: inherit;
 
