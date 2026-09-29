@@ -1234,6 +1234,11 @@ ndc-micro {
   --line: color-mix(in srgb, var(--ink) 18%, transparent);
 
   display: grid;
+  // One column that may shrink below its content. The default track is sized
+  // by the content's own minimum, and a canvas's is its drawn width: on a
+  // 390px phone the Melba jar held its column at 380px against 350px of room
+  // and pushed the page sideways — the case-study bar was stretched with it.
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin: 1.25rem 0 0;
   max-width: min(100%, 46rem);
@@ -2708,6 +2713,39 @@ vitosha-ridge {
   // room for the name the peak is there to carry.
   vitosha-ridge {
     height: 260px;
+  }
+
+  // The jars' buttons: 12px a side, against the desktop's 14. A group that
+  // still cannot fit wraps, centred, rather than overflow.
+  jar-skin,
+  jar-jelly {
+    .seg {
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .seg button,
+    .btn {
+      padding-inline: 12px;
+    }
+  }
+
+  // Except the jelly's five presets, which need 377px at 12px a side against
+  // a 350px column on a 390 screen, so Custom dropped to a line of its own. The
+  // group spans the column instead and the five share its width: every button
+  // grows by the same amount, so the spacing stays even, and it comes out at
+  // ~10px a side at 390, ~14 at 430, and still one line at 360. The 4px is the
+  // floor it may shrink to before the wrap above takes over.
+  jar-jelly {
+    .seg {
+      width: 100%;
+    }
+
+    .seg button {
+      flex: 1 1 auto;
+      padding-inline: 4px;
+    }
   }
 
   // Label above value rather than beside it: the two-column grid gave the
