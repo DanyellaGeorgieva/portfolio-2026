@@ -14,11 +14,18 @@
 
     <main id="swup" class="view" data-page="detail">
       <article class="page">
-        <a class="back" href="/work/">
-          <svg class="chevron" viewBox="0 0 6 10" width="6" height="10" aria-hidden="true" focusable="false">
-            <path d="M5 1 1 5l4 4" />
-          </svg><span>back</span>
-        </a>
+        <!-- The way back, and on a phone a bar across the top that also names
+             the project (a short form of the eyebrow's). On a desktop the bar is
+             not a box at all: Back keeps its place in the gutter and the name
+             stands down, because the eyebrow already says it. -->
+        <div class="page__bar">
+          <a class="back" href="/work/">
+            <svg class="chevron" viewBox="0 0 6 10" width="6" height="10" aria-hidden="true" focusable="false">
+              <path d="M5 1 1 5l4 4" />
+            </svg><span>back</span>
+          </a>
+          <span class="page__bar-name">Next-DC</span>
+        </div>
 
         <p class="page__eyebrow">Next-DC · Agency site · 2023</p>
         <h1 class="page__title">NEXT-DC'S WEBSITE</h1>

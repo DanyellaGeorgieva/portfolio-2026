@@ -78,6 +78,7 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v));
  *   item  the things that can be hovered inside it
  *   text  what actually thickens, within an item
  *   name  prefix for the cloned filters, so two instances cannot collide
+ *   media optional: a media query outside which nothing goes quiet
  */
 export const PROJECT_GOO = {
   list: '.projects',
@@ -95,6 +96,9 @@ export const NAV_GOO = {
   text: '.site-header__label',
   name: 'goo-quiet-nav',
   ratio: 0.0625, // 1.1px at 17.6px
+  // The header has no hover on a phone (main.scss, max-width 640px), and a tap
+  // leaves :hover stuck — which is what sync() reads. This is that breakpoint.
+  media: '(min-width: 641px)',
 };
 
 // Same treatment as the nav, on the palette numbers under it. A smaller
@@ -117,6 +121,7 @@ export default class QuietGoo {
     this.frame = null;
     this.items = [];
     this.config = config;
+    this.media = config.media ? window.matchMedia(config.media) : null;
     this.list = root?.querySelector(config.list) ?? null;
 
     const template = document.querySelector(`#${TEMPLATE_ID}`);
@@ -177,7 +182,9 @@ export default class QuietGoo {
   sync = () => {
     this.pending = null;
     const { item } = this.config;
-    const live = this.list.querySelector(`${item}:hover, ${item}:focus-visible`);
+    // Outside its media query nothing is live, so everything stays at rest.
+    const live =
+      this.media && !this.media.matches ? null : this.list.querySelector(`${item}:hover, ${item}:focus-visible`);
     const now = performance.now();
     let changed = false;
 

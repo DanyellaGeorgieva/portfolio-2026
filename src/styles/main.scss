@@ -952,6 +952,18 @@ body:has(#swup[data-page="detail"]) .page__eye {
   }
 }
 
+// What holds Back on a case study. On a phone it is a bar across the top (see
+// Small screens); here it is no box at all, so Back is positioned exactly as if
+// it stood alone, and the project's name — the eyebrow's job on a desktop —
+// stands down.
+.page__bar {
+  display: contents;
+}
+
+.page__bar-name {
+  display: none;
+}
+
 // The chevron that leads a link — back on a case study, onward on Contact. The
 // direction is the path's; this is only how it is drawn. Drawn rather than
 // typed: a ‹ glyph at 12px is a faint hairline. Stroked in the text colour at
@@ -1029,6 +1041,12 @@ body:has(#swup[data-page="detail"]) .page__eye {
   width: 8rem;
   height: auto;
   border-radius: 0.25rem;
+}
+
+// A link that stands in for the QR on a phone (see Small screens), where the
+// visitor is already holding the device the site needs.
+.page__exit-phone {
+  display: none;
 }
 
 // --- Case study ------------------------------------------------------------
@@ -1222,6 +1240,11 @@ ndc-micro {
   --line: color-mix(in srgb, var(--ink) 18%, transparent);
 
   display: grid;
+  // One column that may shrink below its content. The default track is sized
+  // by the content's own minimum, and a canvas's is its drawn width: on a
+  // 390px phone the Melba jar held its column at 380px against 350px of room
+  // and pushed the page sideways — the case-study bar was stretched with it.
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin: 1.25rem 0 0;
   max-width: min(100%, 46rem);
@@ -2524,8 +2547,13 @@ vitosha-ridge {
   }
 
   .site-header {
-    padding: 16px 20px;
+    padding: 12px;
     font-size: var(--fs-small);
+    // A solid bar of the palette's ink, the words in white. Faded on the same
+    // 1.2s as the text, so the bar changes palette with the page, not before it.
+    background-color: var(--ink);
+    color: #fff;
+    transition: background-color 1.2s ease;
     // Below about 360px even the smaller type cannot hold one line. Rather than
     // shrink it further, the nav drops to its own line and stays hard right —
     // two short lines read better than one cramped one.
@@ -2534,8 +2562,33 @@ vitosha-ridge {
   }
 
   .main-nav {
-    gap: 18px;
+    gap: 16px;
     margin-left: auto; // holds the nav right when it has wrapped to its own line
+  }
+
+  // No hover in the header on a phone. There is nothing to point with, and a
+  // tap leaves :hover stuck on the link until the next tap elsewhere — so the
+  // name stayed swapped for an eye and the other links stayed quiet after
+  // every navigation. Each rule puts back what its desktop one changes, at the
+  // same specificity, so being later is what wins. The active link keeps its
+  // bold; only the hover's is taken away. (The goo that goes with the
+  // quieting is switched off in quietGoo.js, on the same breakpoint.)
+  .site-header a:not(.is-active):hover {
+    font-weight: 800;
+  }
+
+  .site-header a:hover {
+    .site-header__label {
+      opacity: 1;
+    }
+
+    .site-header__eye {
+      opacity: 0;
+    }
+  }
+
+  .site-header:has(a:hover) a:not(:hover) {
+    opacity: 1;
   }
 
   .picker {
@@ -2584,20 +2637,63 @@ vitosha-ridge {
   .page {
     width: auto;
     margin-inline: var(--content-left);
-    // Less top padding than the desktop's 8rem, because the pinned way out
-    // below is no longer pinned and no longer needs clearing.
-    padding: 2.5rem 0 6rem;
+    // Clears the bar below, then the same 2rem the title had under the old
+    // in-flow Back. The bar's height is its line (the 1.5 it inherits) plus
+    // its padding, so it is stated rather than measured.
+    padding: calc(1.5 * var(--fs-small) + 24px + 2rem) 0 6rem;
   }
 
-  // On a desktop this sits in the gutter beside the column. A phone has no
-  // gutter, so a fixed one floats over the copy the whole way down — measured,
-  // it was sitting on the second paragraph. It rides with the page instead, at
-  // the top where a way back belongs; the exit at the foot is the other one.
+  // The case study's bar: the mobile header's ink, white, type size and 12px
+  // padding, so the two are one bar at one height (45px), with Back at one end
+  // and the project's name — which takes over from the eyebrow here — at the
+  // other.
+  //
+  // Not part of the reveal: the copy fades in, the bar is simply there (see
+  // gooeyText.js).
+  //
+  // Pinned, where a pinned Back used to be a problem: in the gutter it floated
+  // over the copy (measured on the second paragraph). A solid bar is the top
+  // of the screen rather than something on top of the text.
+  .page__bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 12px;
+    background-color: var(--ink);
+    color: #fff;
+    transition: background-color 1.2s ease;
+    @include type-label;
+    font-size: var(--fs-small);
+    white-space: nowrap;
+  }
+
+  // Out of the gutter and into the bar, at the bar's size.
   .back {
     position: static;
     display: inline-flex;
+    flex: none;
     width: auto;
-    margin-bottom: 1.75rem;
+    font-size: inherit;
+  }
+
+  // A long name gives way to an ellipsis rather than pushing Back off-screen.
+  .page__bar-name {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Said by the bar now; the rest of it (the kind of project, the year) is
+  // the part the mockup leaves out.
+  .page__eyebrow {
+    display: none;
   }
 
   :root {
@@ -2625,6 +2721,49 @@ vitosha-ridge {
     height: 260px;
   }
 
+  // The jars' buttons: 12px a side, against the desktop's 14. A group that
+  // still cannot fit wraps, centred, rather than overflow.
+  jar-skin,
+  jar-jelly {
+    .seg {
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .seg button,
+    .btn {
+      padding-inline: 12px;
+    }
+  }
+
+  // Except the jelly's five presets, which need 377px at 12px a side against
+  // a 350px column on a 390 screen, so Custom dropped to a line of its own. The
+  // group spans the column instead and the five share its width: every button
+  // grows by the same amount, so the spacing stays even, and it comes out at
+  // ~10px a side at 390, ~14 at 430, and still one line at 360. The 4px is the
+  // floor it may shrink to before the wrap above takes over.
+  jar-jelly {
+    .seg {
+      width: 100%;
+    }
+
+    .seg button {
+      flex: 1 1 auto;
+      padding-inline: 4px;
+    }
+  }
+
+  // A QR is for pointing a phone at, and this is the phone: the Vitosha
+  // teaser's live-site QR gives way to a plain link to the same address.
+  .page__exit-qr {
+    display: none;
+  }
+
+  .page__exit-phone {
+    display: inline;
+  }
+
   // Label above value rather than beside it: the two-column grid gave the
   // value about half of an already narrow column.
   .page__meta {
@@ -2642,5 +2781,32 @@ vitosha-ridge {
   .page__meta a,
   .page__body a {
     overflow-wrap: anywhere;
+  }
+
+  // The Melba recording is a whole desktop screen, 2.1 : 1, and at a phone's
+  // width it came out at a quarter of its size, most of it dark margin and the
+  // Awwwards badge. Cropped to 8 : 5, centred, it keeps exactly the seven jars
+  // and the logo (measured on the frame: jars from x 189 to 1253 of 1440, the
+  // crop 174 to 1266) and shows them about 1.3× larger. object-fit crops the
+  // poster the same way, so the still and the film agree.
+  //
+  // And Pause moves out from over the jars to under them, right-aligned, where
+  // the demos keep their buttons — with the page behind it now, it drops the
+  // light ground it needed on top of the film.
+  .page__video {
+    display: grid;
+    justify-items: end;
+    gap: 10px;
+
+    video {
+      aspect-ratio: 8 / 5;
+      object-fit: cover;
+    }
+  }
+
+  .page__video-toggle {
+    position: static;
+    background: none;
+    padding-inline: 12px; // the jars' buttons on a phone
   }
 }
