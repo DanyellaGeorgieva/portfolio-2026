@@ -78,7 +78,9 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v));
  *   item  the things that can be hovered inside it
  *   text  what actually thickens, within an item
  *   name  prefix for the cloned filters, so two instances cannot collide
- *   media optional: a media query outside which nothing goes quiet
+ *   media optional: a media query outside which hover no longer decides
+ *   rest  optional, with media: outside it, the item matching this is the
+ *         live one instead, and the rest stay quiet for as long as it does
  */
 export const PROJECT_GOO = {
   list: '.projects',
@@ -99,6 +101,9 @@ export const NAV_GOO = {
   // The header has no hover on a phone (main.scss, max-width 640px), and a tap
   // leaves :hover stuck — which is what sync() reads. This is that breakpoint.
   media: '(min-width: 641px)',
+  // Below it the page you are on is the live one: the others stay quiet, as
+  // the stylesheet keeps them at 0.6. main.js re-syncs on every navigation.
+  rest: '.is-active',
 };
 
 // Same treatment as the nav, on the palette numbers under it. A smaller
@@ -168,6 +173,11 @@ export default class QuietGoo {
     this.list.addEventListener('pointerout', this.schedule);
     this.list.addEventListener('focusin', this.schedule);
     this.list.addEventListener('focusout', this.schedule);
+    // Crossing the breakpoint changes who decides, so it is a change too. And
+    // with a resting item, the quiet has to be there from the start rather than
+    // waiting for the first pointer event.
+    this.media?.addEventListener('change', this.schedule);
+    if (config.rest) this.schedule();
   }
 
   // Read on the next frame, not on the event: during a pointerout the element
@@ -175,16 +185,24 @@ export default class QuietGoo {
   // answer the stylesheet has already settled on. That makes the CSS the single
   // source of truth for "which row is live" — this file never keeps its own.
   schedule = () => {
-    if (this.pending) return;
+    // Nothing to do when the constructor stood down (reduced motion, no list) —
+    // and main.js calls this on every navigation regardless.
+    if (this.pending || !this.items.length) return;
     this.pending = requestAnimationFrame(this.sync);
   };
 
   sync = () => {
     this.pending = null;
     const { item } = this.config;
-    // Outside its media query nothing is live, so everything stays at rest.
+    // Outside its media query hover does not count: the live one is whichever
+    // matches `rest` (the page you are on), or none, and everything rests.
+    const { rest } = this.config;
     const live =
-      this.media && !this.media.matches ? null : this.list.querySelector(`${item}:hover, ${item}:focus-visible`);
+      this.media && !this.media.matches
+        ? rest
+          ? this.list.querySelector(`${item}${rest}`)
+          : null
+        : this.list.querySelector(`${item}:hover, ${item}:focus-visible`);
     const now = performance.now();
     let changed = false;
 
@@ -230,6 +248,7 @@ export default class QuietGoo {
     this.list?.removeEventListener('pointerout', this.schedule);
     this.list?.removeEventListener('focusin', this.schedule);
     this.list?.removeEventListener('focusout', this.schedule);
+    this.media?.removeEventListener('change', this.schedule);
     this.items.forEach(({ el, blur }) => {
       blur.closest('filter')?.remove();
       el.style.filter = '';

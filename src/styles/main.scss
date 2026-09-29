@@ -2571,8 +2571,7 @@ vitosha-ridge {
   // name stayed swapped for an eye and the other links stayed quiet after
   // every navigation. Each rule puts back what its desktop one changes, at the
   // same specificity, so being later is what wins. The active link keeps its
-  // bold; only the hover's is taken away. (The goo that goes with the
-  // quieting is switched off in quietGoo.js, on the same breakpoint.)
+  // bold; only the hover's is taken away.
   .site-header a:not(.is-active):hover {
     font-weight: 800;
   }
@@ -2587,8 +2586,23 @@ vitosha-ridge {
     }
   }
 
+  // The quiet state the desktop gives the links you are not pointing at is
+  // given here to the pages you are not on: bold and full for where you are,
+  // 0.6 and a little goo for the rest (the goo in quietGoo.js, NAV_GOO's
+  // `rest`). Written as a property each link carries, set by is-active, so
+  // the second selector — the desktop's own, repeated to outrank it — can
+  // only ever apply this, whatever :hover a tap has left stuck.
+  .site-header a {
+    --nav-rest: 0.6;
+
+    &.is-active {
+      --nav-rest: 1;
+    }
+  }
+
+  .site-header a,
   .site-header:has(a:hover) a:not(:hover) {
-    opacity: 1;
+    opacity: var(--nav-rest);
   }
 
   .picker {

@@ -344,6 +344,9 @@ function setupPage() {
   navigated = true;
 
   setActiveNav(location.pathname);
+  // On a phone the nav's goo follows the active page rather than the pointer
+  // (NAV_GOO's `rest`), so a new active page is a change it has to hear about.
+  navGoo.schedule();
 
   // The picker belongs to the front door: it is a choice for the whole visit,
   // not a control for the page you happen to be reading.
