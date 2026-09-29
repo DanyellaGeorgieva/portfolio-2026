@@ -2571,8 +2571,7 @@ vitosha-ridge {
   // name stayed swapped for an eye and the other links stayed quiet after
   // every navigation. Each rule puts back what its desktop one changes, at the
   // same specificity, so being later is what wins. The active link keeps its
-  // bold; only the hover's is taken away. (The goo that goes with the
-  // quieting is switched off in quietGoo.js, on the same breakpoint.)
+  // bold; only the hover's is taken away.
   .site-header a:not(.is-active):hover {
     font-weight: 800;
   }
@@ -2587,8 +2586,23 @@ vitosha-ridge {
     }
   }
 
+  // The quiet state the desktop gives the links you are not pointing at is
+  // given here to the pages you are not on: bold and full for where you are,
+  // 0.6 and a little goo for the rest (the goo in quietGoo.js, NAV_GOO's
+  // `rest`). Written as a property each link carries, set by is-active, so
+  // the second selector — the desktop's own, repeated to outrank it — can
+  // only ever apply this, whatever :hover a tap has left stuck.
+  .site-header a {
+    --nav-rest: 0.6;
+
+    &.is-active {
+      --nav-rest: 1;
+    }
+  }
+
+  .site-header a,
   .site-header:has(a:hover) a:not(:hover) {
-    opacity: 1;
+    opacity: var(--nav-rest);
   }
 
   .picker {
@@ -2788,6 +2802,30 @@ vitosha-ridge {
   .page__meta a,
   .page__body a {
     overflow-wrap: anywhere;
+  }
+
+  // The Vitosha end screens are a panorama, 10 : 3, and at a phone's width the
+  // place names came out a few pixels tall. Shown ~1.7× taller instead and
+  // cropped from the left, which is where all four names are; the far right
+  // of the ridge and the festival's mark are what give way.
+  //
+  // The images keep their own ratio at the stage's height and run off its
+  // right edge, where the stage's overflow (hidden, from the rule above)
+  // cuts them. The radius is the one drawn into the images (58px of 768) at
+  // this height, so the stage's corners and the frame's own agree.
+  vitosha-textiles {
+    .textiles__stage {
+      aspect-ratio: auto;
+      height: 11rem;
+      border-radius: calc(11rem * 58 / 768);
+    }
+
+    .textiles__img {
+      inset: 0 auto 0 0;
+      width: auto;
+      height: 100%;
+      max-width: none; // the reset's 100% would squeeze it back to the stage
+    }
   }
 
   // The Melba recording is a whole desktop screen, 2.1 : 1, and at a phone's
