@@ -57,6 +57,12 @@ const HEART_HALF_W = 0.604;
 // Floaters: all lengths in uv units, where 1.0 is the viewport height.
 const FLOAT = {
   size: [0.22, 0.38], // scale factor; heart height is ~1.1× this, in uv units
+  // Sizes are in uv units, which are the screen's height, so on a tall narrow
+  // phone a heart came out ~280px across a 390px screen — most of it. Narrower
+  // than this aspect (width / height), hearts shrink with the width instead:
+  // a phone at 390 × 844 (0.46) gets about two thirds, ~190px, half the
+  // screen. A portrait tablet (0.75) and anything wider are untouched.
+  fitAspect: 0.68,
   rise: [0.07, 0.16], // upward speed per second — a drift, not a launch
   // Sideways speed per second. Well under the rise, so the path leans without
   // ever stopping being a climb. Signed outward from the middle of the screen at
@@ -521,12 +527,14 @@ export default class Scene {
     // A still has no frames for them to rise through.
     if (this.still) return;
     const rand = (range) => range[0] + Math.random() * (range[1] - range[0]);
+    // 1 on anything wider than fitAspect; below it, the share of the width lost.
+    const fit = Math.min(1, this.aspect / FLOAT.fitAspect);
 
     for (let n = 0; n < count; n++) {
       const slot = this.floaters.indexOf(null);
       if (slot === -1) break; // all slots busy
 
-      const size = rand(FLOAT.size);
+      const size = rand(FLOAT.size) * fit;
       // Spread across the width in bands rather than independently at random:
       // four random x's cluster together surprisingly often, and hearts landing
       // on each other read as one blob instead of a drift. The jitter keeps it
