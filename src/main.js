@@ -434,8 +434,10 @@ function setupPage() {
   // a projects list, so it is built unconditionally rather than gated on view.
   quietGoo = new QuietGoo(main, PROJECT_GOO);
 
-  // Arriving at contact sends up a drift of glass hearts.
-  if (view === 'contact') scene.releaseHearts();
+  // Arriving at contact sends up a drift of glass hearts — or on a phone, one:
+  // four across a narrow screen crowd it rather than drift. Same breakpoint as
+  // the stylesheet's small screens.
+  if (view === 'contact') scene.releaseHearts(matchMedia('(max-width: 640px)').matches ? 1 : 4);
 }
 
 // swup keeps the canvas alive by only ever replacing #swup. No await-animations.
