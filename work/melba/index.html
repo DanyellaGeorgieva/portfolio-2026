@@ -23,11 +23,11 @@
         <p class="page__eyebrow">
           Melba Sofia Design Festival · Website · 2021
         </p>
-        <h1 class="page__title">MELBA Design Festival 2021</h1>
+        <h1 class="page__title">MELBA Design Festival</h1>
 
         <p class="page__lead">
-          A responsive web platform featuring 19 physics-driven digital
-          containers engineered for the 4th Melba Sofia Design Festival.
+          A custom web presence based on 19&nbsp;physics-driven
+          containers, all engineered for the 4th Melba Sofia Design Festival.
         </p>
 
         <dl class="page__meta">
@@ -49,12 +49,12 @@
         <h2 class="page__heading">Concept</h2>
         <p class="page__body">
           The festival's visual identity grew out of a classic Bulgarian
-          tradition: jars of compotes and pickles, preserving the best of a
-          season. The festival did the same with design, sealing every part of
+          tradition: <strong>jars of compotes and pickles, preserving the best of a
+          season.</strong> The festival did the same with design, sealing every part of
           the 2021 programme inside its own container.
         </p>
         <p class="page__body">
-          My job was to make those containers interactive. Every section of the
+          My job was to make those containers interactive. <br><br>Every section of the
           site lives in a jar, filled with illustrated produce, wobbling jelly
           and its own name in floating pieces. Hover, and it all drifts, bumps
           and slowly settles, like a jar someone just set down.
@@ -75,7 +75,7 @@
             aria-label="The Melba 2021 home page: seven jars of illustrated produce, each wobbling and resettling as the cursor passes over it"></video>
         </figure>
 
-        <h2 class="page__heading">The Ancestral Method</h2>
+        <h2 class="page__heading">The Ancestral Method, all hand-coded like a savage</h2>
         <p class="page__body">
           This was 2021, when the only way to tune a jelly blob was to change a
           decimal point, hard-reload the tab, and watch it either set into stone
@@ -100,12 +100,11 @@
           <li class="step">
             <h3 class="page__subheading">Syrup gravity</h3>
             <p class="page__body">
-              Standard gravity is deactivated. Objects float weightlessly as if
+              Standard gravity isn't there; instead, objects float weightlessly as if
               suspended in thick syrup. To eliminate elastic bouncing, every
               object is assigned a mass five times heavier than Matter.js
-              defaults, combined with a restitution value of zero. This forces
-              all vector collisions to land softly and deliberately rather than
-              springily.
+              defaults, combined with a restitution value of zero. This is what makes
+              all vector collisions land softly.
             </p>
           </li>
 
@@ -119,23 +118,23 @@
               by the engine, and a visible graphic skin rendered to the user.
             </p>
             <p class="page__body">
-              <strong>Collider:</strong> A simplified, straight-edged SVG vector outline. While
+              <strong>The collision mechanism:</strong> A simplified, straight-edged SVG vector outline. While
               scanning a smooth curve pixel-by-pixel demands hundreds of points,
               reducing the shape to sharp corners allows a complex asset like a
-              peach to be represented by just 11 points. Minimizing the vertex
+              peach to be represented by just 11 points. <strong>Minimizing the vertex
               count drastically drops the number of collision checks required
-              per frame, keeping all 19 jars running at a locked frame rate.
+              per frame</strong>, keeping all 19 jars running at a locked frame rate.
             </p>
             <p class="page__body">
-              <strong>Concave shapes:</strong> Complex shapes like leaves cannot be processed as
+              <strong>The concave shapes issue:</strong> Complex shapes like leaves cannot be processed as
               a single convex hull without losing their empty inner gaps. We
               used poly-decomp to automatically slice concave paths into
               separate convex pieces, which are then welded into a single
               composite rigid body. A pathseg polyfill handles the path
-              segmentation layer directly in the browser.
+              segmentation layer directly in the browser. Pretty proud of that one.
             </p>
             <p class="page__body">
-              <strong>Skin:</strong> Illustrated assets receive a standard PNG sprite precisely
+              <strong>The skin:</strong> Illustrated assets receive a standard PNG sprite precisely
               scaled and anchored to match the underlying collider geometry. To
               optimize memory, matching items (such as six identical peaches in
               one jar) share the exact same mathematical vector outline. Flat
@@ -180,7 +179,7 @@
               </li>
             </ul>
             <p class="page__body">
-              A secondary canvas running Paper.js loops through these coordinate
+              <strong>Where it gets really interesting:</strong> A secondary canvas running Paper.js loops through these coordinate
               nodes every frame, drawing a smooth vector spline through the
               points so a small cluster of floating tracking dots reads as a
               single, continuous, organic shape. When a rigid asset like a peach
@@ -204,7 +203,7 @@
             <p class="page__body">
               Together, the rigid geometries, invisible boundaries, and
               structural spring blobs form an interconnected system of 19
-              independent worlds that remain fully operational today. Because
+              independent worlds that remain fully operational today. <br><br>Because
               physics layouts are best understood through physical touch, open
               the live platform on a desktop screen and run your cursor through
               the jars.
