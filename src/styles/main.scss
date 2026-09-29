@@ -952,6 +952,18 @@ body:has(#swup[data-page="detail"]) .page__eye {
   }
 }
 
+// What holds Back on a case study. On a phone it is a bar across the top (see
+// Small screens); here it is no box at all, so Back is positioned exactly as if
+// it stood alone, and the project's name — the eyebrow's job on a desktop —
+// stands down.
+.page__bar {
+  display: contents;
+}
+
+.page__bar-name {
+  display: none;
+}
+
 // The chevron that leads a link — back on a case study, onward on Contact. The
 // direction is the path's; this is only how it is drawn. Drawn rather than
 // typed: a ‹ glyph at 12px is a faint hairline. Stroked in the text colour at
@@ -2614,20 +2626,63 @@ vitosha-ridge {
   .page {
     width: auto;
     margin-inline: var(--content-left);
-    // Less top padding than the desktop's 8rem, because the pinned way out
-    // below is no longer pinned and no longer needs clearing.
-    padding: 2.5rem 0 6rem;
+    // Clears the bar below, then the same 2rem the title had under the old
+    // in-flow Back. The bar's height is its line (the 1.5 it inherits) plus
+    // its padding, so it is stated rather than measured.
+    padding: calc(1.5 * var(--fs-small) + 24px + 2rem) 0 6rem;
   }
 
-  // On a desktop this sits in the gutter beside the column. A phone has no
-  // gutter, so a fixed one floats over the copy the whole way down — measured,
-  // it was sitting on the second paragraph. It rides with the page instead, at
-  // the top where a way back belongs; the exit at the foot is the other one.
+  // The case study's bar: the mobile header's ink, white, type size and 12px
+  // padding, so the two are one bar at one height (45px), with Back at one end
+  // and the project's name — which takes over from the eyebrow here — at the
+  // other.
+  //
+  // Not part of the reveal: the copy fades in, the bar is simply there (see
+  // gooeyText.js).
+  //
+  // Pinned, where a pinned Back used to be a problem: in the gutter it floated
+  // over the copy (measured on the second paragraph). A solid bar is the top
+  // of the screen rather than something on top of the text.
+  .page__bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 12px;
+    background-color: var(--ink);
+    color: #fff;
+    transition: background-color 1.2s ease;
+    @include type-label;
+    font-size: var(--fs-small);
+    white-space: nowrap;
+  }
+
+  // Out of the gutter and into the bar, at the bar's size.
   .back {
     position: static;
     display: inline-flex;
+    flex: none;
     width: auto;
-    margin-bottom: 1.75rem;
+    font-size: inherit;
+  }
+
+  // A long name gives way to an ellipsis rather than pushing Back off-screen.
+  .page__bar-name {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Said by the bar now; the rest of it (the kind of project, the year) is
+  // the part the mockup leaves out.
+  .page__eyebrow {
+    display: none;
   }
 
   :root {

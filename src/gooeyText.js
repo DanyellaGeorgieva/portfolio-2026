@@ -121,7 +121,10 @@ const TITLE_HOLD = 850;
 // .back is in it too, though it is a way out rather than copy: it is set in
 // the eyebrow's type on the eyebrow's line, and arriving before the rest of
 // the page it read as a leftover from the last one. Small, so it fades, on the
-// same beat as the eyebrow beside it.
+// same beat as the eyebrow beside it. That is on a desktop. On a phone Back is
+// in a bar pinned across the top of the screen, and a bar is chrome, not copy:
+// it is simply there, like the header, so nothing inside it is revealed (see
+// inPinnedBar below).
 //
 // <vitosha-textiles> is in it though it is pictures: it closes the Vitosha
 // Concept, right under the paragraphs, and sat there fully drawn while they
@@ -141,6 +144,14 @@ const TEXT =
 // The pictures in that list. Copy with no text is skipped as empty; these are
 // not empty, they are pictures.
 const MEDIA = 'vitosha-textiles, .page__video';
+
+// Whether an element sits in the case study's bar while the bar is pinned — a
+// phone. Asked of the bar's own position rather than of a breakpoint, so the
+// stylesheet stays the one place that decides when it is a bar.
+const inPinnedBar = (el) => {
+  const bar = el.closest('.page__bar');
+  return Boolean(bar) && getComputedStyle(bar).position === 'fixed';
+};
 
 // Cubic ease-out — 1 - (1 - t)³ — the curve the shader eases its own uniforms
 // on, so the copy settles at the pace the field does.
@@ -176,7 +187,9 @@ export default class GooeyText {
 
     const elements = [...root.querySelectorAll(TEXT)].filter(
       (el) =>
-        (el.textContent.trim() || el.matches(MEDIA)) && el.getBoundingClientRect().top < window.innerHeight,
+        (el.textContent.trim() || el.matches(MEDIA)) &&
+        el.getBoundingClientRect().top < window.innerHeight &&
+        !inPinnedBar(el),
     );
 
     this.items = elements.map((el, i) => {
