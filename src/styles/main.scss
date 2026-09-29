@@ -2613,6 +2613,13 @@ vitosha-ridge {
     padding-top: 6rem;
   }
 
+  // About is the one top-level page long enough to scroll on a phone, and it
+  // ended on its last paragraph's own margin — 29px from the bottom of the
+  // screen. Room under it, so the page ends rather than stops.
+  #about {
+    padding-bottom: 92px;
+  }
+
   .projects {
     width: 100%;
   }
