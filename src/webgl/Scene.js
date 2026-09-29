@@ -159,12 +159,16 @@ export default class Scene {
     // renderer's own name is what gives it away, so that is asked too.
     try {
       this.renderer = new WebGLRenderer({ canvas, antialias: false, failIfMajorPerformanceCaveat: true });
-      this.still = isSoftware(this.renderer.getContext());
+      this.software = isSoftware(this.renderer.getContext());
     } catch {
       // A refused request creates no context, so the canvas can be asked again.
       this.renderer = new WebGLRenderer({ canvas, antialias: false });
-      this.still = true;
+      this.software = true;
     }
+    // The same still serves anyone who has asked their system to reduce motion:
+    // a full-screen field that never stops moving is exactly what that setting
+    // is for. Unlike a software context, a GPU draws it at full resolution.
+    this.still = this.software || matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.stillPending = null;
 
     // --- Why there is no syncFrame() here any more -------------------------
@@ -514,6 +518,8 @@ export default class Scene {
    * the drift up rather than restarting it.
    */
   releaseHearts(count = 4) {
+    // A still has no frames for them to rise through.
+    if (this.still) return;
     const rand = (range) => range[0] + Math.random() * (range[1] - range[0]);
 
     for (let n = 0; n < count; n++) {
@@ -689,7 +695,7 @@ export default class Scene {
     // A still (no GPU) is drawn at half that: the CPU fills every pixel, so a
     // quarter of the pixels is most of the cost of its one frame gone, and the
     // browser's scale-up of a soft gradient is hard to see.
-    const ratio = this.ratioOverride ?? (this.still ? STILL_RATIO : 1);
+    const ratio = this.ratioOverride ?? (this.software ? STILL_RATIO : 1);
     if (ratio !== this.pixelRatio) {
       this.pixelRatio = ratio;
       this.renderer.setPixelRatio(ratio);

@@ -1367,6 +1367,43 @@ ndc-micro {
   }
 }
 
+// Play / Pause, in the recording's corner. The demos' pill button, on a
+// light ground of its own because the video under it is never the same
+// colour twice.
+.page__video {
+  position: relative;
+}
+
+.page__video-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  min-height: 32px;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.85);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+}
+
+// The widget kit's canvases that take the keyboard (the kit makes them
+// sliders) ring like every other control on the page.
+.page .widget canvas:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
 // Every caption, in the demos and the widget kit alike: one size, weight and
 // colour, so none of them reads as a different kind of note from the others.
 .caption {
