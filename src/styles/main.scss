@@ -2804,6 +2804,30 @@ vitosha-ridge {
     overflow-wrap: anywhere;
   }
 
+  // The Vitosha end screens are a panorama, 10 : 3, and at a phone's width the
+  // place names came out a few pixels tall. Shown ~1.7× taller instead and
+  // cropped from the left, which is where all four names are; the far right
+  // of the ridge and the festival's mark are what give way.
+  //
+  // The images keep their own ratio at the stage's height and run off its
+  // right edge, where the stage's overflow (hidden, from the rule above)
+  // cuts them. The radius is the one drawn into the images (58px of 768) at
+  // this height, so the stage's corners and the frame's own agree.
+  vitosha-textiles {
+    .textiles__stage {
+      aspect-ratio: auto;
+      height: 11rem;
+      border-radius: calc(11rem * 58 / 768);
+    }
+
+    .textiles__img {
+      inset: 0 auto 0 0;
+      width: auto;
+      height: 100%;
+      max-width: none; // the reset's 100% would squeeze it back to the stage
+    }
+  }
+
   // The Melba recording is a whole desktop screen, 2.1 : 1, and at a phone's
   // width it came out at a quarter of its size, most of it dark margin and the
   // Awwwards badge. Cropped to 8 : 5, centred, it keeps exactly the seven jars
