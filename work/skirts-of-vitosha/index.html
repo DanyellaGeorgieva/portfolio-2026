@@ -225,14 +225,17 @@
         <footer class="page__exit">
           <div class="page__exit-item">
             <span class="page__exit-label">Live site</span>
-            <!-- Deliberately not a link. The teaser only runs on a phone held
-                 sideways, so the only way in from here is scanning the QR —
-                 the same refusal the site itself makes. -->
+            <!-- The teaser only runs on a phone held sideways. On a desktop the
+                 way in is scanning the QR — the same refusal the site itself
+                 makes — so there it is not a link. On a phone you are already
+                 holding the right device, so there the QR gives way to the
+                 link (main.scss, small screens). Same address the QR holds. -->
             <img
               class="page__exit-qr"
               src="/src/assets/qr-code.png"
               alt="QR code for the live site — scan it with your phone to open it"
               loading="lazy" />
+            <a class="page__exit-title page__exit-phone" href="https://skirtsofvitosha.com/" target="_blank" rel="noopener">skirtsofvitosha.com</a>
           </div>
           <div class="page__exit-item">
             <span class="page__exit-label">Festival</span>

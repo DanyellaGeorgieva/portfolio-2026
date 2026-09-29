@@ -1043,6 +1043,12 @@ body:has(#swup[data-page="detail"]) .page__eye {
   border-radius: 0.25rem;
 }
 
+// A link that stands in for the QR on a phone (see Small screens), where the
+// visitor is already holding the device the site needs.
+.page__exit-phone {
+  display: none;
+}
+
 // --- Case study ------------------------------------------------------------
 // A detail page that runs long enough to need structure: a standing head with
 // the credits, then headed sections of body copy. Everything holds the same
@@ -2746,6 +2752,16 @@ vitosha-ridge {
       flex: 1 1 auto;
       padding-inline: 4px;
     }
+  }
+
+  // A QR is for pointing a phone at, and this is the phone: the Vitosha
+  // teaser's live-site QR gives way to a plain link to the same address.
+  .page__exit-qr {
+    display: none;
+  }
+
+  .page__exit-phone {
+    display: inline;
   }
 
   // Label above value rather than beside it: the two-column grid gave the
