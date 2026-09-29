@@ -2524,8 +2524,13 @@ vitosha-ridge {
   }
 
   .site-header {
-    padding: 16px 20px;
+    padding: 12px;
     font-size: var(--fs-small);
+    // A solid bar of the palette's ink, the words in white. Faded on the same
+    // 1.2s as the text, so the bar changes palette with the page, not before it.
+    background-color: var(--ink);
+    color: #fff;
+    transition: background-color 1.2s ease;
     // Below about 360px even the smaller type cannot hold one line. Rather than
     // shrink it further, the nav drops to its own line and stays hard right —
     // two short lines read better than one cramped one.
@@ -2534,8 +2539,33 @@ vitosha-ridge {
   }
 
   .main-nav {
-    gap: 18px;
+    gap: 16px;
     margin-left: auto; // holds the nav right when it has wrapped to its own line
+  }
+
+  // No hover in the header on a phone. There is nothing to point with, and a
+  // tap leaves :hover stuck on the link until the next tap elsewhere — so the
+  // name stayed swapped for an eye and the other links stayed quiet after
+  // every navigation. Each rule puts back what its desktop one changes, at the
+  // same specificity, so being later is what wins. The active link keeps its
+  // bold; only the hover's is taken away. (The goo that goes with the
+  // quieting is switched off in quietGoo.js, on the same breakpoint.)
+  .site-header a:not(.is-active):hover {
+    font-weight: 800;
+  }
+
+  .site-header a:hover {
+    .site-header__label {
+      opacity: 1;
+    }
+
+    .site-header__eye {
+      opacity: 0;
+    }
+  }
+
+  .site-header:has(a:hover) a:not(:hover) {
+    opacity: 1;
   }
 
   .picker {
