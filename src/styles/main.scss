@@ -319,8 +319,9 @@ body:has(#swup[data-page="detail"]) {
   // Opacity only — the dimming when another link is pointed at. Not `all`,
   // which caught the font size arriving with the stylesheet and grew the nav
   // in on every load; and not font-weight, which animated the active link
-  // turning bold just after load. Bold is instant.
-  transition: opacity 0.2s ease;
+  // turning bold just after load. Bold is instant. The same 0.35s and curve
+  // as the eye's arrival below, so the quieting and the swap are one gesture.
+  transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 
   &.is-active,
   &[aria-pressed="true"] {
@@ -340,22 +341,30 @@ body:has(#swup[data-page="detail"]) {
     pointer-events: none;
   }
 
-  &:hover {
-    font-weight: 900;
-  }
-
   // The eye is laid over the name rather than next to it, so the swap happens
   // in place and the bar does not move. The ::after above already reserves the
   // bold width, so nothing shifts on hover either.
   position: relative;
 }
 
+// Bold on hover is the palette numbers' only. A nav link's name is on its way
+// out when pointed at — it fades for the eye — so bold there was only ever a
+// jolt on the first frame, the word thickening before it faded: the snap that
+// made the swap look instant.
+.picker__link:hover {
+  font-weight: 900;
+}
+
 // --- Nav hover: the name gives way to an eye ---------------------------------
-// A plain crossfade on opacity. No scaling: the name and the eye stay the size
-// they are and only trade places.
+// A crossfade on opacity. No scaling: the name and the eye stay the size they
+// are and only trade places. At 0.2s both ways it read as a swap rather than a
+// fade, so now the name leaves in 0.25s and the eye arrives over 0.35s, a
+// beat behind it (the delay is on the hover state only, so leaving is
+// immediate) — the eye surfaces as the word goes. The curve is the growing
+// underlines' ease-out.
 .site-header__label {
   display: block;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .site-header__eye {
@@ -372,7 +381,7 @@ body:has(#swup[data-page="detail"]) {
   opacity: 0;
   // It sits over the link it belongs to; the link keeps the pointer.
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .site-header a:hover,
@@ -383,6 +392,7 @@ body:has(#swup[data-page="detail"]) {
 
   .site-header__eye {
     opacity: 1;
+    transition-delay: 60ms;
   }
 }
 
@@ -2570,12 +2580,7 @@ vitosha-ridge {
   // tap leaves :hover stuck on the link until the next tap elsewhere — so the
   // name stayed swapped for an eye and the other links stayed quiet after
   // every navigation. Each rule puts back what its desktop one changes, at the
-  // same specificity, so being later is what wins. The active link keeps its
-  // bold; only the hover's is taken away.
-  .site-header a:not(.is-active):hover {
-    font-weight: 800;
-  }
-
+  // same specificity, so being later is what wins.
   .site-header a:hover {
     .site-header__label {
       opacity: 1;

@@ -61,7 +61,8 @@
 const RESTING = 0;
 
 // Matched to the 0.2s opacity on .project__link, so the two halves of the
-// gesture are one gesture.
+// gesture are one gesture. A list whose opacity runs longer says so in its
+// config (duration, below).
 const DURATION = 200;
 
 const TEMPLATE_ID = 'goo-title';
@@ -81,6 +82,8 @@ const clamp01 = (v) => Math.min(1, Math.max(0, v));
  *   media optional: a media query outside which hover no longer decides
  *   rest  optional, with media: outside it, the item matching this is the
  *         live one instead, and the rest stay quiet for as long as it does
+ *   duration  optional: ms for the goo to ease in or out, to match the list's
+ *         own opacity transition (DURATION when not given)
  */
 export const PROJECT_GOO = {
   list: '.projects',
@@ -98,6 +101,7 @@ export const NAV_GOO = {
   text: '.site-header__label',
   name: 'goo-quiet-nav',
   ratio: 0.0625, // 1.1px at 17.6px
+  duration: 350, // the header's 0.35s quieting and eye (main.scss)
   // The header has no hover on a phone (main.scss, max-width 640px), and a tap
   // leaves :hover stuck — which is what sync() reads. This is that breakpoint.
   media: '(min-width: 641px)',
@@ -230,7 +234,7 @@ export default class QuietGoo {
     let running = false;
 
     this.items.forEach((item) => {
-      const t = clamp01((now - item.started) / DURATION);
+      const t = clamp01((now - item.started) / (this.config.duration ?? DURATION));
       if (t < 1) running = true;
       item.value = item.from + (item.to - item.from) * ease(t);
       item.blur.setAttribute('stdDeviation', item.value.toFixed(2));
