@@ -8,6 +8,30 @@
   font-display: swap;
 }
 
+// The titles' face. A woff2 cut down from the variable TTF beside it, which is
+// 777kB — seven times this — for a face that only sets a few headlines a page.
+// Kept: Latin, Latin-1 and Latin Extended-A, the common punctuation (the em
+// dash and curly quotes the titles use), the euro and ™, and basic Cyrillic,
+// so a Bulgarian title still sets in it. The whole weight axis is kept too.
+// Rebuilt with fontTools:
+//
+//   pyftsubset Unbounded-VariableFont_wght.ttf --flavor=woff2 \
+//     --layout-features='*' --output-file=Unbounded-Variable.woff2 \
+//     --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+2010-2027,U+2030-203A,U+20AC,U+2122,U+0400-045F"
+@font-face {
+  font-family: "Unbounded";
+  src: url("../assets/fonts/Unbounded-Variable.woff2") format("woff2");
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+:root {
+  // Every title on the site: a page's h1, the project names on Work, and the
+  // next project at the foot of a case study. Satoshi stays for everything
+  // else — headings within a page included.
+  --font-title: "Unbounded", "Satoshi", sans-serif;
+}
+
 // =============================================================================
 // TEXT COLOUR — one per palette, yours to set
 // =============================================================================
@@ -602,6 +626,7 @@ html:has(#swup[data-page="top"]) {
 // roles it needs. .section and .page are layout only.
 .page__title {
   margin: 0 0 var(--title-gap);
+  font-family: var(--font-title);
   font-size: var(--title-size);
   font-weight: 800;
   line-height: var(--lh-tight);
@@ -721,6 +746,7 @@ html:has(#swup[data-page="top"]) {
 }
 
 .project__title {
+  font-family: var(--font-title);
   font-size: var(--fs-lead);
   font-weight: 800;
   line-height: var(--lh-heading);
@@ -1029,6 +1055,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 // An underline that grows from the left on hover, the edge the text is set
 // against.
 .page__exit-title {
+  font-family: var(--font-title);
   font-size: var(--fs-lead);
   font-weight: 800;
   line-height: var(--lh-tight);
