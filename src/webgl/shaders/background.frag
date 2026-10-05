@@ -55,9 +55,11 @@ uniform float uPokeAmount; // how far the surface is pushed out, in uv units
 uniform float uGlassBend; // how far the edge bends its lookup
 uniform float uGlassBevel; // depth over which the bend eases off
 uniform float uGlassAberration; // per-channel spread in the bend
-uniform float uGlassFrost; // milkiness across the whole panel
+uniform float uGlassFrost; // milkiness in the middle, thinning to none at the rim
 uniform float uGlassRim; // specular highlight strength
 uniform float uGlassRimWidth; // how far in that highlight reaches
+uniform float uGlassIridescence; // the coloured reflection's strength at the rim (0 = none)
+uniform float uGlassGlint; // white band along the inside of the bottom edge
 uniform float uWobble; // bubble-wobble amplitude, in the shape's local units
 uniform float uWobbleRate; // how fast the outline breathes, radians per second
 
@@ -366,6 +368,34 @@ float heartsAt(in vec2 uv, out float size) {
   return d;
 }
 
+// What the edge of a drop reflects: the room around it, seen as big soft
+// patches of colour, each direction its own. Taken from a photo of a drop
+// against pink — blue down both sides, a pale yellow-green up at the top left,
+// green low on the left, violet along the bottom and a deep blue under the
+// right. `a` is the direction the surface faces, in turns (0 = right, 0.25 =
+// up), and the stops blend smoothly into each other all the way round.
+vec3 envColor(in float a) {
+  const vec3 RIGHT = vec3(0.55, 0.74, 1.00);    // light blue
+  const vec3 UP_R = vec3(0.62, 0.92, 0.82);     // pale green-cyan
+  const vec3 UP = vec3(0.80, 0.92, 0.96);       // nearly white
+  const vec3 UP_L = vec3(0.84, 0.95, 0.62);     // pale yellow-green
+  const vec3 LEFT = vec3(0.46, 0.62, 1.00);     // blue
+  const vec3 DOWN_L = vec3(0.50, 0.88, 0.46);   // green
+  const vec3 DOWN = vec3(0.68, 0.38, 0.98);     // violet
+  const vec3 DOWN_R = vec3(0.26, 0.32, 0.96);   // deep blue
+  float s = fract(a) * 8.0;
+  float f = smoothstep(0.0, 1.0, fract(s));
+  // GLSL ES 1.00 can't index a constant array by a computed int, so a chain.
+  if (s < 1.0) return mix(RIGHT, UP_R, f);
+  if (s < 2.0) return mix(UP_R, UP, f);
+  if (s < 3.0) return mix(UP, UP_L, f);
+  if (s < 4.0) return mix(UP_L, LEFT, f);
+  if (s < 5.0) return mix(LEFT, DOWN_L, f);
+  if (s < 6.0) return mix(DOWN_L, DOWN, f);
+  if (s < 7.0) return mix(DOWN, DOWN_R, f);
+  return mix(DOWN_R, RIGHT, f);
+}
+
 vec3 glassAt(in vec2 uv, in float px) {
   float size;
   float d = heartsAt(uv, size);
@@ -388,7 +418,7 @@ vec3 glassAt(in vec2 uv, in float px) {
   float rim = 1.0 - smoothstep(0.0, uGlassRimWidth, -d);
 
   // The flat middle of a heart bends nothing and catches no highlight, so it is
-  // just frosted field. Bailing here skips the normal (four more shape probes)
+  // just frosted field, at the full frost. Bailing here skips the normal (four more shape probes)
   // and the aberration samples for the bulk of a large heart's area — the single
   // biggest saving, since that middle is most of the pixels.
   if (reach < px && rim <= 0.0) {
@@ -426,8 +456,39 @@ vec3 glassAt(in vec2 uv, in float px) {
     col = fieldAt(uv + off);
   }
 
-  // Frost, then a specular rim that catches the light from the upper left.
-  col = mix(col, vec3(1.0), uGlassFrost);
+  // Frost, then the reflection, then a specular rim that catches the light from
+  // the upper left.
+  //
+  // The frost is a drop's milky middle: full past the bevel, thinning towards
+  // the rim and gone at it, so the edge keeps its colours clean.
+  col = mix(col, vec3(1.0), uGlassFrost * smoothstep(0.15, 0.85, k));
+
+  // The reflection: the edge shows the colour of whatever it faces (envColor),
+  // strong at the rim and fading out across the bevel, so the middle is the
+  // field seen through the glass. The direction is wobbled by slow noise, in
+  // place and in time, so the patches are soft and uneven like a real
+  // reflection rather than eight tidy sectors, and drift a little as the heart
+  // floats. Deeper into the bevel it turns a touch further, so the colour
+  // shifts across the band instead of sitting flat.
+  float facingTurns = atan(n.y, n.x) / 6.2831853;
+  float wobble = 0.08 * noise(uv * 3.0 + vec2(0.0, uTime * 0.05)) + 0.06 * k;
+  vec3 env = envColor(facingTurns + wobble);
+  col = mix(col, env, uGlassIridescence * (1.0 - smoothstep(0.0, 0.8, k)));
+
+  // Soft highlights up on the upper left of the bevel, where a window in that
+  // room would catch: long and pale, not a hard spot.
+  float lit = pow(max(dot(n, normalize(vec2(-0.45, 0.9))), 0.0), 6.0);
+  float mid = smoothstep(0.2, 0.4, k) * (1.0 - smoothstep(0.55, 0.8, k));
+  col += lit * mid * 0.45;
+
+  // The glint: light caught along the inside of the bottom edge, a white band a
+  // little in from the rim — the rim itself keeps its colour below it. Only
+  // where the surface faces down, so it sits under the drop and nowhere else.
+  float down = max(0.0, -n.y);
+  float band = smoothstep(0.1, 0.2, k) * (1.0 - smoothstep(0.38, 0.6, k));
+  col = mix(col, vec3(1.0), clamp(band * pow(down, 2.0) * uGlassGlint, 0.0, 1.0));
+
+
   float facing = 0.5 + 0.5 * dot(n, normalize(vec2(-0.6, 0.8)));
   col += rim * facing * uGlassRim;
 

@@ -34,6 +34,9 @@ const scene = new Scene(canvas, {
     markPalette(name);
   },
 });
+// Tuning handle, dev only: the glass lives in its uniforms, so
+// __scene.material.uniforms.uGlassIridescence.value = 0.8 changes it live.
+if (import.meta.env.DEV) window.__scene = scene;
 
 // Vite replaces this module on edit without reloading the page, which would
 // leave the previous Scene's render loop running: two Scenes then draw to the
