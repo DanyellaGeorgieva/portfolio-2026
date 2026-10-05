@@ -472,6 +472,254 @@ document.addEventListener('keydown', (event) => {
   swup.navigate(backLink.getAttribute('href'));
 });
 
+// --- Scroll on to the next page ---------------------------------------------
+// On a top-level page, scrolling past the bottom — a wheel or trackpad push, a
+// swipe up on a phone, or Space, Page Down or ↓ — is the same as clicking the
+// next link in the header: home → work → colophon → contact. Scrolling past the
+// top — the same gestures the other way, or Shift+Space, Page Up or ↑ — is the
+// link before it. The order is read off the header itself, so rearranging the
+// nav rearranges this with it. Home and contact are the two ends: there is
+// nowhere further, and a push past them does nothing. Case studies are left
+// alone — they are long reads, and the end of one is not a request to leave.
+//
+// One gesture has to mean exactly one step, and that can't be done on a timer.
+// A trackpad flick keeps emitting wheel events from momentum long after the
+// fingers have lifted — easily a second or two, and the tail is
+// indistinguishable from a fresh flick except by *when* it arrives. Locking for
+// a fixed period just means the tail steps again as soon as the lock expires,
+// which is how you scroll through the whole site in one swipe.
+//
+// This is the detector from the one-document version of the site, when the
+// wheel moved between sections stacked on home. Four approaches were tried
+// before it:
+//
+//   • A fixed lock. Momentum outlasts any lock short enough to feel responsive.
+//   • A size threshold per event. Momentum decays through the whole range a real
+//     push occupies, so it re-arms mid-coast wherever the line is drawn.
+//   • An acceleration test. True of a flick, false of a drag: fingers stay down
+//     and the delta rises and falls with them, so every rise stepped again.
+//   • Silence alone. One threshold has to serve two jobs at once — a pause
+//     *inside* a gesture must not end it, while a pause *between* two gestures
+//     must. Set it short and a slow drag re-steps; set it long and a quick
+//     second flick is swallowed.
+//
+// So there are three rules, not one:
+//
+//   1. Silence for gestureEnd ends the gesture and re-arms. Generous enough
+//      that a stutter inside a drag doesn't count.
+//   2. No two steps closer together than cooldown, whatever the stream does.
+//   3. A spike re-arms early. Coasting decays, so a delta several times the
+//      recent average is a hand back on the trackpad — that restores the quick
+//      second flick that rule 1 alone would swallow. Gated behind the cooldown,
+//      so a drag's own wandering can't trigger it.
+//
+// One rule is new, because pages are real pages now and some can scroll — work
+// on a phone, anything on a short window. A gesture only counts if it starts
+// with the page already at the edge it is pushing past: the bottom to go on,
+// the top to go back. Otherwise the flick that scrolls you down to the end
+// would carry straight on into the next page; this way you arrive at the end,
+// and a second push is what takes you on. A page with nothing to scroll is at
+// both edges at once, so there either direction steps straight away.
+//
+// These are the whole feel of it, and they can only be judged on real hardware
+// — trackpad timing differs by device and by how you swipe. In dev they hang
+// off window.__scroll so they can be changed live in the console:
+//
+//   __scroll.gestureEnd = 400   // it re-steps during one slow drag
+//   __scroll.gestureEnd = 200   // a quick second flick gets ignored
+//   __scroll.cooldown   = 700   // a firm flick occasionally counts twice
+//   __scroll.minPush    = 20    // a coasting tail still creeps a step through
+//   __scroll.spikeFloor = 40    // ...or one sneaks in via the spike rule
+//   __scroll.spike      = 2     // a second flick during coasting feels dead
+//   __scroll.swipe      = 40    // a phone swipe needs to travel further
+const tuning = {
+  gestureEnd: 300, // ms of silence that ends a gesture
+  cooldown: 500, // ms floor between steps
+  spike: 3, // × the recent average to read as a fresh push
+  spikeFloor: 25, // ...and this big in absolute terms
+  minPush: 12, // below this it is coasting or jitter, not a push
+  swipe: 24, // px a finger has to travel before it counts
+};
+const RECENT = 8; // events averaged for the spike test
+
+if (import.meta.env.DEV) window.__scroll = tuning;
+
+let armed = true;
+let quiet = null;
+let lastStep = 0;
+let recent = [];
+// Set while swup is fetching and swapping, so a push during the swap can't
+// queue a second visit behind the first. Cleared once the new page is in, not
+// at visit:end: that waits on an animation frame, which a backgrounded tab
+// never runs, and the guard has no reason to outlast the swap.
+let visiting = false;
+swup.hooks.on('visit:start', () => (visiting = true));
+swup.hooks.on('page:view', () => (visiting = false));
+// A visit that fails or is overtaken never ends, so it would hold this forever.
+swup.hooks.on('visit:abort', () => (visiting = false));
+
+const onTopPage = () => document.querySelector('#swup')?.dataset.page === 'top';
+
+/**
+ * Whether the page is at the edge a push in `direction` would go past: the
+ * bottom for 1, the top for -1. A pixel of slack either way: on a zoomed or
+ * high-density screen the scroll can land a fraction short of the edge and
+ * never quite reach it.
+ */
+function atEdge(direction) {
+  return direction > 0
+    ? window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 1
+    : window.scrollY <= 1;
+}
+
+/**
+ * Go to the link after the lit one (1) or before it (-1). Returns false if
+ * there was nowhere to go.
+ */
+function step(direction) {
+  if (visiting) return false;
+  const current = navLinks.findIndex((a) => a.classList.contains('is-active'));
+  const target = navLinks[current + direction];
+  if (current < 0 || !target) return false;
+  swup.navigate(target.getAttribute('href'));
+  return true;
+}
+
+/** One step per gesture. */
+function onGesture(delta) {
+  const magnitude = Math.abs(delta);
+  const direction = Math.sign(delta);
+  const now = performance.now();
+  const rested = now - lastStep > tuning.cooldown;
+
+  // Every event pushes the silence out, coasting ones included — a coasting
+  // event is still the gesture continuing.
+  clearTimeout(quiet);
+  quiet = setTimeout(() => {
+    armed = true;
+  }, tuning.gestureEnd);
+
+  // A gesture still scrolling the page is reading, not leaving. Spend it, so
+  // its momentum reaching the end doesn't count as a push past it.
+  if (!direction || !atEdge(direction)) {
+    armed = false;
+    recent = [];
+    return;
+  }
+
+  const average = recent.length ? recent.reduce((n, v) => n + v, 0) / recent.length : 0;
+  recent.push(magnitude);
+  if (recent.length > RECENT) recent.shift();
+
+  // Rule 3: a spike well above the recent average, once the cooldown has passed.
+  //
+  // The absolute floor matters as much as the ratio. A decayed coast sits around
+  // 1, so *any* jitter clears "three times the average" — that is a coast
+  // re-arming itself and stepping again for as long as it trickles. A real push
+  // starts in the tens whatever came before it.
+  if (
+    !armed &&
+    rested &&
+    average &&
+    magnitude >= tuning.spikeFloor &&
+    magnitude > average * tuning.spike
+  ) {
+    armed = true;
+    recent = [magnitude];
+  }
+
+  if (!armed || magnitude < tuning.minPush) return;
+  if (!rested) return; // rule 2
+
+  // Only a move that actually happened spends the gesture — past either end a
+  // push does nothing, and it must not cost you the push back the other way.
+  if (step(direction)) {
+    armed = false;
+    lastStep = now;
+  }
+}
+
+// Removed on a hot reload, like swup: two sets of these would step twice.
+const gestures = new AbortController();
+if (import.meta.hot) import.meta.hot.dispose(() => gestures.abort());
+
+// Passive: nothing here needs to stop the browser scrolling. At an edge there is
+// nothing left to scroll that way, and the bounce is already off
+// (overscroll-behavior in main.scss).
+window.addEventListener(
+  'wheel',
+  (event) => {
+    // A trackpad pinch arrives as a wheel event with ctrlKey set. That is zoom.
+    if (!onTopPage() || event.ctrlKey) return;
+    // Firefox reports a mouse wheel in lines, not pixels — 3 a notch, which
+    // would never clear minPush. Rough pixel equivalents put it on one scale.
+    const unit = [1, 16, window.innerHeight][event.deltaMode] ?? 1;
+    onGesture(event.deltaY * unit);
+  },
+  { passive: true, signal: gestures.signal },
+);
+
+// A swipe is one gesture by construction — it starts with a touch and ends
+// when the finger lifts — so it needs none of the wheel's rules. It counts
+// only if the page was at the edge it pushes past when the finger went down,
+// for the same reason the wheel's has to start there. Both edges are noted at
+// the start, because which one matters isn't known until the finger moves.
+//
+// Swiping down at the top would be pull-to-refresh in Chrome on Android, but
+// the overscroll-behavior that stops the bounce stops that too.
+let touchStart = null;
+window.addEventListener(
+  'touchstart',
+  (event) => {
+    const touch = event.touches[0];
+    touchStart =
+      onTopPage() && event.touches.length === 1
+        ? { x: touch.clientX, y: touch.clientY, top: atEdge(-1), bottom: atEdge(1) }
+        : null;
+  },
+  { passive: true, signal: gestures.signal },
+);
+window.addEventListener(
+  'touchmove',
+  (event) => {
+    if (!touchStart) return;
+    const touch = event.touches[0];
+    // Dragging up is scrolling down, so this is positive for a swipe up.
+    const travel = touchStart.y - touch.clientY;
+    const across = Math.abs(touch.clientX - touchStart.x);
+    // Mostly vertical, and far enough that a tap's wobble doesn't count.
+    if (Math.abs(travel) <= tuning.swipe || Math.abs(travel) <= across) return;
+    const direction = Math.sign(travel);
+    if (direction > 0 ? touchStart.bottom : touchStart.top) step(direction);
+    touchStart = null; // one decision per swipe, not one per frame of it
+  },
+  { passive: true, signal: gestures.signal },
+);
+
+// The keys that scroll a page, with the same rule as everything else: they
+// step only once the page has nothing left to scroll that way, so on a page
+// that does scroll they read it first and move on after.
+const STEP_KEYS = { ArrowDown: 1, PageDown: 1, ' ': 1, ArrowUp: -1, PageUp: -1 };
+
+window.addEventListener(
+  'keydown',
+  (event) => {
+    let direction = STEP_KEYS[event.key];
+    if (!direction || !onTopPage() || event.defaultPrevented) return;
+    // Held down, a key repeats — which would run through every page in turn.
+    // With a modifier it belongs to the browser or the OS (⌥↓, ⌘↑ and so on).
+    if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === ' ' && event.shiftKey) direction = -1; // Shift+Space scrolls up
+    // Typing, or a key that means something to what has focus: Space presses a
+    // focused button — a palette number on the colophon — and follows a link.
+    const field = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+    const control = 'a[href], button, summary, [role="button"]';
+    if (event.target.closest?.(event.key === ' ' ? `${field}, ${control}` : field)) return;
+    if (atEdge(direction)) step(direction);
+  },
+  { signal: gestures.signal },
+);
+
 // Nothing intercepts the nav or the brand any more. They are ordinary links to
 // ordinary URLs, and swup handles them the way it handles every other link on
 // the site — fetching the page and swapping #swup while the canvas outside it

@@ -564,9 +564,10 @@ body:has(#swup[data-page="detail"]) {
 // There used to be a hard lock here. It existed because all four sections lived
 // in one document, stacked absolutely, and a wheel gesture drove which one was
 // up; without the lock the document nudged underneath the gesture. Each view is
-// its own page now, nothing is stacked, and the gesture is gone — so the lock
-// has no job left, and keeping it would mean copy that overflows a short window
-// could not be reached at all.
+// its own page now and nothing is stacked — so the lock has no job left, and
+// keeping it would mean copy that overflows a short window could not be reached
+// at all. The gesture is back, as a push past either end that goes on or back
+// a page (main.js), and it only acts once there is nothing left to scroll.
 .view[data-page="top"] {
   position: relative;
   min-height: 100vh;
