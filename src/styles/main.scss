@@ -372,6 +372,16 @@ body:has(#swup[data-page="detail"]) {
   position: relative;
 }
 
+// In the header, the links you are not on are a step lighter, so the one you
+// are on reads as the bold one. 800 against the active 900 was the whole
+// difference before, and at this size the two read as one weight; 400 was far
+// too much, two different typefaces in one bar. The ::after above still
+// reserves the 900 width, so a link going bold on arrival moves nothing. The
+// palette numbers keep their 800: their active one has brackets to say so.
+.site-header a:not(.is-active) {
+  font-weight: 700;
+}
+
 // Bold on hover is the palette numbers' only. A nav link's name is on its way
 // out when pointed at — it fades for the eye — so bold there was only ever a
 // jolt on the first frame, the word thickening before it faded: the snap that
