@@ -12,12 +12,25 @@
   <body>
     {{> frame }}
 
-    <!-- The front door: the shell and the field, nothing else. Every other view
-         is its own page now, so this one holds no content of its own.
+    <!-- The front door: the shell, the field, and who this is — the opening
+         that used to lead About (now the colophon), so the first page says it
+         before anyone has to go looking.
 
          Only #swup is swapped between pages; the canvas above it persists, which
          is what keeps the shader running across a navigation. -->
-    <main id="swup" class="view" data-page="top" data-view="home"></main>
+    <main id="swup" class="view" data-page="top" data-view="home">
+      <section class="section" id="intro">
+        <h1 class="page__title">
+          I’m Daniela Paneva — <br>a front-end developer based in Sofia, Bulgaria
+        </h1>
+        <p class="page__body">
+          I build things that move, react, and feel alive. Most of my work
+          centers around creative coding and interaction. There, I spend solid time
+          wielding maths and logic to fine-tune animation curves; transitions; and micro-interactions, to
+          make them feel real.
+        </p>
+      </section>
+    </main>
 
     <script type="module" src="/src/main.js"></script>
   </body>

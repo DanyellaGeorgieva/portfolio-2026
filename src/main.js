@@ -326,7 +326,7 @@ let navigated = false;
 function setupPage() {
   const main = document.querySelector('#swup');
   const isDetail = main.dataset.page === 'detail';
-  const view = main.dataset.view; // home | work | about | contact, top-level only
+  const view = main.dataset.view; // home | work | colophon | contact, top-level only
 
   gooeyText?.destroy();
   gooeyText = null;
@@ -348,9 +348,10 @@ function setupPage() {
   // (NAV_GOO's `rest`), so a new active page is a change it has to hear about.
   navGoo.schedule();
 
-  // The picker belongs to the front door: it is a choice for the whole visit,
-  // not a control for the page you happen to be reading.
-  if (picker) picker.hidden = view !== 'home';
+  // The picker belongs to the colophon, beside the story of the shader it
+  // recolours: the page that explains the field is the one that lets you play
+  // with it.
+  if (picker) picker.hidden = view !== 'colophon';
 
   if (isDetail) {
     // Before the reveal is built, not after: it decides what to animate by
