@@ -34,9 +34,11 @@ const GLASS = {
   bevel: 0.48, // thickness of the bevelled edge, as a fraction of the panel's
   // half-thickness: 1.0 is a fully domed panel, 0.2 a thin lip
   aberration: 3, // per-channel spread — 0 disables the extra samples
-  frost: 0.06, // milkiness; anything much higher hides the refraction
+  frost: 0.15, // the hazy middle; it thins to nothing at the rim, where the colours are
   rim: 0.36, // specular highlight strength
   rimWidth: 0.02, // highlight reach, in uv units (1.0 = viewport height)
+  iridescence: 0.85, // the coloured reflection at the rim — 0 is plain glass
+  glint: 1.1, // the white crescent of light along the inside of the bottom edge
   wobble: 0.06, // bubble-wobble amplitude, in local units (half-height is 0.552)
   wobbleRate: 0.8, // how fast the outline breathes, radians per second
 };
@@ -277,6 +279,8 @@ export default class Scene {
         uGlassFrost: { value: GLASS.frost },
         uGlassRim: { value: GLASS.rim },
         uGlassRimWidth: { value: GLASS.rimWidth },
+        uGlassIridescence: { value: GLASS.iridescence },
+        uGlassGlint: { value: GLASS.glint },
         uWobble: { value: GLASS.wobble },
         uWobbleRate: { value: GLASS.wobbleRate },
         uPointer: { value: new Vector2() },
