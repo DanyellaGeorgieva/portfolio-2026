@@ -167,9 +167,10 @@ a {
   z-index: -1;
 }
 
-// The persistent shell — the nav and the palette picker — belongs to home. A
-// detail page carries its own title and its own "← works" link back out, so the
-// shell stands down and leaves it the whole screen.
+// The persistent shell — the nav and the palette picker — belongs to the
+// top-level pages (the picker to the colophon alone; main.js decides that). A
+// detail page carries its own title and its own "← works" link back out, so
+// the shell stands down and leaves it the whole screen.
 //
 // Keyed off #swup's data-page, which ships in the HTML, rather than a class set
 // from JS: main.js is a deferred module that pulls in three and swup, so a JS
@@ -423,7 +424,7 @@ body:has(#swup[data-page="detail"]) {
 
 // The name deliberately stays outside <nav>: a navigation landmark is the list
 // of a site's sections, and the site's own name is not one of them — a screen
-// reader announcing "navigation, Daniela Paneva, work, about, contact" reads as
+// reader announcing "navigation, Daniela Paneva, work, colophon, contact" reads as
 // though the name were a fourth section. It sits beside the nav and shares its
 // styling instead, which is the part that was actually missing.
 .main-nav {
@@ -594,7 +595,7 @@ html:has(#swup[data-page="top"]) {
 }
 
 // --- Typography -------------------------------------------------------------
-// One set of text roles for every page — case studies, About and Contact
+// One set of text roles for every page — case studies, the colophon and Contact
 // alike: .page__eyebrow, __title, __lead, __heading, __subheading, __body,
 // __list and __note. A page is not its own typographic system; it picks the
 // roles it needs. .section and .page are layout only.
@@ -2630,13 +2631,6 @@ vitosha-ridge {
     width: auto;
     margin: 0 var(--content-left);
     padding-top: 6rem;
-  }
-
-  // About is the one top-level page long enough to scroll on a phone, and it
-  // ended on its last paragraph's own margin — 29px from the bottom of the
-  // screen. Room under it, so the page ends rather than stops.
-  #about {
-    padding-bottom: 92px;
   }
 
   .projects {
