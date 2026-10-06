@@ -299,12 +299,30 @@ const float HEART_HALF_H = 0.552;
 // heart's size. 0 = a hard seam; larger values pull the merge further out.
 const float SMOOTH = 0.45;
 
+// The heart is two things read off one formula: an outline, and a surface.
+// The outline is the exact shape, tip and cleft as sharp as drawn. The surface
+// — the way each point faces, which is what the colours, the bend and the
+// highlights are all read from — is taken from a softened copy of it, where the
+// two halves melt into each other across the centre line instead of meeting
+// there. That is what a blown bubble does: a pointed outline, but no fold
+// anywhere on the skin.
+//
+// This is how far either side of the centre line that melt reaches, in the
+// heart's local units (it is about 1.2 wide). 0 = a crease up from the tip,
+// green on one side and blue on the other; larger spreads the turn wider. It
+// does not touch the outline.
+const float HEART_SOFT = 0.22;
+
 float dot2(in vec2 v) { return dot(v, v); }
 
 // Inigo Quilez's heart SDF: mirrored about x, a circle for each lobe above the
 // diagonal, and the distance to the point/edge below it.
-float sdHeart(in vec2 p) {
-  p.x = abs(p.x);
+//
+// `soft` rounds the mirror: 0 is abs(), the exact shape. Above it the fold on
+// the centre line — where the nearest side flips from left to right, and the
+// gradient snaps with it — is blended over that distance instead.
+float sdHeart(in vec2 p, in float soft) {
+  p.x = sqrt(p.x * p.x + soft * soft);
   if (p.y + p.x > 1.0) {
     return sqrt(dot2(p - vec2(0.25, 0.75))) - sqrt(2.0) / 4.0;
   }
@@ -316,7 +334,7 @@ float sdHeart(in vec2 p) {
 // proportions — a non-uniform fit would stretch it and skew the distances the
 // bevel and normals are built from. `phase` offsets the wobble per heart so a
 // group of them never breathes in unison.
-float heartDist(in vec2 rel, in float size, in float phase) {
+float heartDist(in vec2 rel, in float size, in float phase, in float soft) {
   vec2 q = rel / size;
   q.y += HEART_HALF_H; // local origin sits at the tip, not the centre
 
@@ -328,20 +346,20 @@ float heartDist(in vec2 rel, in float size, in float phase) {
   float t = uTime * uWobbleRate + phase;
   float w = uWobble * sin(q.x * 4.5 + t) * sin(q.y * 3.9 - t * 0.83);
 
-  return (sdHeart(q) + w) * size; // back into uv units, so the bevel reads the same
+  return (sdHeart(q, soft) + w) * size; // back into uv units, so the bevel reads the same
 }
 
 // Every heart combined into one field. A plain min() would let the nearest heart
 // cut a hard seam across its neighbour; the polynomial smooth-min rounds the
 // join instead, so overlapping hearts fuse like drops of liquid. Also carries the
 // blended size out, since the bevel is measured against it.
-float heartsAt(in vec2 uv, out float size) {
+float heartsAt(in vec2 uv, in float soft, out float size) {
   float d = 1e9;
   size = 0.0;
   for (int i = 0; i < HEART_COUNT; i++) {
     if (uHearts[i].z <= 0.0) continue; // empty slot
     // Slot index as the wobble phase: constant per heart and free.
-    float di = heartDist(uv - uHearts[i].xy, uHearts[i].z, float(i) * 2.399);
+    float di = heartDist(uv - uHearts[i].xy, uHearts[i].z, float(i) * 2.399, soft);
 
     if (size <= 0.0) {
       d = di; // first contributor seeds the field
@@ -398,7 +416,7 @@ vec3 envColor(in float a) {
 
 vec3 glassAt(in vec2 uv, in float px) {
   float size;
-  float d = heartsAt(uv, size);
+  float d = heartsAt(uv, 0.0, size); // the outline: exact
   // No hearts at all, or outside them (with a pixel of slack for the edge blend).
   if (size <= 0.0 || d > px) return fieldAt(uv);
 
@@ -426,12 +444,13 @@ vec3 glassAt(in vec2 uv, in float px) {
   }
 
   // Surface normal from the gradient of the *blended* field, so the merge region
-  // gets a continuous surface rather than two normals meeting at a crease.
+  // gets a continuous surface rather than two normals meeting at a crease — and
+  // of the softened one (HEART_SOFT), so a heart has none up its own middle.
   vec2 e = vec2(px, 0.0);
   float s0, s1, s2, s3; // sizes at the probe points — not needed, but required
   vec2 n = normalize(vec2(
-    heartsAt(uv + e.xy, s0) - heartsAt(uv - e.xy, s1),
-    heartsAt(uv + e.yx, s2) - heartsAt(uv - e.yx, s3)
+    heartsAt(uv + e.xy, HEART_SOFT, s0) - heartsAt(uv - e.xy, HEART_SOFT, s1),
+    heartsAt(uv + e.yx, HEART_SOFT, s2) - heartsAt(uv - e.yx, HEART_SOFT, s3)
   ) + 1e-6);
 
   vec2 off = n * reach;
