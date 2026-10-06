@@ -2,6 +2,14 @@
      (and its live WebGL context) survives navigation. -->
 <canvas id="webgl" aria-hidden="true"></canvas>
 
+<!-- The frame round the screen. Empty here: waveFrame.js writes the path's
+     shape every frame, and until it has, the stylesheet's own plain frame
+     (body::after) is what shows. preserveAspectRatio is beside the point —
+     there is no viewBox, so one unit is one CSS px and nothing is scaled. -->
+<svg class="screen-frame" aria-hidden="true" focusable="false">
+  <path fill="currentColor" fill-rule="evenodd" />
+</svg>
+
 <!-- First-paint guard.
      ===================================================================
      The stylesheet is not there at the first paint — in dev it arrives with the
@@ -54,6 +62,13 @@
     width: 0;
     height: 0;
     overflow: hidden;
+  }
+
+  /* Out of the flow before the stylesheet says so, or it is a 300 × 150 box
+     at the top of the page pushing everything down. */
+  :where(.screen-frame) {
+    position: fixed;
+    pointer-events: none;
   }
 </style>
 

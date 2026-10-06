@@ -1,9 +1,10 @@
 import './styles/main.scss';
 import Swup from 'swup';
 import SwupA11yPlugin from '@swup/a11y-plugin';
-import Scene from './webgl/Scene.js';
+import Scene, { PALETTE_FADE } from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
 import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
+import WaveFrame from './waveFrame.js';
 import { paletteNames } from './webgl/palettes.js';
 // Define <vitosha-ridge> and <vitosha-textiles>, used by the Vitosha case study.
 import './vitoshaRidge.js';
@@ -38,6 +39,14 @@ const scene = new Scene(canvas, {
 // __scene.material.uniforms.uGlassIridescence.value = 0.8 changes it live.
 if (import.meta.env.DEV) window.__scene = scene;
 
+// The frame round the screen. In the shell, like the canvas, so it is built
+// once and outlives page navigations — each of which changes its shape (see
+// the visit:start hook below).
+const waveFrame = new WaveFrame(document.querySelector('.screen-frame'), {
+  // A ripple lasts as long as a palette takes to sweep the field.
+  duration: PALETTE_FADE,
+});
+
 // Vite replaces this module on edit without reloading the page, which would
 // leave the previous Scene's render loop running: two Scenes then draw to the
 // same canvas and context from different uniforms, alternating frames. That
@@ -45,6 +54,8 @@ if (import.meta.env.DEV) window.__scene = scene;
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     scene.dispose();
+    // Two of these would both write the one path.
+    waveFrame.destroy();
     // swup has to go too. It binds a document-level click handler, so a second
     // instance from a hot reload leaves two routers intercepting the same link:
     // the first navigation appears to work and every one after it is swallowed.
@@ -291,6 +302,10 @@ function setActiveNav(path) {
 function advancePalette() {
   const index = Math.max(0, paletteNames.indexOf(scene.paletteName));
   scene.setPalette(paletteNames[(index + 1) % paletteNames.length]);
+  // The ripple set off with the click; the palette only now, once the new page
+  // has arrived — a moment later, or longer on a slow connection. Whatever the
+  // gap, the ripple is stretched by it so the two finish on the same frame.
+  waveFrame.settleIn(PALETTE_FADE);
 }
 
 // --- Detail pages -----------------------------------------------------------
@@ -460,6 +475,16 @@ const swup = new Swup({
 // fade it sits open over a case study that is still assembling itself. This
 // closes it as the visit starts, before any of the new page is on screen.
 swup.hooks.on('visit:start', hidePageEye);
+// The frame changes shape as the page does, by a ripple from the link that was
+// clicked: set off with the click, so the edge is already moving while the old
+// page leaves. From the middle of the link rather than the pointer, so it is
+// the same from the keyboard — and a visit with no link behind it, the back
+// button, ripples from the middle of the screen instead.
+swup.hooks.on('visit:start', (visit) => {
+  const box = visit.trigger?.el?.getBoundingClientRect();
+  if (box?.width) waveFrame.shift(box.left + box.width / 2, box.top + box.height / 2);
+  else waveFrame.shift();
+});
 
 swup.hooks.on('page:view', () => {
   setupPage();

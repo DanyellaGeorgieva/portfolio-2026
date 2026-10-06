@@ -93,7 +93,8 @@ const POKE = {
 // Palette transition: a wavefront (driven by the shader's uMix) that expands
 // outward from the channel centres, so the new palette flows out from the core
 // through the field. PALETTE_FADE is how long that outward flow takes.
-const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
+// Exported: the frame's ripple (waveFrame.js) is timed to end with it.
+export const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
 
 // Scale/speed changes (opening a project page tightens and calms the field) ease
 // over this long. Shorter than the palette sweep — it reads as a response to the
