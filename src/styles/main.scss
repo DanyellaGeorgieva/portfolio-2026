@@ -191,6 +191,37 @@ a {
   z-index: -1;
 }
 
+// The frame — a border round the screen itself, in the ink. Fixed and drawn on
+// a pseudo-element rather than as a border on body: it stays at the edge of the
+// viewport while the page scrolls under it, and it takes no room from the
+// layout. Above the shell (z-index 10) so nothing pinned crosses it, and it
+// catches no clicks.
+:root {
+  // On :root rather than on the frame itself: whatever is pinned to the screen's
+  // edge has to step in by the same amount.
+  --frame: 16px;
+  --frame-radius: 8px;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  // The box is the hole, not the frame: inset by the frame's width and rounded,
+  // with the frame painted outwards from it as a shadow. A real border can't do
+  // this — a radius rounds its outer corners, at the screen's edge, and leaves
+  // the inner ones square until it exceeds the border's own width.
+  inset: var(--frame);
+  z-index: 20;
+  border-radius: var(--frame-radius);
+  // Spread past the frame's width so the shadow's own rounded corners land off
+  // screen: twice the frame plus the radius always clears the viewport corner.
+  box-shadow: 0 0 0 calc(var(--frame) * 2 + var(--frame-radius)) var(--ink);
+  pointer-events: none;
+  // Listed explicitly: the shadow follows --ink, but only animates with the
+  // palette if box-shadow is transitionable.
+  transition: box-shadow 1.2s ease;
+}
+
 // The persistent shell — the nav and the palette picker — belongs to the
 // top-level pages (the picker to the colophon alone; main.js decides that). A
 // detail page carries its own title and its own "← works" link back out, so
@@ -326,7 +357,8 @@ body:has(#swup[data-page="detail"]) {
   justify-content: space-between;
   font-size: var(--fs-body);
   text-transform: uppercase;
-  padding: 24px;
+  // 24px from the frame, not from the screen's edge.
+  padding: calc(24px + var(--frame));
 }
 
 // Set to match the nav rather than to outrank it: the name is a label, not a
