@@ -293,6 +293,9 @@ body:has(#swup[data-page="detail"]) {
   gap: 0.6rem;
   font-size: var(--fs-label);
   text-transform: uppercase;
+  // MARKED FOR REMOVAL. Neon green is not a design choice: it flags this whole
+  // row as something that is going to be taken out.
+  color: #39ff14;
 
   // main.js hides this with the `hidden` attribute whenever a section is up.
   // Spelled out because `[hidden] { display: none }` comes from the UA
@@ -857,6 +860,198 @@ html:has(#swup[data-page="top"]) {
 .project__blurb {
   padding-left: calc(var(--track-width) + var(--track-gap));
   font-size: var(--fs-body);
+}
+
+// --- Visualizer player ------------------------------------------------------
+// The window a visualizer plays in, on the colophon (src/visualizer/). A
+// droplet of the ink with the video in it: the same ink as the frame, so it
+// reads as a piece of the frame come loose, and it changes with the palette.
+//
+// In the flow by default — under the intro, as wide as the column — and
+// floating to the right of the copy only once the screen has room for it there:
+// the column is 42% wide and centred, so the gutter beside it is 29% of the
+// screen, and the video has to stay 200px tall (YouTube's minimum), which at
+// 16:9 is 356px wide. That fits from about 1440 up.
+.vplayer {
+  --vplayer-radius: 28px;
+
+  position: relative;
+  width: 100%;
+  max-width: 34rem;
+  margin-top: 2rem;
+  padding: 14px;
+  color: #fff;
+  background-color: var(--ink);
+  border-radius: var(--vplayer-radius);
+  // The same 1.2s the text takes to change ink (body).
+  transition: background-color 1.2s ease;
+  // Scrolled into view when it opens below the fold: clear of the header
+  // above and the frame below, not flush against the screen's edge.
+  scroll-margin: 5rem 0 calc(var(--frame) + 24px);
+
+  &[hidden] {
+    display: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 4px;
+  }
+
+  @media (min-width: 1440px) {
+    position: fixed;
+    top: 12rem; // level with the title: the section's own padding-top
+    right: calc(var(--frame) + 20px);
+    z-index: 10;
+    width: min(420px, 29vw - 40px);
+    margin-top: 0;
+  }
+}
+
+.vplayer__content {
+  position: relative;
+  display: grid;
+  // minmax(0, …), not the default auto: where the video is held 200px tall on
+  // a narrow screen, its 16:9 would otherwise ask the column for 356px of
+  // width to match, and push the window off the side of a phone.
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.vplayer__head {
+  display: flex;
+  justify-content: flex-end;
+}
+
+// The video's box. Nothing is positioned over it, and nothing may be: only
+// the rounded clip. min-height is YouTube's 200px, for the screens where the
+// column is too narrow for 16:9 to reach it.
+.vplayer__video,
+.vplayer__fallback {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-width: 200px;
+  min-height: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+.vplayer__video {
+  background: #000;
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+}
+
+// Stands in the video's place when it will not play — not on top of it.
+.vplayer__fallback {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  font-size: var(--fs-small);
+  border: 1px solid rgb(255 255 255 / 0.3);
+
+  a {
+    font-weight: 600;
+    text-underline-offset: 0.18em;
+  }
+}
+
+.vplayer__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vplayer__button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: inherit;
+  background: none;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgb(255 255 255 / 0.14);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// Thin, and only a readout: there is no scrubbing.
+.vplayer__progress {
+  flex: 1;
+  height: 2px;
+  margin: 0 6px;
+  background: rgb(255 255 255 / 0.25);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.vplayer__progress-fill {
+  height: 100%;
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.vplayer__status {
+  @include type-caption;
+  // A line's height held even when there is nothing to say, so the window
+  // does not change size as the status comes and goes.
+  min-height: 1.5em;
+  padding: 0 8px 2px;
+}
+
+// The row of them, one per track.
+.vplayer-tracks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+// What opens it: a pill in the ink, like the window it turns into.
+.vplayer-open {
+  min-height: 40px;
+  padding: 8px 20px;
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: #fff;
+  background-color: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 1.2s ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
 }
 
 // --- Say hi -----------------------------------------------------------------
