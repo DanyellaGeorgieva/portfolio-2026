@@ -326,6 +326,8 @@ let gooeyText = null;
 // Same reason: it holds a filter per title and listeners on a list that swup is
 // about to throw away.
 let quietGoo = null;
+let playerWindow = null;
+let forgetTrack = null;
 
 // Whether anything has been shown yet. Used to tell a cold load from a
 // navigation: the first page should keep the palette it was linked with rather
@@ -342,6 +344,12 @@ function setupPage() {
   gooeyText = null;
   quietGoo?.destroy();
   quietGoo = null;
+  // The visualizer's window lives in the colophon's own section, so it leaves
+  // with the page — and takes the player, and its sound, with it.
+  playerWindow?.destroy();
+  playerWindow = null;
+  forgetTrack?.();
+  forgetTrack = null;
 
   // Every navigation steps the palette — nav clicks, project links, the "next
   // project" at the foot of a case study, Back and Forward. One rule covers
@@ -362,6 +370,31 @@ function setupPage() {
   // recolours: the page that explains the field is the one that lets you play
   // with it.
   if (picker) picker.hidden = view !== 'colophon';
+
+  // The colophon can play the visualizers it is about. Loaded when asked for,
+  // like the case studies' demos: no other page needs any of it. Anything in
+  // the section marked data-visualizer-track opens the window.
+  if (view === 'colophon') {
+    import('./visualizer/playerWindow.js').then(({ default: PlayerWindow }) => {
+      // The page may have been left while this was on its way.
+      if (!main.isConnected || playerWindow) return;
+      playerWindow = new PlayerWindow(main.querySelector('.section'));
+    });
+    // Each track brings its palette (visualizer/tracks.js): when one starts,
+    // the field sweeps to it, by the same sweep the picker sets off. Closing
+    // the window leaves the palette where it is.
+    import('./visualizer/player.js').then((store) => {
+      if (!main.isConnected || forgetTrack) return;
+      let playing = null;
+      forgetTrack = store.subscribe(({ current }) => {
+        if (!current || current.id === playing) return;
+        playing = current.id;
+        scene.setPalette(current.palette);
+      });
+      // Dev only: __visualizer.getVideoTime() and the other hooks, in the console.
+      if (import.meta.env.DEV) window.__visualizer = store;
+    });
+  }
 
   if (isDetail) {
     // Before the reveal is built, not after: it decides what to animate by
