@@ -1,0 +1,184 @@
+// The frame round the screen, with a wavy inner edge.
+//
+// One <path> in a fixed, full-screen <svg>: the screen's own rectangle with a
+// hole cut out of it, and the hole is what is wavy. Nothing is filtered — the
+// wave is in the geometry. The hole's outline is walked point by point, each
+// point is pushed in or out by smooth noise read at its own place on the
+// screen, and the result is written to the path's `d`.
+//
+// Reading the noise by position is what makes it organic: two points near each
+// other get nearly the same push, so the edge swells rather than jitters, and
+// the outline closes on itself with no join to hide.
+//
+// It does not move. It is drawn once, in its shape, and again only when the
+// window changes size.
+
+// Everything worth tuning. Lengths are CSS px.
+const WAVE = {
+  amplitude: 5, // furthest the edge strays from straight, either way
+  wavelength: 190, // roughly the length of one swell along the edge
+  detail: 0.35, // a second, finer swell on top: its share of the first
+  step: 14, // distance between points along a straight side
+  corner: 5, // points round each rounded corner
+};
+
+// --- Noise ------------------------------------------------------------------
+// Value noise in three dimensions: a random number at every whole-number
+// corner of a grid, blended smoothly in between. Two across the screen, and a
+// third that only picks which slice of it is read. Returns -1..1.
+
+function hash(x, y, z) {
+  let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 2147483647);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+
+const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function noise(x, y, z) {
+  const xi = Math.floor(x);
+  const yi = Math.floor(y);
+  const zi = Math.floor(z);
+  const u = fade(x - xi);
+  const v = fade(y - yi);
+  const w = fade(z - zi);
+  const corner = (dx, dy, dz) => hash(xi + dx, yi + dy, zi + dz);
+  const near = lerp(
+    lerp(corner(0, 0, 0), corner(1, 0, 0), u),
+    lerp(corner(0, 1, 0), corner(1, 1, 0), u),
+    v,
+  );
+  const far = lerp(
+    lerp(corner(0, 0, 1), corner(1, 0, 1), u),
+    lerp(corner(0, 1, 1), corner(1, 1, 1), u),
+    v,
+  );
+  return lerp(near, far, w) * 2 - 1;
+}
+
+export default class WaveFrame {
+  /**
+   * @param {SVGSVGElement} svg the shell's .screen-frame
+   */
+  constructor(svg) {
+    this.svg = svg;
+    this.path = svg.querySelector('path');
+    this.points = [];
+
+    this.resize = this.resize.bind(this);
+    window.addEventListener('resize', this.resize);
+
+    this.measure();
+    this.draw();
+    // Only now does the stylesheet's plain frame stand down (see main.scss):
+    // there is never a moment with no frame, and none with two.
+    document.documentElement.classList.add('has-wave-frame');
+  }
+
+  /**
+   * Lay the hole's outline out as points, each with the direction it is pushed
+   * in: straight out from the page, toward the screen's edge. A rounded
+   * rectangle, walked clockwise from the top left.
+   */
+  measure() {
+    const style = getComputedStyle(this.svg);
+    const frame = parseFloat(style.getPropertyValue('--frame')) || 16;
+    const radius = parseFloat(style.getPropertyValue('--frame-radius')) || 0;
+    // The element's own box, not window.inner*: it is fixed at inset 0, so
+    // this is the screen less any scrollbar — the same box the old frame had.
+    const w = (this.width = this.svg.clientWidth);
+    const h = (this.height = this.svg.clientHeight);
+
+    const left = frame;
+    const top = frame;
+    const right = w - frame;
+    const bottom = h - frame;
+    const r = Math.max(0, Math.min(radius, (right - left) / 2, (bottom - top) / 2));
+
+    const points = [];
+    const side = (x0, y0, x1, y1, nx, ny) => {
+      const length = Math.hypot(x1 - x0, y1 - y0);
+      const count = Math.max(1, Math.round(length / WAVE.step));
+      // Up to but not including the far end: the corner after it starts there.
+      for (let i = 0; i < count; i++) {
+        const t = i / count;
+        points.push({ x: lerp(x0, x1, t), y: lerp(y0, y1, t), nx, ny });
+      }
+    };
+    const corner = (cx, cy, from) => {
+      for (let i = 0; i < WAVE.corner; i++) {
+        const a = from + (i / WAVE.corner) * (Math.PI / 2);
+        const nx = Math.cos(a);
+        const ny = Math.sin(a);
+        points.push({ x: cx + nx * r, y: cy + ny * r, nx, ny });
+      }
+    };
+
+    side(left + r, top, right - r, top, 0, -1);
+    corner(right - r, top + r, -Math.PI / 2);
+    side(right, top + r, right, bottom - r, 1, 0);
+    corner(right - r, bottom - r, 0);
+    side(right - r, bottom, left + r, bottom, 0, 1);
+    corner(left + r, bottom - r, Math.PI / 2);
+    side(left, bottom - r, left, top + r, -1, 0);
+    corner(left + r, top + r, Math.PI);
+
+    this.points = points;
+    // The push can never reach the screen's edge, or the frame would tear
+    // open there. A pixel and a half of frame is always left. (See draw():
+    // this is approached, not hit.)
+    this.limit = Math.max(0, frame - 1.5);
+  }
+
+  draw() {
+    const { points, width: w, height: h, limit } = this;
+    const scale = 1 / WAVE.wavelength;
+
+    const n = points.length;
+    const xs = new Array(n);
+    const ys = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const p = points[i];
+
+      // Two swells: the long one, and a finer one on top of it, read from
+      // elsewhere in the noise so the two never line up.
+      const wave =
+        (noise(p.x * scale, p.y * scale, 0) +
+          WAVE.detail * noise(p.x * scale * 2.3 + 40, p.y * scale * 2.3 + 40, 9)) /
+        (1 + WAVE.detail);
+      let push = wave * WAVE.amplitude;
+      // Into the page there is room for any crest. Toward the screen's edge
+      // there is only the frame's own width, so that way the push is eased
+      // against the limit rather than cut off at it: a tall crest rounds over
+      // under the edge instead of going flat along it.
+      if (push > 0) push = limit * Math.tanh(push / limit);
+      xs[i] = p.x + p.nx * push;
+      ys[i] = p.y + p.ny * push;
+    }
+
+    // A smooth line through the points: each one is the control point of a
+    // curve that runs from the midpoint before it to the midpoint after it.
+    // The curves meet at those midpoints already pointing the same way, so
+    // there is no corner anywhere — and it closes on itself the same way.
+    const f = (v) => v.toFixed(1);
+    let d = `M-1-1H${w + 1}V${h + 1}H-1Z`; // the screen, and a pixel past it
+    d += `M${f((xs[n - 1] + xs[0]) / 2)} ${f((ys[n - 1] + ys[0]) / 2)}`;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      d += `Q${f(xs[i])} ${f(ys[i])} ${f((xs[i] + xs[j]) / 2)} ${f((ys[i] + ys[j]) / 2)}`;
+    }
+    this.path.setAttribute('d', d + 'Z');
+  }
+
+  resize() {
+    this.measure();
+    this.draw();
+  }
+
+  destroy() {
+    window.removeEventListener('resize', this.resize);
+    document.documentElement.classList.remove('has-wave-frame');
+    this.path.removeAttribute('d');
+  }
+}

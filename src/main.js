@@ -4,6 +4,7 @@ import SwupA11yPlugin from '@swup/a11y-plugin';
 import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
 import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
+import WaveFrame from './waveFrame.js';
 import { paletteNames } from './webgl/palettes.js';
 // Define <vitosha-ridge> and <vitosha-textiles>, used by the Vitosha case study.
 import './vitoshaRidge.js';
@@ -38,6 +39,10 @@ const scene = new Scene(canvas, {
 // __scene.material.uniforms.uGlassIridescence.value = 0.8 changes it live.
 if (import.meta.env.DEV) window.__scene = scene;
 
+// The frame round the screen. In the shell, like the canvas, so it is built
+// once and outlives page navigations. It is drawn in its shape and stays there.
+const waveFrame = new WaveFrame(document.querySelector('.screen-frame'));
+
 // Vite replaces this module on edit without reloading the page, which would
 // leave the previous Scene's render loop running: two Scenes then draw to the
 // same canvas and context from different uniforms, alternating frames. That
@@ -45,6 +50,8 @@ if (import.meta.env.DEV) window.__scene = scene;
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     scene.dispose();
+    // Two of these would both write the one path.
+    waveFrame.destroy();
     // swup has to go too. It binds a document-level click handler, so a second
     // instance from a hot reload leaves two routers intercepting the same link:
     // the first navigation appears to work and every one after it is swallowed.

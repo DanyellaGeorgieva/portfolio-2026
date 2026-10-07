@@ -93,7 +93,8 @@ const POKE = {
 // Palette transition: a wavefront (driven by the shader's uMix) that expands
 // outward from the channel centres, so the new palette flows out from the core
 // through the field. PALETTE_FADE is how long that outward flow takes.
-const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
+// Exported: the frame's ripple (waveFrame.js) is timed to end with it.
+export const PALETTE_FADE = 3.6; // seconds for the front to sweep the whole field
 
 // Scale/speed changes (opening a project page tightens and calms the field) ease
 // over this long. Shorter than the palette sweep — it reads as a response to the
@@ -107,6 +108,10 @@ const MAX_STEP = 0.1;
 
 // The canvas resolution of a still — see applyResize.
 const STILL_RATIO = 0.5;
+
+// The most pixels the field is ever drawn at, whatever the window — see
+// applyResize. A 1440 × 900 laptop window, near enough.
+const MAX_PIXELS = 1.2e6;
 
 // Renderers that draw on the CPU: Chrome's SwiftShader, Mesa's llvmpipe on
 // Linux, and Windows' fallback adapter. Matched by name, from the debug
@@ -359,6 +364,12 @@ export default class Scene {
 
     // Dev only: watches the drawing buffer for the seam artefact, so the next
     // sighting tells us whether it is in what we drew or only in what was shown.
+    //
+    // Off until asked for — __seamWatch() in the console. Each check is a
+    // readPixels, which blocks until the GPU has finished: measured, ~120ms
+    // every 45 frames, a hitch you can see. The artefact it was built to catch
+    // is fixed, so that is not a price worth paying on every dev page load.
+    this.seamWatchOff = true;
     if (import.meta.env.DEV) {
       import('./seamWatch.js').then(({ default: SeamWatch }) => {
         this.seamWatch = new SeamWatch(this.renderer, this.material);
@@ -396,7 +407,7 @@ export default class Scene {
           return 'click to dismiss';
         };
         // eslint-disable-next-line no-console
-        console.info('[seam] watching the drawing buffer. __seamStatus() for a count.');
+        console.info('[seam] watcher loaded, off. __seamWatch() to start it.');
       });
     }
 
@@ -707,7 +718,15 @@ export default class Scene {
     // A still (no GPU) is drawn at half that: the CPU fills every pixel, so a
     // quarter of the pixels is most of the cost of its one frame gone, and the
     // browser's scale-up of a soft gradient is hard to see.
-    const ratio = this.ratioOverride ?? (this.software ? STILL_RATIO : 1);
+    //
+    // And never more than MAX_PIXELS in all. Cost follows the pixel count, so
+    // at ratio 1 it follows the window: measured on an Intel UHD 630, a frame
+    // is ~13ms at 1440 × 813 and ~37ms at 2560 × 1353 — 60fps on the laptop,
+    // under 30 on the monitor beside it. Past the cap the ratio drops below 1
+    // instead, the same way a still's does, so a big window costs what a
+    // laptop-sized one does and the browser scales the soft field up.
+    const capped = Math.min(1, Math.sqrt(MAX_PIXELS / Math.max(w * h, 1)));
+    const ratio = this.ratioOverride ?? (this.software ? STILL_RATIO : capped);
     if (ratio !== this.pixelRatio) {
       this.pixelRatio = ratio;
       this.renderer.setPixelRatio(ratio);

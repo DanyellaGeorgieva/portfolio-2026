@@ -191,11 +191,16 @@ a {
   z-index: -1;
 }
 
-// The frame — a border round the screen itself, in the ink. Fixed and drawn on
-// a pseudo-element rather than as a border on body: it stays at the edge of the
-// viewport while the page scrolls under it, and it takes no room from the
-// layout. Above the shell (z-index 10) so nothing pinned crosses it, and it
+// The frame — a border round the screen itself, in the ink. It stays at the
+// edge of the viewport while the page scrolls under it, takes no room from the
+// layout, sits above the shell (z-index 10) so nothing pinned crosses it, and
 // catches no clicks.
+//
+// Drawn twice, one at a time. The wavy one is .screen-frame, an SVG whose
+// shape waveFrame.js writes. This pseudo-element is the plain one underneath
+// it in time rather than in space: it is what paints before the script has
+// run, or if it never does, and it stands down the moment the script marks the
+// root .has-wave-frame.
 :root {
   // On :root rather than on the frame itself: whatever is pinned to the screen's
   // edge has to step in by the same amount.
@@ -220,6 +225,22 @@ body::after {
   // Listed explicitly: the shadow follows --ink, but only animates with the
   // palette if box-shadow is transitionable.
   transition: box-shadow 1.2s ease;
+}
+
+.has-wave-frame body::after {
+  display: none;
+}
+
+.screen-frame {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 20;
+  pointer-events: none;
+  // No colour set: the path is filled with currentColor, and that is inherited
+  // from body, which already fades with the palette. Naming --ink here instead
+  // would cut the frame out of that fade — it would snap while the text eased.
 }
 
 // The persistent shell — the nav and the palette picker — belongs to the
