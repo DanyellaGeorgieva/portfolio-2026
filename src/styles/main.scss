@@ -196,12 +196,11 @@ a {
 // layout, sits above the shell (z-index 10) so nothing pinned crosses it, and
 // catches no clicks.
 //
-// Drawn twice, one at a time. The moving one is .screen-frame, an SVG whose
-// shape waveFrame.js rewrites every frame. This pseudo-element is the plain
-// one underneath it in time rather than in space: it is what paints before the
-// script has run, or if it never does, and it stands down the moment the
-// script marks the root .has-wave-frame. The moving frame starts out straight,
-// in exactly this shape, so the handover shows nothing.
+// Drawn twice, one at a time. The wavy one is .screen-frame, an SVG whose
+// shape waveFrame.js writes. This pseudo-element is the plain one underneath
+// it in time rather than in space: it is what paints before the script has
+// run, or if it never does, and it stands down the moment the script marks the
+// root .has-wave-frame.
 :root {
   // On :root rather than on the frame itself: whatever is pinned to the screen's
   // edge has to step in by the same amount.

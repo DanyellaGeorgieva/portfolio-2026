@@ -1,7 +1,7 @@
 import './styles/main.scss';
 import Swup from 'swup';
 import SwupA11yPlugin from '@swup/a11y-plugin';
-import Scene, { PALETTE_FADE } from './webgl/Scene.js';
+import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
 import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
 import WaveFrame from './waveFrame.js';
@@ -40,12 +40,8 @@ const scene = new Scene(canvas, {
 if (import.meta.env.DEV) window.__scene = scene;
 
 // The frame round the screen. In the shell, like the canvas, so it is built
-// once and outlives page navigations — each of which changes its shape (see
-// the visit:start hook below).
-const waveFrame = new WaveFrame(document.querySelector('.screen-frame'), {
-  // A ripple lasts as long as a palette takes to sweep the field.
-  duration: PALETTE_FADE,
-});
+// once and outlives page navigations. It is drawn in its shape and stays there.
+const waveFrame = new WaveFrame(document.querySelector('.screen-frame'));
 
 // Vite replaces this module on edit without reloading the page, which would
 // leave the previous Scene's render loop running: two Scenes then draw to the
@@ -302,10 +298,6 @@ function setActiveNav(path) {
 function advancePalette() {
   const index = Math.max(0, paletteNames.indexOf(scene.paletteName));
   scene.setPalette(paletteNames[(index + 1) % paletteNames.length]);
-  // The ripple set off with the click; the palette only now, once the new page
-  // has arrived — a moment later, or longer on a slow connection. Whatever the
-  // gap, the ripple is stretched by it so the two finish on the same frame.
-  waveFrame.settleIn(PALETTE_FADE);
 }
 
 // --- Detail pages -----------------------------------------------------------
@@ -475,16 +467,6 @@ const swup = new Swup({
 // fade it sits open over a case study that is still assembling itself. This
 // closes it as the visit starts, before any of the new page is on screen.
 swup.hooks.on('visit:start', hidePageEye);
-// The frame changes shape as the page does, by a ripple from the link that was
-// clicked: set off with the click, so the edge is already moving while the old
-// page leaves. From the middle of the link rather than the pointer, so it is
-// the same from the keyboard — and a visit with no link behind it, the back
-// button, ripples from the middle of the screen instead.
-swup.hooks.on('visit:start', (visit) => {
-  const box = visit.trigger?.el?.getBoundingClientRect();
-  if (box?.width) waveFrame.shift(box.left + box.width / 2, box.top + box.height / 2);
-  else waveFrame.shift();
-});
 
 swup.hooks.on('page:view', () => {
   setupPage();
