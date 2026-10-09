@@ -58,7 +58,7 @@
         </p>
         <p class="page__body">
           My job was to turn this linguistic metaphor into a tactile interaction
-          mechanic. Built strictly for phones held in landscape, the piece let's
+          mechanic. Built strictly for phones held in landscape, the piece lets
           users manipulate a continuous digital textile. As they scroll, the
           fabric warps and pulls upward, molding itself into the rugged ridge
           line of the mountain.
@@ -91,10 +91,10 @@
 
         <h2 class="page__heading">The “prompt engineer” tax:</h2>
         <p class="page__body">
-          I'd be lying if I said ”make it better” never left my keyboard.
+          I’d be lying if I said ”make it better” never left my keyboard.
           However, my goal was to avoid the trap of vague, repeated prompting that
           spirals into spaghetti code. Therefore instead of one-shot prompts, I wrote
-          precise, plain-language specs describing the fabric's exact behavior,
+          precise, plain-language specs describing the fabric’s exact behavior,
           then made a point of actually understanding the resulting math rather
           than treating it as a black box, before manually orchestrating the
           shaders and motion myself.
@@ -149,7 +149,7 @@
               stay continuous there. The pipeline doesn’t take that on trust: it
               eases the outer 8% at each end toward a height the two ends share,
               on a <code>smoothstep</code> curve. The join is then exact by
-              construction (the light blur afterwards doesn't reopen it),
+              construction (the light blur afterwards doesn’t reopen it),
               whatever contour is dropped in, where the
               ends already measure level, what the easing actually does is
               flatten those outer columns toward that shared height.
@@ -195,7 +195,7 @@
               textile up or down, blending from the bottom contour to the top
               one. The peak, neighborhoods and venue labels are normal HTML
               elements, so their text stays sharp and accessible. To keep them
-              on the peaks, JavaScript mirrors the shader's calculation using
+              on the peaks, JavaScript mirrors the shader’s calculation using
               the saved heights array, with the same wrap, mask and amplitude.
               It then projects the point through the Three.js camera to get a
               screen position. That is why the dots in the render at the top
@@ -210,14 +210,14 @@
 
         <h2 class="page__heading">Behind the Distortion</h2>
         <p class="page__body">
-          The fabric's ridge line is traced as an SVG path, then distorted with
+          The fabric’s ridge line is traced as an SVG path, then distorted with
           a handful of extra effects stacked on top. There are three textile and
-          colour variants, each tuned differently; you'll land on one at random,
+          colour variants, each tuned differently; you’ll land on one at random,
           and never the same one twice in a row.
         </p>
 
         <p class="page__body">
-          Curious which one you'll get? Scan the QR code below, disable your
+          Curious which one you’ll get? Scan the QR code below, disable your
           rotation lock, and turn your phone sideways. I promise the visual is
           worth it.
         </p>

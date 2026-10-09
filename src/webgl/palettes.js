@@ -35,7 +35,7 @@ import { Vector3 } from "three";
 export const palettes = {
   //             background   smoke        glow         inner
   skyOrchid:    ["#F7F9F0", "#3C98F3", "#8F6CED", "#E694EF"], // pale citron  ← sky · lavender · orchid
-  lavenderPeach:["#F1F9F0", "#8F6CED", "#e66df3", "#e8aa90"], // pale green   ← lavender · magenta · peach
+  lavenderPeach:["#F1F9F0", "#c26ced", "#e66df3", "#e8aa90"], // pale green   ← lavender · magenta · peach
   magentaGold:  ["#EFF7FA", "#e66df3", "#e88054", "#E9DC71"], // pale sky     ← magenta · amber · gold
   coralLime:    ["#F2F2FB", "#e4a191", "#F4F055", "#B1F8A1"], // pale violet  ← coral · gold · lime
   goldAqua:     ["#F9F2FA", "#F4F055", "#B1F8A1", "#23e7e7"], // pale lilac   ← gold · lime · aqua

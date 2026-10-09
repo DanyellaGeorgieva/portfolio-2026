@@ -1,35 +1,27 @@
 @use "reset";
 
-@font-face {
-  font-family: "Satoshi";
-  src:
-    url("../assets/fonts/Satoshi-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-// The titles' face. A woff2 cut down from the variable TTF beside it, which is
-// 777kB — seven times this — for a face that only sets a few headlines a page.
-// Kept: Latin, Latin-1 and Latin Extended-A, the common punctuation (the em
-// dash and curly quotes the titles use), the euro and ™, and basic Cyrillic,
-// so a Bulgarian title still sets in it. The whole weight axis is kept too.
-// Rebuilt with fontTools:
+// The one face on the site, titles and body alike. A woff2 cut down from the
+// variable TTF beside it, which is 689kB. Kept: Latin, Latin-1 and Latin
+// Extended-A, the common punctuation (the em dash and curly quotes), the euro
+// and ™, the four arrows, the minus and ≈ that the case studies use, and basic
+// Cyrillic, so Bulgarian sets in it too. The whole weight axis is kept — it is
+// the only axis the face has. Rebuilt with fontTools:
 //
-//   pyftsubset Unbounded-VariableFont_wght.ttf --flavor=woff2 \
-//     --layout-features='*' --output-file=Unbounded-Variable.woff2 \
-//     --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+2010-2027,U+2030-203A,U+20AC,U+2122,U+0400-045F"
+//   pyftsubset Montserrat-VariableFont_wght.ttf --flavor=woff2 \
+//     --layout-features='*' --output-file=Montserrat-Variable.woff2 \
+//     --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+2010-2027,U+2030-203A,U+20AC,U+2122,U+2190-2193,U+2212,U+2248,U+0400-045F"
 @font-face {
-  font-family: "Unbounded";
-  src: url("../assets/fonts/Unbounded-Variable.woff2") format("woff2");
-  font-weight: 200 900;
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-Variable.woff2") format("woff2");
+  font-weight: 100 900;
   font-display: swap;
 }
 
 :root {
   // Every title on the site: a page's h1, the project names on Work, and the
-  // next project at the foot of a case study. Satoshi stays for everything
-  // else — headings within a page included.
-  --font-title: "Unbounded", "Satoshi", sans-serif;
+  // next project at the foot of a case study. The same face as the body — the
+  // titles are told apart by size and by weight, at 900 the heaviest it has.
+  --font-title: "Montserrat", sans-serif;
 }
 
 // =============================================================================
@@ -99,10 +91,10 @@ $inks: (
 }
 
 body {
-  // Satoshi is the only face on the site; everything else inherits it from here.
-  // The generic fallback is for glyphs Satoshi doesn't have — Cyrillic, in the
-  // Vitosha case study. With none those dropped to the browser's default serif.
-  font-family: "Satoshi", sans-serif;
+  // Montserrat is the only face on the site; everything else inherits it from
+  // here. The generic fallback is for any glyph it was not cut with; with none
+  // those dropped to the browser's default serif.
+  font-family: "Montserrat", sans-serif;
   // A stated default rather than the font's `normal`, so anything that sets
   // no leading of its own — labels, UI, the eyebrow — gets a known one.
   line-height: 1.5;
@@ -487,6 +479,80 @@ body:has(#swup[data-page="detail"]) {
   }
 }
 
+// --- Name hover: "Paneva" melts into another wording -------------------------
+// The site's name has no eye. Its second word and the wording that replaces
+// it (data-swap, drawn as generated content over the same spot) trade places:
+// each blurs as it goes and sharpens as it comes, and for as long as that
+// takes main.js puts the #goo-morph cut over the pair, which turns the two
+// blurs into one mass that pulls apart into the new letters.
+//
+// The new wording is longer and simply runs on to the right, where the bar is
+// empty; the link's own box, and so the nav, does not move.
+.site-header__swap {
+  position: relative;
+  display: inline-block;
+
+  &.is-morphing {
+    filter: url(#goo-morph);
+  }
+
+  &::after {
+    content: attr(data-swap);
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+    opacity: 0;
+    filter: blur(var(--swap-blur));
+  }
+}
+
+.site-header__swap-from,
+.site-header__swap::after {
+  // How far gone a word is at its furthest. In em: it is the letters' own
+  // strokes that have to dissolve, whatever size the bar is set at.
+  --swap-blur: 0.3em;
+  transition:
+    opacity 0.55s ease,
+    filter 0.55s ease;
+}
+
+.site-header__swap-from {
+  display: inline-block;
+}
+
+// Above the phone's breakpoint only: there is no hover in the header on a
+// phone (see the 640px block below).
+@media (min-width: 641px) {
+  // The label stays: the rule above that fades it is for the links with an eye.
+  .site-header a.site-header__name:hover .site-header__label,
+  .site-header a.site-header__name:focus-visible .site-header__label {
+    opacity: 1;
+  }
+
+  .site-header__name:hover,
+  .site-header__name:focus-visible {
+    .site-header__swap-from {
+      opacity: 0;
+      filter: blur(var(--swap-blur));
+    }
+
+    .site-header__swap::after {
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+}
+
+// Without motion the two wordings simply change places.
+@media (prefers-reduced-motion: reduce) {
+  .site-header__swap-from,
+  .site-header__swap::after {
+    --swap-blur: 0;
+    transition-duration: 0.01s;
+  }
+}
+
 // Pointing at one link quiets the rest.
 //
 // :has(a:hover) rather than .site-header:hover, because the bar runs the full
@@ -553,13 +619,14 @@ body:has(#swup[data-page="detail"]) {
   --eye-gap: 1.25rem;
   // The eyebrow's line (its size at the body's 1.5 leading) and the 0.75rem
   // under it, then half the title's first line at its own leading — which is
-  // the line box's centre — then down to the centre of the capitals. Satoshi's
-  // caps sit a touch low in their line: ascent 1.01, descent 0.24, cap height
-  // 0.7355 (measured in the browser), so their centre is (1.01 − 0.24 −
-  // 0.7355) / 2 = 0.0172em below the box's. The eye reads against the letters.
+  // the line box's centre — then down to the centre of the capitals.
+  // Montserrat's caps sit a touch low in their line: ascent 0.968, descent
+  // 0.251, cap height 0.7 (read from the font file), so their centre is (0.968
+  // − 0.251 − 0.7) / 2 = 0.0085em below the box's. The eye reads against the
+  // letters.
   --eye-center: calc(
     var(--column-top) + var(--fs-label) * 1.5 + 0.75rem +
-      var(--title-size) * (var(--lh-tight) / 2 + 0.0172)
+      var(--title-size) * (var(--lh-tight) / 2 + 0.0085)
   );
   --eye-right: calc(50% + var(--panel-width) / 2 + var(--eye-gap));
   --eye-width: calc(
@@ -694,7 +761,7 @@ html:has(#swup[data-page="top"]) {
   margin: 0 0 var(--title-gap);
   font-family: var(--font-title);
   font-size: var(--title-size);
-  font-weight: 800;
+  font-weight: 900;
   line-height: var(--lh-tight);
 }
 
@@ -814,7 +881,7 @@ html:has(#swup[data-page="top"]) {
 .project__title {
   font-family: var(--font-title);
   font-size: var(--fs-lead);
-  font-weight: 800;
+  font-weight: 900;
   line-height: var(--lh-heading);
   text-transform: uppercase;
 
@@ -863,28 +930,39 @@ html:has(#swup[data-page="top"]) {
 }
 
 // --- Visualizer player ------------------------------------------------------
-// The window a visualizer plays in, on the colophon (src/visualizer/). A
-// droplet of the ink with the video in it: the same ink as the frame, so it
-// reads as a piece of the frame come loose, and it changes with the palette.
+// The window a visualizer plays in, on the colophon (src/visualizer/). Two
+// pieces, one over the other: a small pill — a grip, the track's name, mute
+// and close — and under it the video in a frame. Both are the ink, the colour
+// of the frame round the screen, with the pill's words in white as the
+// header's are on a phone: pieces of that frame come loose. The video's frame
+// has the screen frame's wavy edge too (.vplayer__frame). All of it changes
+// with the palette, on the same 1.2s the text takes to change ink (body).
 //
-// In the flow by default — under the intro, as wide as the column — and
-// floating to the right of the copy only once the screen has room for it there:
-// the column is 42% wide and centred, so the gutter beside it is 29% of the
-// screen, and the video has to stay 200px tall (YouTube's minimum), which at
-// 16:9 is 356px wide. That fits from about 1440 up.
+// 450px wide at most, and on a phone as wide as the column. Under the copy by
+// default, and floating to the right of it once the screen has room there:
+// the column is 42% wide and centred, so the gutter beside it is 29vw. The
+// window is let a little wider than that gutter — 31vw less its margins — so
+// from 1440 up it floats, starting just over the column's ragged right edge.
+//
+// Floating, that place is only where it opens: playerWindow.js then drifts it
+// slowly through the screen with a transform, and lets it be dragged by the
+// pill.
 .vplayer {
-  --vplayer-radius: 28px;
+  --vplayer-border: 7px;
+  --vplayer-paper: color-mix(in oklab, var(--ink) 6%, white);
 
   position: relative;
+  // A stacking context of its own, so the wavy edge can sit behind the video's
+  // box without going behind the page.
+  isolation: isolate;
+  display: grid;
+  // minmax(0, …), not the default auto: where the video is held 200px tall on
+  // a narrow screen, its 16:9 would otherwise ask the column for more width
+  // to match, and push the window off the side of a phone.
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   width: 100%;
-  max-width: 34rem;
   margin-top: 2rem;
-  padding: 14px;
-  color: #fff;
-  background-color: var(--ink);
-  border-radius: var(--vplayer-radius);
-  // The same 1.2s the text takes to change ink (body).
-  transition: background-color 1.2s ease;
   // Scrolled into view when it opens below the fold: clear of the header
   // above and the frame below, not flush against the screen's edge.
   scroll-margin: 5rem 0 calc(var(--frame) + 24px);
@@ -896,6 +974,12 @@ html:has(#swup[data-page="top"]) {
   &:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 4px;
+    border-radius: 20px;
+  }
+
+  @media (min-width: 641px) {
+    width: 450px;
+    max-width: 100%;
   }
 
   @media (min-width: 1440px) {
@@ -903,37 +987,138 @@ html:has(#swup[data-page="top"]) {
     top: 12rem; // level with the title: the section's own padding-top
     right: calc(var(--frame) + 20px);
     z-index: 10;
-    width: min(420px, 29vw - 40px);
+    width: min(450px, 31vw - 40px);
     margin-top: 0;
+    will-change: transform;
+
+    &.is-dragging {
+      user-select: none;
+
+      iframe {
+        pointer-events: none;
+      }
+    }
   }
 }
 
-.vplayer__content {
-  position: relative;
-  display: grid;
-  // minmax(0, …), not the default auto: where the video is held 200px tall on
-  // a narrow screen, its 16:9 would otherwise ask the column for 356px of
-  // width to match, and push the window off the side of a phone.
-  grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
-}
-
-.vplayer__head {
+// The pill: grip, name, a hairline, mute, close. Only as wide as what is in
+// it, and set against the video's left edge.
+.vplayer__bar {
+  justify-self: start;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 32px;
+  padding: 0 4px 0 10px;
+  color: #fff;
+  background-color: var(--ink);
+  border-radius: 999px;
+  transition: background-color 1.2s ease;
+
+  svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+  }
+
+  // The handle, where the window floats (playerWindow.js).
+  @media (min-width: 1440px) {
+    cursor: grab;
+    touch-action: none;
+
+    .vplayer.is-dragging & {
+      cursor: grabbing;
+    }
+  }
 }
 
-// The video's box. Nothing is positioned over it, and nothing may be: only
-// the rounded clip. min-height is YouTube's 200px, for the screens where the
-// column is too narrow for 16:9 to reach it.
+// Only where there is something to drag.
+.vplayer__grip {
+  display: none;
+  flex: none;
+  opacity: 0.7;
+
+  @media (min-width: 1440px) {
+    display: block;
+  }
+}
+
+.vplayer__title {
+  @include type-label;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vplayer__divider {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 2px 0 4px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+// Mute and close: the icon alone, in a 28px square to aim at.
+.vplayer__button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  // The last one follows the pill's own curve round.
+  &:last-child {
+    border-radius: 6px 14px 14px 6px;
+  }
+
+  &:hover {
+    background-color: rgb(255 255 255 / 0.14);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+// The video's frame: a border of the ink round it, and under it a soft shadow
+// of the same ink, the palette's darkest colour, at about a third strength.
+// Nothing is positioned over the video, and nothing may be: only the rounded
+// clip and the border round it. min-height is YouTube's 200px, for the screens
+// where the column is too narrow for 16:9 to reach it.
 .vplayer__video,
 .vplayer__fallback {
-  width: 100%;
+  // content-box, and the width less the border: the 16:9 has to be the
+  // video's own, inside the border. Measured across the border it leaves the
+  // video a shade too wide for its height, and YouTube fills the difference
+  // with a black bar down each side, between the picture and the frame.
+  box-sizing: content-box;
+  width: calc(100% - var(--vplayer-border) * 2);
   aspect-ratio: 16 / 9;
   min-width: 200px;
   min-height: 200px;
-  border-radius: 16px;
+  border: var(--vplayer-border) solid var(--ink);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px -10px color-mix(in srgb, var(--ink) 35%, transparent);
   overflow: hidden;
+  transition:
+    border-color 1.2s ease,
+    background-color 1.2s ease,
+    box-shadow 1.2s ease;
 
   &[hidden] {
     display: none;
@@ -941,14 +1126,33 @@ html:has(#swup[data-page="top"]) {
 }
 
 .vplayer__video {
-  background: #000;
+  // The ink, not black: what shows in the corners, between the iframe's
+  // rounding and the border's, is then more of the border.
+  background: var(--ink);
 
   iframe {
     display: block;
     width: 100%;
     height: 100%;
     border: 0;
+    border-radius: 14px;
   }
+}
+
+// The wavy edge of the video's frame, as the screen's frame has one: a shape
+// playerWindow.js draws, in the window's own px (no viewBox), behind the
+// video's box. The box's border is the frame at its thinnest; this is what
+// swells out past it. Never over the video.
+.vplayer__frame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--ink);
+  pointer-events: none;
+  transition: color 1.2s ease;
 }
 
 // Stands in the video's place when it will not play — not on top of it.
@@ -959,7 +1163,8 @@ html:has(#swup[data-page="top"]) {
   gap: 0.4rem;
   text-align: center;
   font-size: var(--fs-small);
-  border: 1px solid rgb(255 255 255 / 0.3);
+  color: var(--ink);
+  background-color: var(--vplayer-paper);
 
   a {
     font-weight: 600;
@@ -967,91 +1172,67 @@ html:has(#swup[data-page="top"]) {
   }
 }
 
-.vplayer__controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+// Said, not shown: a live region for a screen reader (playerWindow.js).
+.vplayer__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.vplayer__button {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
+// The tracks that can be played, one to a row.
+.vplayer-tracks {
+  // As wide as a listing, not as the column: the times stay next to the names
+  // they belong to rather than out at the far edge.
+  max-width: 26rem;
+  margin: 0;
   padding: 0;
+  list-style: none;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+// What opens it: a row of a track listing — number, name, running time. The
+// whole row is the button.
+.vplayer-open {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  column-gap: 0.5rem;
+  width: 100%;
+  padding: 0.2rem 0;
+  font: inherit;
+  // Tabular, so the numbers and the times line up down their columns.
+  font-variant-numeric: tabular-nums;
+  text-align: left;
   color: inherit;
   background: none;
-  border: 1px solid rgb(255 255 255 / 0.35);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: rgb(255 255 255 / 0.14);
-  }
-
-  &:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-}
-
-// Thin, and only a readout: there is no scrubbing.
-.vplayer__progress {
-  flex: 1;
-  height: 2px;
-  margin: 0 6px;
-  background: rgb(255 255 255 / 0.25);
-  border-radius: 1px;
-  overflow: hidden;
-}
-
-.vplayer__progress-fill {
-  height: 100%;
-  background: #fff;
-  transform: scaleX(0);
-  transform-origin: left;
-}
-
-.vplayer__status {
-  @include type-caption;
-  // A line's height held even when there is nothing to say, so the window
-  // does not change size as the status comes and goes.
-  min-height: 1.5em;
-  padding: 0 8px 2px;
-}
-
-// The row of them, one per track.
-.vplayer-tracks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-// What opens it: a pill in the ink, like the window it turns into.
-.vplayer-open {
-  min-height: 40px;
-  padding: 8px 20px;
-  font: inherit;
-  font-size: var(--fs-small);
-  font-weight: 600;
-  color: #fff;
-  background-color: var(--ink);
   border: 0;
-  border-radius: 999px;
   cursor: pointer;
-  transition: background-color 1.2s ease;
+
+  &:hover .vplayer-open__title,
+  &:focus-visible .vplayer-open__title {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
 
   &:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 3px;
   }
+}
+
+// The names on the colophon — the band's and the album's in the copy, and each
+// track's here — a step lighter than the copy's bold elsewhere (800).
+#colophon .page__body strong,
+.vplayer-open__title {
+  font-weight: 700;
+}
+
+.vplayer-open__time {
+  text-align: right;
 }
 
 // --- Say hi -----------------------------------------------------------------
@@ -1315,7 +1496,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
 .page__exit-title {
   font-family: var(--font-title);
   font-size: var(--fs-lead);
-  font-weight: 800;
+  font-weight: 900;
   line-height: var(--lh-tight);
   text-decoration: none;
   // A URL is one long unbreakable token; let it wrap rather than push out of
@@ -1859,7 +2040,7 @@ vitosha-textiles {
 
 // Two copies, one window. The window is one full line, the distance each copy
 // travels. The site's was a little shorter (h-8 on text-3xl, 32/36 of a line),
-// which suited Neue Haas but cut Satoshi's descenders off.
+// which suited Neue Haas but cut this face's descenders off.
 ndc-roll {
   .demo__stage {
     display: flex;
@@ -1869,7 +2050,7 @@ ndc-roll {
   }
 
   .roll {
-    // Room for Satoshi's descenders inside each line: at 1.2 the parked copy's
+    // Room for the descenders inside each line: at 1.2 the parked copy's
     // g and p reached below their own line and showed at the window's top edge.
     --line: 1.4em;
     font-size: var(--fs-lead);

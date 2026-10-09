@@ -179,28 +179,59 @@ function checkStart() {
 
 // --- What the window does ---------------------------------------------------
 
+// YouTube's own no-cookie address for embeds. Besides what the name says, the
+// player there skips its ad-conversion pings, which the browser blocked from
+// the ordinary one and logged as errors.
+const EMBED = 'https://www.youtube-nocookie.com/embed/';
+
+// The iframe, made here rather than left to YT.Player, and handed over only
+// once it has loaded. Given a plain element the API makes the iframe itself
+// and starts posting messages to it at once, addressed to YouTube — while the
+// frame is still empty and so still this page's origin. The browser refuses
+// each one and says so in the console, several times on a slow connection.
+// Nothing to post to until there is a player there to hear it.
+//
+// The attributes are the ones the API gives the iframe it makes. `allow` is
+// the one that matters: without autoplay there the video cannot start itself.
+function embed(el) {
+  const frame = document.createElement('iframe');
+  const vars = new URLSearchParams({
+    controls: 0,
+    color: 'white',
+    fs: 0,
+    disablekb: 1,
+    playsinline: 1,
+    rel: 0,
+    // Each visualizer loops. YouTube loops playlists, not single videos, so
+    // every track is loaded as a playlist of itself — see load().
+    loop: 1,
+    enablejsapi: 1,
+    origin: window.location.origin,
+  });
+  frame.title = 'YouTube video player';
+  frame.width = '100%';
+  frame.height = '100%';
+  frame.allow =
+    'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  frame.referrerPolicy = 'strict-origin-when-cross-origin';
+  const loaded = new Promise((resolve) => {
+    frame.addEventListener('load', () => resolve(frame), { once: true });
+  });
+  frame.src = `${EMBED}?${vars}`;
+  el.replaceWith(frame);
+  return loaded;
+}
+
 /**
  * Make the one player, in place of `el`. Safe to call again: the same player
  * comes back. Resolves when it can take commands.
  */
 export function mount(el) {
   if (ready) return ready;
-  ready = loadApi().then(
-    (YT) =>
+  ready = Promise.all([loadApi(), embed(el)]).then(
+    ([YT, frame]) =>
       new Promise((resolve) => {
-        player = new YT.Player(el, {
-          width: '100%',
-          height: '100%',
-          playerVars: {
-            controls: 0,
-            color: 'white',
-            fs: 0,
-            disablekb: 1,
-            playsinline: 1,
-            rel: 0,
-            enablejsapi: 1,
-            origin: window.location.origin,
-          },
+        player = new YT.Player(frame, {
           events: {
             onReady: () => {
               // Said either way: YouTube remembers the last mute it was left
@@ -236,7 +267,13 @@ export async function load(index) {
   if (ready !== mounted || track !== index) return;
   started = false;
   raw = -1;
-  player.loadVideoById(tracks[index].id);
+  // A playlist of the one video, and told to loop: YouTube's own way to have
+  // a single video play round — the loop=1 and playlist=<its id> of an embed
+  // address, said through the API because the one player is kept from track
+  // to track. setLoop as well as loop=1: the parameter is read when the iframe
+  // loads, before there is any playlist for it to apply to.
+  player.loadPlaylist([tracks[index].id]);
+  player.setLoop(true);
   clearTimeout(watch);
   // Already muted, it will start whatever the browser thinks: nothing to watch.
   if (!muted) watch = setTimeout(checkStart, START_WAIT);
