@@ -272,6 +272,26 @@ navLinks.forEach((a) => {
   a.dataset.label = a.textContent.trim();
 });
 
+// The name's second word melts into another wording when the link is pointed
+// at (main.scss, .site-header__swap). The stylesheet does the moving; this
+// only holds the cut over the two words for as long as they are in motion —
+// the length of that transition and a little over — and takes it off again,
+// because at rest it would do nothing but harden the letters' edges.
+const NAME_MORPH = 600;
+const nameSwap = document.querySelector('.site-header__swap');
+if (nameSwap && !reducedMotion) {
+  let morphEnd;
+  const morph = () => {
+    nameSwap.classList.add('is-morphing');
+    clearTimeout(morphEnd);
+    morphEnd = setTimeout(() => nameSwap.classList.remove('is-morphing'), NAME_MORPH);
+  };
+  const nameLink = nameSwap.closest('a');
+  ['pointerenter', 'pointerleave', 'focus', 'blur'].forEach((type) =>
+    nameLink.addEventListener(type, morph),
+  );
+}
+
 /**
  * Light the nav item for the page being shown.
  *
@@ -769,4 +789,3 @@ window.addEventListener(
 // keeps running. Everything that used to happen on a nav click now happens in
 // setupPage(), which fires for *every* arrival: a click, a typed URL, Back,
 // Forward. One path instead of two, and no way for them to disagree.
-

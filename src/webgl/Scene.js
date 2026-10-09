@@ -406,8 +406,6 @@ export default class Scene {
           document.body.append(img);
           return 'click to dismiss';
         };
-        // eslint-disable-next-line no-console
-        console.info('[seam] watcher loaded, off. __seamWatch() to start it.');
       });
     }
 

@@ -111,6 +111,23 @@
            the ink itself, not the blurred average of ink and background. -->
       <feComposite in="SourceGraphic" in2="cut" operator="atop" />
     </filter>
+
+    <!-- The cut on its own, with no blur in front of it: for the name in the
+         header, whose two wordings are each blurred by the stylesheet as one
+         melts into the other (.site-header__swap). The same ramp as above with
+         the cut a little lower, so the two half-gone words hold together as
+         one mass in the middle instead of both vanishing. On only while the
+         morph runs — main.js — because at rest it would only harden the
+         letters' edges. -->
+    <filter id="goo-morph"
+            x="-25%" y="-60%" width="150%" height="220%"
+            color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 20 -7" />
+    </filter>
   </defs>
 
   <!-- The eye that marks the way into a project. Defined once here, like the
@@ -328,12 +345,16 @@
   <use href="#icon-eye-still" />
 </svg>
 
-<!-- Each link carries its name and an eye. The name stays in the DOM while it
-     is hidden — faded, never removed — so the link keeps its accessible name
-     and the eye stays aria-hidden decoration on top of it. -->
+<!-- Each nav link carries its name and an eye. The name stays in the DOM while
+     it is hidden — faded, never removed — so the link keeps its accessible
+     name and the eye stays aria-hidden decoration on top of it.
+
+     The site's name has no eye. Pointed at, its second word melts into
+     another: "Paneva" into the data-swap wording, which the stylesheet draws
+     as generated content — so it is never in the link's text, and the link is
+     still called Dani Paneva. -->
 <header class="site-header">
-  <a href="/"><span class="site-header__label">Dani Paneva</span>
-    <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
+  <a href="/" class="site-header__name"><span class="site-header__label">Dani <span class="site-header__swap" data-swap="the girl"><span class="site-header__swap-from">Paneva</span></span></span></a>
 
   <nav class="main-nav" aria-label="Primary">
     <a href="/work/"><span class="site-header__label">work</span>

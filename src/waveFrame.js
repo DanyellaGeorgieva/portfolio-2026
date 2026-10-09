@@ -57,6 +57,79 @@ function noise(x, y, z) {
   return lerp(near, far, w) * 2 - 1;
 }
 
+// --- The shape, in three parts ----------------------------------------------
+// Exported: the visualizer's window (visualizer/playerWindow.js) frames its
+// video with the same outline, the same swell and the same line.
+
+/**
+ * A rounded rectangle as points, walked clockwise from the top left, each with
+ * the direction that leads straight out of it (nx, ny).
+ */
+export function roundedRect(left, top, right, bottom, radius) {
+  const r = Math.max(0, Math.min(radius, (right - left) / 2, (bottom - top) / 2));
+
+  const points = [];
+  const side = (x0, y0, x1, y1, nx, ny) => {
+    const length = Math.hypot(x1 - x0, y1 - y0);
+    const count = Math.max(1, Math.round(length / WAVE.step));
+    // Up to but not including the far end: the corner after it starts there.
+    for (let i = 0; i < count; i++) {
+      const t = i / count;
+      points.push({ x: lerp(x0, x1, t), y: lerp(y0, y1, t), nx, ny });
+    }
+  };
+  const corner = (cx, cy, from) => {
+    for (let i = 0; i < WAVE.corner; i++) {
+      const a = from + (i / WAVE.corner) * (Math.PI / 2);
+      const nx = Math.cos(a);
+      const ny = Math.sin(a);
+      points.push({ x: cx + nx * r, y: cy + ny * r, nx, ny });
+    }
+  };
+
+  side(left + r, top, right - r, top, 0, -1);
+  corner(right - r, top + r, -Math.PI / 2);
+  side(right, top + r, right, bottom - r, 1, 0);
+  corner(right - r, bottom - r, 0);
+  side(right - r, bottom, left + r, bottom, 0, 1);
+  corner(left + r, bottom - r, Math.PI / 2);
+  side(left, bottom - r, left, top + r, -1, 0);
+  corner(left + r, top + r, Math.PI);
+  return points;
+}
+
+/**
+ * How far the edge swells at a place, -1..1. Two swells: the long one, and a
+ * finer one on top of it, read from elsewhere in the noise so the two never
+ * line up. `slice` is which layer of the noise is read: another slice is
+ * another shape of the same character.
+ */
+export function swell(x, y, slice = 0) {
+  const scale = 1 / WAVE.wavelength;
+  return (
+    (noise(x * scale, y * scale, slice) +
+      WAVE.detail * noise(x * scale * 2.3 + 40, y * scale * 2.3 + 40, slice + 9)) /
+    (1 + WAVE.detail)
+  );
+}
+
+/**
+ * A smooth closed line through points, as path data. Each point is the control
+ * point of a curve that runs from the midpoint before it to the midpoint after
+ * it. The curves meet at those midpoints already pointing the same way, so
+ * there is no corner anywhere — and it closes on itself the same way.
+ */
+export function smoothPath(xs, ys) {
+  const f = (v) => v.toFixed(1);
+  const n = xs.length;
+  let d = `M${f((xs[n - 1] + xs[0]) / 2)} ${f((ys[n - 1] + ys[0]) / 2)}`;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    d += `Q${f(xs[i])} ${f(ys[i])} ${f((xs[i] + xs[j]) / 2)} ${f((ys[i] + ys[j]) / 2)}`;
+  }
+  return d + 'Z';
+}
+
 export default class WaveFrame {
   /**
    * @param {SVGSVGElement} svg the shell's .screen-frame
@@ -78,8 +151,7 @@ export default class WaveFrame {
 
   /**
    * Lay the hole's outline out as points, each with the direction it is pushed
-   * in: straight out from the page, toward the screen's edge. A rounded
-   * rectangle, walked clockwise from the top left.
+   * in: straight out from the page, toward the screen's edge.
    */
   measure() {
     const style = getComputedStyle(this.svg);
@@ -90,41 +162,7 @@ export default class WaveFrame {
     const w = (this.width = this.svg.clientWidth);
     const h = (this.height = this.svg.clientHeight);
 
-    const left = frame;
-    const top = frame;
-    const right = w - frame;
-    const bottom = h - frame;
-    const r = Math.max(0, Math.min(radius, (right - left) / 2, (bottom - top) / 2));
-
-    const points = [];
-    const side = (x0, y0, x1, y1, nx, ny) => {
-      const length = Math.hypot(x1 - x0, y1 - y0);
-      const count = Math.max(1, Math.round(length / WAVE.step));
-      // Up to but not including the far end: the corner after it starts there.
-      for (let i = 0; i < count; i++) {
-        const t = i / count;
-        points.push({ x: lerp(x0, x1, t), y: lerp(y0, y1, t), nx, ny });
-      }
-    };
-    const corner = (cx, cy, from) => {
-      for (let i = 0; i < WAVE.corner; i++) {
-        const a = from + (i / WAVE.corner) * (Math.PI / 2);
-        const nx = Math.cos(a);
-        const ny = Math.sin(a);
-        points.push({ x: cx + nx * r, y: cy + ny * r, nx, ny });
-      }
-    };
-
-    side(left + r, top, right - r, top, 0, -1);
-    corner(right - r, top + r, -Math.PI / 2);
-    side(right, top + r, right, bottom - r, 1, 0);
-    corner(right - r, bottom - r, 0);
-    side(right - r, bottom, left + r, bottom, 0, 1);
-    corner(left + r, bottom - r, Math.PI / 2);
-    side(left, bottom - r, left, top + r, -1, 0);
-    corner(left + r, top + r, Math.PI);
-
-    this.points = points;
+    this.points = roundedRect(frame, frame, w - frame, h - frame, radius);
     // The push can never reach the screen's edge, or the frame would tear
     // open there. A pixel and a half of frame is always left. (See draw():
     // this is approached, not hit.)
@@ -133,21 +171,13 @@ export default class WaveFrame {
 
   draw() {
     const { points, width: w, height: h, limit } = this;
-    const scale = 1 / WAVE.wavelength;
 
     const n = points.length;
     const xs = new Array(n);
     const ys = new Array(n);
     for (let i = 0; i < n; i++) {
       const p = points[i];
-
-      // Two swells: the long one, and a finer one on top of it, read from
-      // elsewhere in the noise so the two never line up.
-      const wave =
-        (noise(p.x * scale, p.y * scale, 0) +
-          WAVE.detail * noise(p.x * scale * 2.3 + 40, p.y * scale * 2.3 + 40, 9)) /
-        (1 + WAVE.detail);
-      let push = wave * WAVE.amplitude;
+      let push = swell(p.x, p.y) * WAVE.amplitude;
       // Into the page there is room for any crest. Toward the screen's edge
       // there is only the frame's own width, so that way the push is eased
       // against the limit rather than cut off at it: a tall crest rounds over
@@ -157,18 +187,8 @@ export default class WaveFrame {
       ys[i] = p.y + p.ny * push;
     }
 
-    // A smooth line through the points: each one is the control point of a
-    // curve that runs from the midpoint before it to the midpoint after it.
-    // The curves meet at those midpoints already pointing the same way, so
-    // there is no corner anywhere — and it closes on itself the same way.
-    const f = (v) => v.toFixed(1);
-    let d = `M-1-1H${w + 1}V${h + 1}H-1Z`; // the screen, and a pixel past it
-    d += `M${f((xs[n - 1] + xs[0]) / 2)} ${f((ys[n - 1] + ys[0]) / 2)}`;
-    for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      d += `Q${f(xs[i])} ${f(ys[i])} ${f((xs[i] + xs[j]) / 2)} ${f((ys[i] + ys[j]) / 2)}`;
-    }
-    this.path.setAttribute('d', d + 'Z');
+    // The screen, and a pixel past it; then the hole, as a smooth line.
+    this.path.setAttribute('d', `M-1-1H${w + 1}V${h + 1}H-1Z` + smoothPath(xs, ys));
   }
 
   resize() {
