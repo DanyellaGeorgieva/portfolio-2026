@@ -352,21 +352,23 @@
      The site's name has no eye. Pointed at, its second word melts into
      another: "Paneva" into the data-swap wording, which the stylesheet draws
      as generated content — so it is never in the link's text, and the link is
-     still called Dani Paneva. -->
+     still called Dani Paneva.
+
+     The two together are the start of a line from Red Hot Chili Peppers'
+     "By the Way", and data-tail is how that line goes on: it comes up
+     small under the name, once the name has changed, a word at a time in the
+     song's tempo, so the reference can be caught. main.js builds it from the
+     attribute, aria-hidden, so it is not part of the link's name either. -->
 <header class="site-header">
-  <a href="/" class="site-header__name"><span class="site-header__label">Dani <span class="site-header__swap" data-swap="the girl"><span class="site-header__swap-from">Paneva</span></span></span></a>
+  <a href="/" class="site-header__name" data-tail="is singing songs to me beneath the marquee"><span class="site-header__label">Dani <span class="site-header__swap" data-swap="the girl"><span class="site-header__swap-from">Paneva</span></span></span></a>
 
   <nav class="main-nav" aria-label="Primary">
     <a href="/work/"><span class="site-header__label">work</span>
     <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
-    <a href="/colophon/"><span class="site-header__label">colophon</span>
+    <a href="/the-spark/"><span class="site-header__label">the spark</span>
     <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
     <a href="/contact/"><span class="site-header__label">contact</span>
     <svg class="site-header__eye" viewBox="0 0 36.2425 44.1213" aria-hidden="true" focusable="false"><use href="#icon-eye" /></svg></a>
   </nav>
 </header>
 
-<!-- Palette picker — filled by main.js from paletteNames, so the order on screen
-     is the palette sequence itself. Lives in the shell rather than in the page
-     so it survives a swup swap; hidden on detail pages by the rule above. -->
-<div class="picker" id="picker" hidden></div>
