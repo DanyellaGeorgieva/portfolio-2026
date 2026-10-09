@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>The Spark — Daniela Paneva</title>
+    <meta
+      name="description"
+      content="How this site was made: a hand-built WebGL shader inspired by the Red Hot Chili Peppers’ Return of the Dream Canteen visualizers." />
+  </head>
+  <body>
+    {{> frame }}
+
+    <main id="swup" class="view" data-page="top" data-view="the-spark">
+      <section class="section" id="the-spark">
+        <h1 class="page__title">By the way, it always starts with music.</h1>
+        <p class="page__body">
+          Even though I’m a <strong>Red Hot Chili Peppers</strong> fan, I came across their
+          latest album, <strong>Return of the Dream Canteen</strong>, four years late — and still
+          fell completely in love with it, the music and the art around it. The
+          album came with a series of psychedelic visualizers: fluid, morphing
+          shapes that moved along with the sound. I wanted to recreate that
+          effect myself, so what you’re seeing on this site is a hand-crafted
+          WebGL shader, built from scratch to translate that same movement into
+          real-time code.
+        </p>
+        <!-- The visualizers that can be played here, set like the links on the
+             contact page — a chevron, and a name whose underline grows when it
+             is pointed at — with how long each video runs beside it. The
+             chevron carries a second path, the same two strokes closed into a
+             triangle and filled: the play mark it becomes when pointed at.
+             data-visualizer-track is the track's place in
+             src/visualizer/tracks.js, which also holds the palette each one
+             brings with it.
+
+             The underline is fitted to the letters (see .vplayer-open__title),
+             so the two names that do not start on a stem or end on an E carry
+             their own measure: an S sits closer to its left edge than a P or
+             an L, and an A closer to its right edge than an E. -->
+        <ol class="vplayer-tracks">
+          <li>
+            <button type="button" class="vplayer-open" data-visualizer-track="0">
+              <svg class="chevron" viewBox="0 0 6 10" width="6" height="10" aria-hidden="true" focusable="false">
+                <path d="M1 1l4 4-4 4" />
+                <path class="chevron__play" d="M1 1l4 4-4 4z" />
+              </svg><span class="vplayer-open__title">Peace and Love</span>
+              <span class="vplayer-open__time">4:03</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="vplayer-open" data-visualizer-track="1">
+              <svg class="chevron" viewBox="0 0 6 10" width="6" height="10" aria-hidden="true" focusable="false">
+                <path d="M1 1l4 4-4 4" />
+                <path class="chevron__play" d="M1 1l4 4-4 4z" />
+              </svg><span class="vplayer-open__title" style="--ink-left: 0.028em">Shoot Me a Smile</span>
+              <span class="vplayer-open__time">3:43</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="vplayer-open" data-visualizer-track="2">
+              <svg class="chevron" viewBox="0 0 6 10" width="6" height="10" aria-hidden="true" focusable="false">
+                <path d="M1 1l4 4-4 4" />
+                <path class="chevron__play" d="M1 1l4 4-4 4z" />
+              </svg><span class="vplayer-open__title" style="--ink-right: 0.071em">La La La La La La La La</span>
+              <span class="vplayer-open__time">3:58</span>
+            </button>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

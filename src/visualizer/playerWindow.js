@@ -49,8 +49,8 @@ const ICONS = {
 // with no small ratio between them, so the path does not close on itself.
 const DRIFT_X = 120;
 const DRIFT_Y = 76;
-// How far it keeps from the header above and the palette picker below, and
-// from the frame at either side.
+// How far it keeps from the header above, and from the frame at either side
+// and below.
 const DRIFT_CLEAR = 12;
 const DRIFT_MARGIN = 20;
 
@@ -61,6 +61,10 @@ const DRIFT_MARGIN = 20;
 // which layer of the noise it is read from: not the screen frame's.
 const FRAME_SWELL = 6;
 const FRAME_SLICE = 4;
+
+// Seconds as a clock: 67.4 → 1:07.
+const clock = (seconds) =>
+  `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
 const icon = (name) =>
   `<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`;
@@ -90,6 +94,13 @@ export default class PlayerWindow {
     this.lastTick = 0;
     // The drag in progress: its pointer, and where on the window it has hold.
     this.drag = null;
+    // The row of the listing whose track is in the window: the row, the
+    // element in it that shows a time, the running time that was written
+    // there, and what the counter in its place last said.
+    this.row = null;
+    this.rowTime = null;
+    this.rowLength = '';
+    this.rowClock = '';
     // One thing at a time: an open and a close asked for together play in the
     // order they were asked, each from where the last one finished.
     this.queue = Promise.resolve();
@@ -194,6 +205,7 @@ export default class PlayerWindow {
       if (this.origin?.isConnected) this.origin.focus({ preventScroll: true });
       else this.el.blur();
       this.el.hidden = true;
+      this.markRow();
     });
   }
 
@@ -220,6 +232,7 @@ export default class PlayerWindow {
     this.fallback.hidden = !failed;
     if (track) this.fallbackLink.href = watchUrl(track.id);
     this.title.textContent = track?.title ?? '';
+    this.markRow();
 
     this.muteButton.innerHTML = icon(muted ? 'muted' : 'sound');
     this.muteButton.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
@@ -229,11 +242,43 @@ export default class PlayerWindow {
       state === 'playing' ? (muted ? PLAYING_MUTED : '') : STATUS[state];
   };
 
-  // Every frame while the window is open: the drift.
+  // Every frame while the window is open: the drift, and the counter.
   tick = (now) => {
     this.driftBy(now);
+    this.count();
     this.frame = requestAnimationFrame(this.tick);
   };
+
+  // --- The listing ----------------------------------------------------------
+
+  // Mark the row whose track is in the window — aria-current, which is also
+  // what the stylesheet holds its hover look on — and unmark the one before
+  // it, giving that one its running time back. No row while the window is
+  // closed.
+  markRow() {
+    const index = this.isOpen ? tracks.indexOf(player.currentTrack()) : -1;
+    const row = index < 0 ? null : this.root.querySelector(`[data-visualizer-track="${index}"]`);
+    if (row === this.row) return;
+    if (this.row) {
+      this.row.removeAttribute('aria-current');
+      if (this.rowTime) this.rowTime.textContent = this.rowLength;
+    }
+    this.row = row;
+    this.rowTime = row?.querySelector('.vplayer-open__time') ?? null;
+    this.rowLength = this.rowTime?.textContent ?? '';
+    this.rowClock = '';
+    row?.setAttribute('aria-current', 'true');
+  }
+
+  // The marked row's running time is a counter while its track is in the
+  // window: how far in it is. Written only when the second changes.
+  count() {
+    if (!this.rowTime) return;
+    const now = clock(player.getVideoTime());
+    if (now === this.rowClock) return;
+    this.rowClock = now;
+    this.rowTime.textContent = now;
+  }
 
   // --- The frame ------------------------------------------------------------
 
@@ -260,7 +305,7 @@ export default class PlayerWindow {
   // --- The drift and the drag -----------------------------------------------
 
   // How far it may go from where the stylesheet puts it: across to the frame's
-  // margin on either side, up to the header and down to the palette picker.
+  // margin on either side and below, and up to the header.
   // Nowhere, where it is in the flow.
   measure = () => {
     const el = this.el;
@@ -278,8 +323,6 @@ export default class PlayerWindow {
     // has done.
     const margin = (parseFloat(style.getPropertyValue('--frame')) || 0) + DRIFT_MARGIN;
     const header = document.querySelector('.site-header')?.getBoundingClientRect().bottom ?? margin;
-    const picker = document.getElementById('picker');
-    const floor = picker && !picker.hidden ? picker.getBoundingClientRect().top : innerHeight - margin;
     // The room is the screen's, not the resting place's: on a short screen the
     // place the stylesheet gives it already reaches past the bottom, and then
     // `down` is above it — it opens moved up, and never drifts or is dragged
@@ -291,7 +334,7 @@ export default class PlayerWindow {
       left,
       right: Math.max(innerWidth - margin - el.offsetWidth - el.offsetLeft, left),
       up,
-      down: Math.max(floor - DRIFT_CLEAR - el.offsetHeight - el.offsetTop, up),
+      down: Math.max(innerHeight - margin - el.offsetHeight - el.offsetTop, up),
     };
     // Where it already is, or the nearest place inside.
     this.moveTo(this.dx, this.dy);
@@ -389,5 +432,6 @@ export default class PlayerWindow {
     player.destroy();
     this.el.remove();
     this.isOpen = false;
+    this.markRow();
   }
 }

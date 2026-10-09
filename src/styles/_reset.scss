@@ -58,8 +58,7 @@ svg {
   max-width: 100%;
 }
 
-// Form controls don't inherit type by default — the picker was already asking
-// for this by hand.
+// Form controls don't inherit type by default.
 button,
 input,
 select,

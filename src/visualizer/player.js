@@ -30,8 +30,13 @@
 // ============================================================================
 // Sound
 // ============================================================================
-// It starts with the sound on. That is allowed because nothing here plays
-// until someone has clicked to play it — but not allowed everywhere: between
+// It starts muted: the sound is for whoever asks for it, with the mute button
+// on the window. Once asked for it stays on from track to track, until the
+// page is left.
+//
+// With the sound on, a track is still started with it. That is allowed because
+// nothing here plays until someone has clicked to play it — but not allowed
+// everywhere: between
 // the click and the video there is a script to load and a player to build,
 // and by then a strict browser (Safari, on a phone above all) may no longer
 // count the play as the click's. It does not say so. The video just never
@@ -53,7 +58,7 @@ const START_WAIT = 1500; // ms a load gets to start with sound before it is mute
 let player = null;
 let ready = null; // resolves once the player can take commands
 let state = 'idle'; // idle | loading | playing | paused | ended | error
-let muted = false; // sound on, unless the browser will not have it — see Sound
+let muted = true; // off until asked for — see Sound
 let track = -1;
 let error = 0; // YouTube's code, while state is 'error'
 let duration = 0;
@@ -251,7 +256,7 @@ export function mount(el) {
   return ready;
 }
 
-/** Play track `index` from the top, with sound unless it has been muted. */
+/** Play track `index` from the top, muted unless the sound has been asked for. */
 export async function load(index) {
   if (!tracks[index] || !ready) return;
   track = index;
@@ -304,9 +309,8 @@ export function setMuted(on) {
 /** Take the player down — the page it was on is going. Listeners stay. */
 export function destroy() {
   clearTimeout(watch);
-  // A mute the browser forced is not carried to the next visit: it gets to
-  // try with sound again.
-  muted = false;
+  // The sound is not carried to the next visit: it starts muted again.
+  muted = true;
   started = false;
   player?.destroy?.();
   player = null;

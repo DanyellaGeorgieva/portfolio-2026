@@ -3,24 +3,13 @@ import Swup from 'swup';
 import SwupA11yPlugin from '@swup/a11y-plugin';
 import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
-import QuietGoo, { PROJECT_GOO, NAV_GOO, PICKER_GOO } from './quietGoo.js';
+import QuietGoo, { PROJECT_GOO, NAV_GOO } from './quietGoo.js';
 import WaveFrame from './waveFrame.js';
 import { paletteNames } from './webgl/palettes.js';
 // Define <vitosha-ridge> and <vitosha-textiles>, used by the Vitosha case study.
 import './vitoshaRidge.js';
 import './vitoshaTextiles.js';
 import vitoshaWidgets from './vitoshaWidgets.js';
-
-// Declared before the scene because Scene calls onPalette from its own
-// constructor, and the callback below marks the picker.
-const picker = document.getElementById('picker');
-
-/** Light the stop matching `name` and put the rest out. */
-function markPalette(name) {
-  picker?.querySelectorAll('.picker__link').forEach((el) => {
-    el.setAttribute('aria-pressed', String(el.dataset.palette === name));
-  });
-}
 
 // The WebGL scene is created once, on the persistent canvas (outside #swup), so
 // it keeps running across page navigations — swup only swaps #swup.
@@ -32,7 +21,6 @@ const scene = new Scene(canvas, {
     // $inks map in main.scss — so text colours are edited where every other
     // colour on the site is edited, not in a JavaScript file.
     document.documentElement.dataset.palette = name;
-    markPalette(name);
   },
 });
 // Tuning handle, dev only: the glass lives in its uniforms, so
@@ -208,58 +196,6 @@ if (pageEye && !reducedMotion) {
 // which is this — so the eye is already looking at the text when it fades in.
 restIris();
 
-// --- Palette picker ---------------------------------------------------------
-// Six numbered stops, in the sequence palettes.js authors — the same order the
-// nav steps through, so picking one is just entering that sequence at a
-// different point. advancePalette() reads the live palette off the scene, so
-// there is nothing here that has to be kept in step with it.
-//
-// An index rather than swatches: the field behind it is already the colour, and
-// a row of coloured chips would compete with the thing it controls.
-//
-// The numbers share the nav links' weight, width reservation and quieting, but
-// not the eye: six eyes in a row this small read as noise, not as a reply.
-if (picker) {
-  const mode = document.createElement('span');
-  mode.className = 'picker__mode';
-  mode.id = 'picker-mode';
-  mode.textContent = 'palette:';
-
-  const list = document.createElement('ul');
-  list.className = 'picker__list';
-  list.setAttribute('aria-labelledby', mode.id);
-
-  paletteNames.forEach((name, i) => {
-    const number = String(i + 1).padStart(2, '0');
-
-    const item = document.createElement('li');
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'picker__link';
-    button.dataset.palette = name;
-    // Reserves the bold width, the same way the nav links' data-label does.
-    button.dataset.label = number;
-    // "lavenderPeach" → "lavender peach". Not shown any more, but still the
-    // button's name: "02" alone tells a screen reader nothing.
-    button.setAttribute('aria-label', name.replace(/([A-Z])/g, (m) => ` ${m.toLowerCase()}`));
-    button.setAttribute('aria-pressed', String(name === scene.paletteName));
-    button.innerHTML = `<span class="picker__num">${number}</span>`;
-
-    item.append(button);
-    list.append(item);
-  });
-
-  list.addEventListener('click', (event) => {
-    const button = event.target.closest('.picker__link');
-    if (button) scene.setPalette(button.dataset.palette);
-  });
-
-  picker.append(mode, list);
-
-  new QuietGoo(picker, PICKER_GOO);
-}
-
 // Every link in the header, the name included — it is the link to /, which is
 // a destination like any other now.
 const navLinks = [...document.querySelectorAll('.site-header a')];
@@ -290,6 +226,49 @@ if (nameSwap && !reducedMotion) {
   ['pointerenter', 'pointerleave', 'focus', 'blur'].forEach((type) =>
     nameLink.addEventListener(type, morph),
   );
+}
+
+// How the line goes on (data-tail on the name's link): under the name, a word
+// at a time, each melting in on its own beat. Built here rather than written
+// into the markup: every word needs an element of its own to be timed, and
+// they are decoration — aria-hidden, so the link is still called Dani Paneva.
+// Built after data-label was read above, which reads the link's whole text.
+//
+// As with the name, the stylesheet does the moving (.site-header__tail) and
+// this only holds the cut over the words while they arrive: the lead, a beat
+// for each word, and the last word's own melt.
+const nameLink = document.querySelector('.site-header__name[data-tail]');
+if (nameLink) {
+  const tail = document.createElement('span');
+  tail.className = 'site-header__tail';
+  tail.setAttribute('aria-hidden', 'true');
+  const words = nameLink.dataset.tail.split(' ');
+  words.forEach((word, i) => {
+    const span = document.createElement('span');
+    span.textContent = word;
+    span.style.setProperty('--i', i);
+    tail.append(span, ' ');
+  });
+  nameLink.append(tail);
+
+  if (!reducedMotion) {
+    const seconds = (name) => parseFloat(getComputedStyle(tail).getPropertyValue(name)) || 0;
+    let meltEnd;
+    const arrive = () => {
+      tail.classList.add('is-melting');
+      clearTimeout(meltEnd);
+      const length = seconds('--tail-lead') + words.length * seconds('--tail-beat') + seconds('--tail-melt');
+      meltEnd = setTimeout(() => tail.classList.remove('is-melting'), length * 1000);
+    };
+    const leave = () => {
+      clearTimeout(meltEnd);
+      tail.classList.remove('is-melting');
+    };
+    nameLink.addEventListener('pointerenter', arrive);
+    nameLink.addEventListener('focus', arrive);
+    nameLink.addEventListener('pointerleave', leave);
+    nameLink.addEventListener('blur', leave);
+  }
 }
 
 /**
@@ -358,13 +337,13 @@ let navigated = false;
 function setupPage() {
   const main = document.querySelector('#swup');
   const isDetail = main.dataset.page === 'detail';
-  const view = main.dataset.view; // home | work | colophon | contact, top-level only
+  const view = main.dataset.view; // home | work | the-spark | contact, top-level only
 
   gooeyText?.destroy();
   gooeyText = null;
   quietGoo?.destroy();
   quietGoo = null;
-  // The visualizer's window lives in the colophon's own section, so it leaves
+  // The visualizer's window lives in The Spark's own section, so it leaves
   // with the page — and takes the player, and its sound, with it.
   playerWindow?.destroy();
   playerWindow = null;
@@ -386,22 +365,17 @@ function setupPage() {
   // (NAV_GOO's `rest`), so a new active page is a change it has to hear about.
   navGoo.schedule();
 
-  // The picker belongs to the colophon, beside the story of the shader it
-  // recolours: the page that explains the field is the one that lets you play
-  // with it.
-  if (picker) picker.hidden = view !== 'colophon';
-
-  // The colophon can play the visualizers it is about. Loaded when asked for,
+  // The Spark can play the visualizers it is about. Loaded when asked for,
   // like the case studies' demos: no other page needs any of it. Anything in
   // the section marked data-visualizer-track opens the window.
-  if (view === 'colophon') {
+  if (view === 'the-spark') {
     import('./visualizer/playerWindow.js').then(({ default: PlayerWindow }) => {
       // The page may have been left while this was on its way.
       if (!main.isConnected || playerWindow) return;
       playerWindow = new PlayerWindow(main.querySelector('.section'));
     });
     // Each track brings its palette (visualizer/tracks.js): when one starts,
-    // the field sweeps to it, by the same sweep the picker sets off. Closing
+    // the field sweeps to it, by the same sweep a navigation sets off. Closing
     // the window leaves the palette where it is.
     import('./visualizer/player.js').then((store) => {
       if (!main.isConnected || forgetTrack) return;
@@ -538,7 +512,7 @@ document.addEventListener('keydown', (event) => {
 // --- Scroll on to the next page ---------------------------------------------
 // On a top-level page, scrolling past the bottom — a wheel or trackpad push, a
 // swipe up on a phone, or Space, Page Down or ↓ — is the same as clicking the
-// next link in the header: home → work → colophon → contact. Scrolling past the
+// next link in the header: home → work → the spark → contact. Scrolling past the
 // top — the same gestures the other way, or Shift+Space, Page Up or ↑ — is the
 // link before it. The order is read off the header itself, so rearranging the
 // nav rearranges this with it. Home and contact are the two ends: there is
@@ -774,7 +748,7 @@ window.addEventListener(
     if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.key === ' ' && event.shiftKey) direction = -1; // Shift+Space scrolls up
     // Typing, or a key that means something to what has focus: Space presses a
-    // focused button — a palette number on the colophon — and follows a link.
+    // focused button — a track on The Spark — and follows a link.
     const field = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
     const control = 'a[href], button, summary, [role="button"]';
     if (event.target.closest?.(event.key === ' ' ? `${field}, ${control}` : field)) return;
@@ -789,3 +763,4 @@ window.addEventListener(
 // keeps running. Everything that used to happen on a nav click now happens in
 // setupPage(), which fires for *every* arrival: a click, a typed URL, Back,
 // Forward. One path instead of two, and no way for them to disagree.
+

@@ -235,18 +235,16 @@ body::after {
   // would cut the frame out of that fade — it would snap while the text eased.
 }
 
-// The persistent shell — the nav and the palette picker — belongs to the
-// top-level pages (the picker to the colophon alone; main.js decides that). A
-// detail page carries its own title and its own "← works" link back out, so
-// the shell stands down and leaves it the whole screen.
+// The persistent shell — the nav — belongs to the top-level pages. A detail
+// page carries its own title and its own "← works" link back out, so the shell
+// stands down and leaves it the whole screen.
 //
 // Keyed off #swup's data-page, which ships in the HTML, rather than a class set
 // from JS: main.js is a deferred module that pulls in three and swup, so a JS
 // toggle would let this paint first and then vanish. swup swaps #swup itself,
 // so this stays right across navigations too.
 body:has(#swup[data-page="detail"]) {
-  .site-header,
-  .picker {
+  .site-header {
     display: none;
   }
 }
@@ -260,104 +258,6 @@ body:has(#swup[data-page="detail"]) {
   height: 0;
   overflow: hidden;
   pointer-events: none;
-}
-
-// --- Palette picker ---------------------------------------------------------
-// An index, not a set of swatches: the field behind it is already the colour, so
-// coloured chips would compete with the thing they control. Centred along the
-// bottom of the screen, under the middle of the field it changes.
-.picker {
-  position: fixed;
-  // Centred on the screen rather than pinned to the left margin. Stretched
-  // across and centred by the flexbox it already is, rather than nudged back by
-  // half its own width with a transform: there is no transform to collide with
-  // whatever this row does later, and it stays centred as the row's width
-  // changes with the label and the numbers.
-  left: 0;
-  right: 0;
-  bottom: 28px;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  // Baseline, so "palette:" and the numbers sit on one line of type. That only
-  // works because .picker__link below takes its baseline from its number.
-  align-items: baseline;
-  gap: 0.6rem;
-  font-size: var(--fs-label);
-  text-transform: uppercase;
-  // MARKED FOR REMOVAL. Neon green is not a design choice: it flags this whole
-  // row as something that is going to be taken out.
-  color: #39ff14;
-
-  // main.js hides this with the `hidden` attribute whenever a section is up.
-  // Spelled out because `[hidden] { display: none }` comes from the UA
-  // stylesheet, and any author `display` on .picker — like the one in the
-  // stand-down rule above — outranks it whatever the specificity.
-  &[hidden] {
-    display: none;
-  }
-}
-
-.picker__mode {
-  font-weight: 800;
-}
-
-.picker__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  // Tighter than it looks: each number already carries its (hidden) brackets.
-  gap: 0.4rem;
-}
-
-// A button, so the reset it needs to read as text. Weight, hover, active and
-// the quieting of the others come from the nav rules below, which it shares.
-.picker__link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit; // follows --ink like everything else
-  font: inherit;
-  font-variant-numeric: tabular-nums; // 01–06 all set to one width
-  cursor: pointer;
-}
-
-// A column flexbox takes its baseline from its first item — the number. As the
-// nav's inline-block, the baseline came from the zero-height ::after that
-// reserves the bold width, which lifted every number off the line. Doubled
-// class so it outranks the shared nav rule's display further down.
-.picker .picker__link {
-  display: inline-flex;
-  flex-direction: column;
-}
-
-// The one playing: bracketed. Every number carries its brackets and only the
-// active one shows them — hung outside instead, they ate into the gaps on
-// either side, so the row looked unevenly spaced around whichever was playing.
-// Kept in the flow, the spacing is the same everywhere and picking another stop
-// moves nothing.
-.picker__num {
-  &::before,
-  &::after {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  &::before {
-    content: "[";
-  }
-
-  &::after {
-    content: "]";
-  }
-}
-
-.picker__link[aria-pressed="true"] .picker__num {
-  &::before,
-  &::after {
-    opacity: 1;
-  }
 }
 
 // The site-header — the name on the left, the nav on the right, across the top of
@@ -383,10 +283,7 @@ body:has(#swup[data-page="detail"]) {
 // name is one of the four destinations now that home is a real page, so it
 // should say when you are on it — landing on / used to leave nothing lit at
 // all, which is the one view with no indication of where you are.
-// The palette numbers share this block — the weight, the bold-width
-// reservation — but not the eye, which stays the nav's own.
-.site-header a,
-.picker__link {
+.site-header a {
   font-weight: 800;
   text-decoration: none;
   // Opacity only — the dimming when another link is pointed at. Not `all`,
@@ -396,8 +293,7 @@ body:has(#swup[data-page="detail"]) {
   // as the eye's arrival below, so the quieting and the swap are one gesture.
   transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  &.is-active,
-  &[aria-pressed="true"] {
+  &.is-active {
     font-weight: 900;
   }
 
@@ -424,19 +320,15 @@ body:has(#swup[data-page="detail"]) {
 // are on reads as the bold one. 800 against the active 900 was the whole
 // difference before, and at this size the two read as one weight; 400 was far
 // too much, two different typefaces in one bar. The ::after above still
-// reserves the 900 width, so a link going bold on arrival moves nothing. The
-// palette numbers keep their 800: their active one has brackets to say so.
+// reserves the 900 width, so a link going bold on arrival moves nothing.
 .site-header a:not(.is-active) {
   font-weight: 700;
 }
 
-// Bold on hover is the palette numbers' only. A nav link's name is on its way
-// out when pointed at — it fades for the eye — so bold there was only ever a
-// jolt on the first frame, the word thickening before it faded: the snap that
-// made the swap look instant.
-.picker__link:hover {
-  font-weight: 900;
-}
+// No bold on hover. A nav link's name is on its way out when pointed at — it
+// fades for the eye — so bold there was only ever a jolt on the first frame,
+// the word thickening before it faded: the snap that made the swap look
+// instant.
 
 // --- Nav hover: the name gives way to an eye ---------------------------------
 // A crossfade on opacity. No scaling: the name and the eye stay the size they
@@ -544,6 +436,78 @@ body:has(#swup[data-page="detail"]) {
   }
 }
 
+// The name is set from the left of its box, not centred in it like the nav's
+// links: the box is a little wider than the word (it reserves the bold
+// width), and what comes up under the name has to start where the name does.
+// Two classes, to outrank the nav's own `.site-header a`.
+.site-header .site-header__name {
+  text-align: left;
+}
+
+// How the line goes on (built by main.js from data-tail): small, in ordinary
+// case, under the name and starting where it starts. Out of the way of the
+// pointer, so the link is no bigger for having it.
+//
+// It arrives a word at a time, in the song's tempo. "By the Way" is listed at
+// about 123 beats a minute (sources differ: 123 to 126, and one says 102);
+// the words here land on the half beat, 0.244s apart, after one whole beat
+// for the name itself to change. Each word melts
+// in the way the name does — out of a blur, under the #goo-morph cut main.js
+// holds over the line while it arrives — and all of them go at once when the
+// pointer does.
+.site-header__tail {
+  --tail-lead: 0.488s; // one beat
+  --tail-beat: 0.244s; // half a beat
+  --tail-melt: 0.45s; // one word's own arrival
+  --tail-blur: 0.45em;
+
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.3em;
+  font-size: var(--fs-label);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+  pointer-events: none;
+
+  &.is-melting {
+    filter: url(#goo-morph);
+  }
+
+  span {
+    display: inline-block;
+    opacity: 0;
+    filter: blur(var(--tail-blur));
+    transition:
+      opacity 0.2s ease,
+      filter 0.2s ease;
+  }
+}
+
+@media (min-width: 641px) {
+  .site-header__name:hover .site-header__tail span,
+  .site-header__name:focus-visible .site-header__tail span {
+    opacity: 1;
+    filter: blur(0);
+    transition:
+      opacity var(--tail-melt) ease,
+      filter var(--tail-melt) ease;
+    transition-delay: calc(var(--tail-lead) + var(--i) * var(--tail-beat));
+  }
+}
+
+// Without motion the line is simply there, all of it.
+@media (prefers-reduced-motion: reduce) {
+  .site-header__tail {
+    --tail-lead: 0s;
+    --tail-beat: 0s;
+    --tail-melt: 0.01s;
+    --tail-blur: 0;
+  }
+}
+
 // Without motion the two wordings simply change places.
 @media (prefers-reduced-motion: reduce) {
   .site-header__swap-from,
@@ -571,16 +535,14 @@ body:has(#swup[data-page="detail"]) {
 // Focus is included so the same thing happens for anyone moving through the bar
 // by keyboard, who otherwise gets no equivalent of the effect at all.
 .site-header:has(a:hover) a:not(:hover),
-.site-header:has(a:focus-visible) a:not(:focus-visible),
-.picker__list:has(.picker__link:hover) .picker__link:not(:hover),
-.picker__list:has(.picker__link:focus-visible) .picker__link:not(:focus-visible) {
+.site-header:has(a:focus-visible) a:not(:focus-visible) {
   // color: var(--ink-quiet);
   opacity: 0.6;
 }
 
 // The name deliberately stays outside <nav>: a navigation landmark is the list
 // of a site's sections, and the site's own name is not one of them — a screen
-// reader announcing "navigation, Daniela Paneva, work, colophon, contact" reads as
+// reader announcing "navigation, Daniela Paneva, work, the spark, contact" reads as
 // though the name were a fourth section. It sits beside the nav and shares its
 // styling instead, which is the part that was actually missing.
 .main-nav {
@@ -753,7 +715,7 @@ html:has(#swup[data-page="top"]) {
 }
 
 // --- Typography -------------------------------------------------------------
-// One set of text roles for every page — case studies, the colophon and Contact
+// One set of text roles for every page — case studies, The Spark and Contact
 // alike: .page__eyebrow, __title, __lead, __heading, __subheading, __body,
 // __list and __note. A page is not its own typographic system; it picks the
 // roles it needs. .section and .page are layout only.
@@ -930,7 +892,7 @@ html:has(#swup[data-page="top"]) {
 }
 
 // --- Visualizer player ------------------------------------------------------
-// The window a visualizer plays in, on the colophon (src/visualizer/). Two
+// The window a visualizer plays in, on The Spark (src/visualizer/). Two
 // pieces, one over the other: a small pill — a grip, the track's name, mute
 // and close — and under it the video in a frame. Both are the ink, the colour
 // of the frame round the screen, with the pill's words in white as the
@@ -949,6 +911,8 @@ html:has(#swup[data-page="top"]) {
 // pill.
 .vplayer {
   --vplayer-border: 7px;
+  // One rounding for all three: the pill, the video's frame, and the video.
+  --vplayer-radius: 12px;
   --vplayer-paper: color-mix(in oklab, var(--ink) 6%, white);
 
   position: relative;
@@ -974,7 +938,7 @@ html:has(#swup[data-page="top"]) {
   &:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 4px;
-    border-radius: 20px;
+    border-radius: var(--vplayer-radius);
   }
 
   @media (min-width: 641px) {
@@ -1010,10 +974,10 @@ html:has(#swup[data-page="top"]) {
   gap: 6px;
   max-width: 100%;
   height: 32px;
-  padding: 0 4px 0 10px;
+  padding: 0 2px 0 10px;
   color: #fff;
   background-color: var(--ink);
-  border-radius: 999px;
+  border-radius: var(--vplayer-radius);
   transition: background-color 1.2s ease;
 
   svg {
@@ -1071,14 +1035,10 @@ html:has(#swup[data-page="top"]) {
   color: inherit;
   background: none;
   border: 0;
-  border-radius: 6px;
+  // The pill's rounding, less the 2px the button sits in from its edge.
+  border-radius: calc(var(--vplayer-radius) - 2px);
   cursor: pointer;
   transition: background-color 0.2s ease;
-
-  // The last one follows the pill's own curve round.
-  &:last-child {
-    border-radius: 6px 14px 14px 6px;
-  }
 
   &:hover {
     background-color: rgb(255 255 255 / 0.14);
@@ -1112,7 +1072,7 @@ html:has(#swup[data-page="top"]) {
   min-width: 200px;
   min-height: 200px;
   border: var(--vplayer-border) solid var(--ink);
-  border-radius: 20px;
+  border-radius: var(--vplayer-radius);
   box-shadow: 0 20px 50px -10px color-mix(in srgb, var(--ink) 35%, transparent);
   overflow: hidden;
   transition:
@@ -1135,7 +1095,7 @@ html:has(#swup[data-page="top"]) {
     width: 100%;
     height: 100%;
     border: 0;
-    border-radius: 14px;
+    border-radius: var(--vplayer-radius);
   }
 }
 
@@ -1190,32 +1150,48 @@ html:has(#swup[data-page="top"]) {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
 }
 
-// What opens it: a row of a track listing — number, name, running time. The
-// whole row is the button.
+// What opens it: a row set like a link on the contact page (.contact__link) —
+// a chevron, then the name in the same small capitals with the same underline
+// growing from the left — and the running time at the row's far end, which
+// counts up while that track plays. The whole row is the button.
 .vplayer-open {
-  display: grid;
-  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
-  column-gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
   width: 100%;
-  padding: 0.2rem 0;
+  padding: 0.4rem 0;
   font: inherit;
-  // Tabular, so the numbers and the times line up down their columns.
-  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-small);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   text-align: left;
   color: inherit;
   background: none;
   border: 0;
   cursor: pointer;
 
+  // The same look for the row being pointed at and the row whose track is in
+  // the window (aria-current, set by playerWindow.js): that one keeps it.
   &:hover .vplayer-open__title,
-  &:focus-visible .vplayer-open__title {
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.18em;
+  &:focus-visible .vplayer-open__title,
+  &[aria-current="true"] .vplayer-open__title {
+    @include grown-underline-full;
+  }
+
+  // Pointed at, the chevron is a play mark: the triangle drawn over it in
+  // the markup — the chevron's two strokes, closed and filled — fades in.
+  .chevron__play {
+    fill: currentColor;
+    opacity: 0;
+    transition: opacity 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
+  &:hover .chevron__play,
+  &:focus-visible .chevron__play,
+  &[aria-current="true"] .chevron__play {
+    opacity: 1;
   }
 
   &:focus-visible {
@@ -1224,15 +1200,29 @@ html:has(#swup[data-page="top"]) {
   }
 }
 
-// The names on the colophon — the band's and the album's in the copy, and each
+// The name. Its underline is fitted to the letters, as the contact links' is:
+// measured at this size and weight, P and L start on a stem 0.083em in, and a
+// final E ends 0.126em short of the box (its own side bearing and the trailing
+// letter-spacing). The names that start or end otherwise say so in the markup.
+.vplayer-open__title {
+  --ink-left: 0.083em;
+  --ink-right: 0.126em;
+  --underline-drop: 0.108em;
+  @include grown-underline(left);
+}
+
+// The names on The Spark — the band's and the album's in the copy, and each
 // track's here — a step lighter than the copy's bold elsewhere (800).
-#colophon .page__body strong,
+#the-spark .page__body strong,
 .vplayer-open__title {
   font-weight: 700;
 }
 
+// Pushed to the row's end, and tabular so the times line up down the column.
 .vplayer-open__time {
-  text-align: right;
+  margin-left: auto;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 // --- Say hi -----------------------------------------------------------------
@@ -1274,9 +1264,9 @@ html:has(#swup[data-page="top"]) {
   // --fs-small in this weight: D, L and I all start on a stem, so one left
   // inset fits the three; LinkedIn and Instagram end on an N.
   span {
-    --ink-left: 0.079em;
-    --ink-right: 0.159em;
-    --underline-drop: 0.107em;
+    --ink-left: 0.07em;
+    --ink-right: 0.15em;
+    --underline-drop: 0.108em;
     @include grown-underline(left);
   }
 
@@ -1288,7 +1278,7 @@ html:has(#swup[data-page="top"]) {
 
 // The address ends on a T, which sits closer to its edge than an N.
 .contact__link[href^="mailto:"] span {
-  --ink-right: 0.099em;
+  --ink-right: 0.084em;
 }
 
 // --- Detail page (project / lab item) ---------------------------------------
@@ -2971,7 +2961,7 @@ vitosha-ridge {
   }
 }
 
-// The colophon line at the very bottom. Quietest tier on the page.
+// The credit line at the very bottom. Quietest tier on the page.
 .page__note {
   margin: 3rem 0 0;
   max-width: var(--measure);
@@ -3076,18 +3066,6 @@ vitosha-ridge {
   .site-header a,
   .site-header:has(a:hover) a:not(:hover) {
     opacity: var(--nav-rest);
-  }
-
-  .picker {
-    // Clear of the home indicator on a phone that has one. The fallback keeps
-    // the old distance everywhere else; env() needs viewport-fit=cover in the
-    // page's viewport meta to report anything but zero.
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-    gap: 0.5rem;
-  }
-
-  .picker__list {
-    gap: 0.3rem;
   }
 
   // The reading column. 42% of the screen is a column on a desktop and a
