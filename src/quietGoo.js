@@ -102,9 +102,9 @@ export const NAV_GOO = {
   name: 'goo-quiet-nav',
   ratio: 0.0625, // 1.1px at 17.6px
   duration: 350, // the header's 0.35s quieting and eye (main.scss)
-  // The header has no hover on a phone (main.scss, max-width 640px), and a tap
+  // The header has no hover on a phone (main.scss, max-width 520px), and a tap
   // leaves :hover stuck — which is what sync() reads. This is that breakpoint.
-  media: '(min-width: 641px)',
+  media: '(min-width: 521px)',
   // Below it the page you are on is the live one: the others stay quiet, as
   // the stylesheet keeps them at 0.6. main.js re-syncs on every navigation.
   rest: '.is-active',

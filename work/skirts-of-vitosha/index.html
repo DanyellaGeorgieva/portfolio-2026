@@ -65,21 +65,27 @@
         </p>
 
         <!-- The end screen on each of the three textiles, crossfading, with
-             controls under it. src/vitoshaTextiles.js stacks the images and
+             controls under it. --ground on each image is its own background
+             colour, sampled from it: the stylesheet paints it behind the
+             image, into the transparent corners the files were exported with,
+             so the stage can round them itself. src/vitoshaTextiles.js stacks the images and
              builds the controls; without it they simply stand in a column. -->
         <vitosha-textiles>
           <img
             src="./assets/1.webp"
+            style="--ground: #231228"
             width="2560"
             height="768"
             alt="The end screen on the first textile: a soft olive-and-lilac cloth risen into the Vitosha ridge on a deep plum ground, with Kamen Del, Bistrishko Branishte, Simeonovo and Boyana marked in pink" />
           <img
             src="./assets/2.webp"
+            style="--ground: #1e1f18"
             width="2560"
             height="768"
             alt="The end screen on the second textile: a crumpled rust-red cloth risen into the ridge on a near-black ground, with the same four places marked in pale yellow" />
           <img
             src="./assets/3.webp"
+            style="--ground: #0c1b23"
             width="2560"
             height="768"
             alt="The end screen on the third textile: an iridescent, heavily melted cloth in bronze and rainbow streaks on a dark navy ground, with the places marked in pale blue" />

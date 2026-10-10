@@ -12,11 +12,11 @@
 // from it would overrule the reader — and it is also the way to stop the
 // motion, which anything moving for longer than five seconds must offer. It
 // holds still while the pointer is over it or focus is inside it. A reader who
-// asks for reduced motion gets no autoplay and no sweep, only the switch.
+// asks for reduced motion gets no autoplay and no fade, only the switch.
 //
-// The change is a sweep rather than a fade: the next textile is drawn across
-// from the left behind a soft, slanted edge, like cloth pulled over the one
-// before. The edge is a mask; the choreography is in main.scss.
+// The change is a plain crossfade: the next textile fades in over the one
+// before it, and nothing travels across the picture. The timing is in
+// main.scss.
 //
 // Usage:
 //   <vitosha-textiles>
@@ -100,12 +100,15 @@ class VitoshaTextiles extends HTMLElement {
   show(i) {
     const next = (i + this.images.length) % this.images.length;
     if (next === this.index) return;
-    // The one going becomes the ground the next is swept over; any earlier
-    // leaver is let go, so a quick second click never stacks three.
+    // The one going stays underneath as the ground the next fades in over,
+    // and is let go when that fade is done; any earlier leaver is let go now,
+    // so a quick second click never stacks three.
     this.images.forEach((img) => img.classList.remove('is-leaving'));
     const leaving = this.images[this.index];
     leaving.classList.add('is-leaving');
-    leaving.addEventListener('animationend', () => leaving.classList.remove('is-leaving'), { once: true });
+    this.images[next].addEventListener('animationend', () => leaving.classList.remove('is-leaving'), {
+      once: true,
+    });
     // Only now does a change animate: the first textile is simply there.
     this.stage.classList.add('is-live');
     this.index = next;
