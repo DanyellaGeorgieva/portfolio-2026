@@ -365,9 +365,14 @@ export default class PlayerWindow {
     // Held under the pointer or while a button in it has the keyboard's focus,
     // and eased into and out of the hold rather than stopped dead. Where
     // motion is not wanted it is always held: it moves only when dragged.
+    // Not under a finger: a tap leaves :hover stuck on the window (.no-hover is
+    // main.js's mark for a device that cannot hover), and it would never move
+    // again.
+    const hovered =
+      !document.documentElement.classList.contains('no-hover') && this.el.matches(':hover');
     const held =
       this.reduced ||
-      this.el.matches(':hover') ||
+      hovered ||
       this.el.querySelector('.vplayer__button:focus-visible');
     this.driftSpeed += ((held ? 0 : 1) - this.driftSpeed) * Math.min(dt * 3, 1);
     this.driftTime += dt * this.driftSpeed;

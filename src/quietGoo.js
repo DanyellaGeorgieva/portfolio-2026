@@ -195,7 +195,13 @@ export default class QuietGoo {
         ? rest
           ? this.list.querySelector(`${item}${rest}`)
           : null
-        : this.list.querySelector(`${item}:hover, ${item}:focus-visible`);
+        : // No :hover where nothing can hover (.no-hover, set by main.js): a tap
+          // leaves it stuck on what was tapped.
+          this.list.querySelector(
+            document.documentElement.classList.contains('no-hover')
+              ? `${item}:focus-visible`
+              : `${item}:hover, ${item}:focus-visible`,
+          );
     const now = performance.now();
     let changed = false;
 
