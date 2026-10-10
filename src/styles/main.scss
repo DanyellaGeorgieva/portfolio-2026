@@ -9,21 +9,19 @@
 // :focus-visible half still applies everywhere.
 $hover: ":hover:where(html:not(.no-hover) *)";
 
-// The one face on the site, titles and body alike: Libre Franklin. A woff2
-// cut down from the variable TTF beside it (187kB, from
-// github.com/google/fonts, ofl/librefranklin). Kept: Latin, Latin-1 and Latin
-// Extended-A, the common punctuation (the em dash and curly quotes), the euro
-// and ™, the minus and ≈ that the case studies use, and basic Cyrillic, so
-// Bulgarian sets in it too. It has no arrows: those fall through to the
-// system's sans. The whole weight axis is kept — 100 to 900, the only axis the
-// face has. Rebuilt with fontTools:
+// The one face on the site, titles and body alike: Montserrat. A woff2 cut
+// down from the variable TTF beside it, which is 689kB. Kept: Latin, Latin-1
+// and Latin Extended-A, the common punctuation (the em dash and curly quotes),
+// the euro and ™, the four arrows, the minus and ≈ that the case studies use,
+// and basic Cyrillic, so Bulgarian sets in it too. The whole weight axis is
+// kept — it is the only axis the face has. Rebuilt with fontTools:
 //
-//   pyftsubset LibreFranklin-VariableFont_wght.ttf --flavor=woff2 \
-//     --layout-features='*' --output-file=LibreFranklin-Variable.woff2 \
-//     --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+2010-2027,U+2030-203A,U+20AC,U+2122,U+2212,U+2248,U+0400-045F"
+//   pyftsubset Montserrat-VariableFont_wght.ttf --flavor=woff2 \
+//     --layout-features='*' --output-file=Montserrat-Variable.woff2 \
+//     --unicodes="U+0020-007E,U+00A0-00FF,U+0100-017F,U+2010-2027,U+2030-203A,U+20AC,U+2122,U+2190-2193,U+2212,U+2248,U+0400-045F"
 @font-face {
-  font-family: "Libre Franklin";
-  src: url("../assets/fonts/LibreFranklin-Variable.woff2") format("woff2");
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-Variable.woff2") format("woff2");
   font-weight: 100 900;
   font-display: swap;
 }
@@ -32,8 +30,8 @@ $hover: ":hover:where(html:not(.no-hover) *)";
   // Every title on the site: a page's h1, the project names on Work, and the
   // next project at the foot of a case study. The same face as the body — the
   // titles are told apart by size and by weight: 800, the heaviest anything
-  // on the site is set (the face goes to 900), against the copy's 400.
-  --font-title: "Libre Franklin", sans-serif;
+  // on the site is set (the face goes to 900), against the copy's 500.
+  --font-title: "Montserrat", sans-serif;
 }
 
 // =============================================================================
@@ -103,12 +101,13 @@ $inks: (
 }
 
 body {
-  // Libre Franklin is the only face on the site; everything else inherits it
-  // from here. The generic fallback is for any glyph it has not got — the
-  // arrows — and with none those dropped to the browser's default serif.
-  font-family: "Libre Franklin", sans-serif;
-  // The copy's weight: everything that does not set its own takes this.
-  font-weight: 400;
+  // Montserrat is the only face on the site; everything else inherits it from
+  // here. The generic fallback is for any glyph it was not cut with; with none
+  // those dropped to the browser's default serif.
+  font-family: "Montserrat", sans-serif;
+  // The copy's weight, a step above regular: everything that does not set its
+  // own takes this.
+  font-weight: 500;
   // A stated default rather than the font's `normal`, so anything that sets
   // no leading of its own — labels, UI, the eyebrow — gets a known one.
   line-height: 1.5;
@@ -147,7 +146,7 @@ body {
 // changes the width around it.
 @mixin type-readout {
   font-size: var(--fs-small);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.5;
   font-variant-numeric: tabular-nums;
 }
@@ -623,13 +622,13 @@ body:has(#swup[data-page="detail"]) {
   // The eyebrow's line (its size at the body's 1.5 leading) and the 0.75rem
   // under it, then half the title's first line at its own leading — which is
   // the line box's centre — then down to the centre of the capitals.
-  // Libre Franklin's caps sit a touch high in their line: ascent 0.966,
-  // descent 0.246, cap height 0.742 (read from the font file), so their centre
-  // is (0.966 − 0.246 − 0.742) / 2 = −0.011em from the box's — above it. The
-  // eye reads against the letters.
+  // Montserrat's caps sit a touch low in their line: ascent 0.968, descent
+  // 0.251, cap height 0.7 (read from the font file), so their centre is (0.968
+  // − 0.251 − 0.7) / 2 = 0.0085em below the box's. The eye reads against the
+  // letters.
   --eye-center: calc(
     var(--column-top) + var(--fs-label) * 1.5 + 0.75rem +
-      var(--title-size) * (var(--lh-tight) / 2 - 0.011)
+      var(--title-size) * (var(--lh-tight) / 2 + 0.0085)
   );
   --eye-right: calc(50% + var(--panel-width) / 2 + var(--eye-gap));
   --eye-width: calc(
@@ -781,7 +780,7 @@ html:has(#swup[data-page="top"]) {
   // instead of staying at a constant number of characters.
   max-width: var(--measure);
   font-size: var(--fs-deck);
-  font-weight: 400;
+  font-weight: 500;
   // A deck is read as sentences, so it gets sentence leading.
   line-height: var(--lh-deck);
 }
@@ -797,7 +796,7 @@ html:has(#swup[data-page="top"]) {
   margin: 0 0 1.25rem;
   max-width: var(--measure);
   font-size: var(--fs-body);
-  font-weight: 400;
+  font-weight: 500;
   line-height: var(--lh-body);
 }
 
@@ -1270,13 +1269,13 @@ html:has(#swup[data-page="top"]) {
 }
 
 // The name. Its underline is fitted to the letters, as the contact links' is:
-// measured at this size and weight, P and L start on a stem 0.07em in, and a
-// final E ends 0.119em short of the box (its own side bearing and the trailing
+// measured at this size and weight, P and L start on a stem 0.083em in, and a
+// final E ends 0.126em short of the box (its own side bearing and the trailing
 // letter-spacing). The names that start or end otherwise say so in the markup.
 .vplayer-open__title {
-  --ink-left: 0.07em;
-  --ink-right: 0.119em;
-  --underline-drop: 0.079em;
+  --ink-left: 0.083em;
+  --ink-right: 0.126em;
+  --underline-drop: 0.108em;
   @include grown-underline(left);
 }
 
@@ -1342,9 +1341,9 @@ html:has(#swup[data-page="top"]) {
   // --fs-small in this weight: D, L and I all start on a stem, so one left
   // inset fits the three; LinkedIn and Instagram end on an N.
   span {
-    --ink-left: 0.061em;
-    --ink-right: 0.142em;
-    --underline-drop: 0.079em;
+    --ink-left: 0.07em;
+    --ink-right: 0.151em;
+    --underline-drop: 0.108em;
     @include grown-underline(left);
   }
 
@@ -1356,7 +1355,7 @@ html:has(#swup[data-page="top"]) {
 
 // The address ends on a T, which sits closer to its edge than an N.
 .contact__link[href^="mailto:"] span {
-  --ink-right: 0.112em;
+  --ink-right: 0.085em;
 }
 
 // --- Detail page (project / lab item) ---------------------------------------
@@ -1487,9 +1486,9 @@ body:has(#swup[data-page="detail"]) .page__eye {
   // runs toward where it goes. Measured at the label's size (12px): the B's
   // bearing on the left, the K's plus the trailing letter-spacing on the right.
   span {
-    --ink-left: 0.07em;
-    --ink-right: 0.11em;
-    --underline-drop: 0.092em;
+    --ink-left: 0.083em;
+    --ink-right: 0.07em;
+    --underline-drop: 0.04em;
     @include grown-underline(right);
   }
 
