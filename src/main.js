@@ -11,6 +11,17 @@ import './vitoshaRidge.js';
 import './vitoshaTextiles.js';
 import vitoshaWidgets from './vitoshaWidgets.js';
 
+// Whether there is anything to hover with. On a device whose main pointer
+// cannot hover — a phone, a tablet — the root is marked .no-hover, and every
+// hover effect stands down: the stylesheet's (see $hover in main.scss) and the
+// ones run from scripts, which ask canHover(). A tap leaves :hover stuck on
+// what was tapped, so there a hover effect is only ever a leftover.
+const noHover = matchMedia('(hover: none)');
+const markHover = () => document.documentElement.classList.toggle('no-hover', noHover.matches);
+markHover();
+noHover.addEventListener('change', markHover);
+const canHover = () => !noHover.matches;
+
 // The WebGL scene is created once, on the persistent canvas (outside #swup), so
 // it keeps running across page navigations — swup only swaps #swup.
 const canvas = document.getElementById('webgl');
@@ -229,9 +240,10 @@ if (nameSwap && !reducedMotion) {
     morphEnd = setTimeout(() => nameSwap.classList.remove('is-morphing'), NAME_MORPH);
   };
   const nameLink = nameSwap.closest('a');
-  ['pointerenter', 'pointerleave', 'focus', 'blur'].forEach((type) =>
-    nameLink.addEventListener(type, morph),
+  ['pointerenter', 'pointerleave'].forEach((type) =>
+    nameLink.addEventListener(type, () => canHover() && morph()),
   );
+  ['focus', 'blur'].forEach((type) => nameLink.addEventListener(type, morph));
 }
 
 // How the line goes on (data-tail on the name's link): under the name, a word
@@ -270,7 +282,7 @@ if (nameLink) {
       clearTimeout(meltEnd);
       tail.classList.remove('is-melting');
     };
-    nameLink.addEventListener('pointerenter', arrive);
+    nameLink.addEventListener('pointerenter', () => canHover() && arrive());
     nameLink.addEventListener('focus', arrive);
     nameLink.addEventListener('pointerleave', leave);
     nameLink.addEventListener('blur', leave);

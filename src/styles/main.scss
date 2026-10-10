@@ -1,5 +1,14 @@
 @use "reset";
 
+// Hover, wherever there is something to hover with. Every :hover in this file
+// is written #{$hover}: the state itself, on an element inside a root that is
+// not marked .no-hover — which main.js marks on a device whose pointer cannot
+// hover (a phone, a tablet), where a tap otherwise leaves :hover stuck on what
+// was tapped until the next tap elsewhere. :where() weighs nothing, so no
+// selector's specificity changes by it. Focus is not touched: a rule's
+// :focus-visible half still applies everywhere.
+$hover: ":hover:where(html:not(.no-hover) *)";
+
 // The one face on the site, titles and body alike: Libre Franklin. A woff2
 // cut down from the variable TTF beside it (187kB, from
 // github.com/google/fonts, ofl/librefranklin). Kept: Latin, Latin-1 and Latin
@@ -387,7 +396,7 @@ body:has(#swup[data-page="detail"]) {
   transition: opacity 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-.site-header a:hover,
+.site-header a#{$hover},
 .site-header a:focus-visible {
   .site-header__label {
     opacity: 0;
@@ -445,12 +454,12 @@ body:has(#swup[data-page="detail"]) {
 // phone (see the 520px block below).
 @media (min-width: 521px) {
   // The label stays: the rule above that fades it is for the links with an eye.
-  .site-header a.site-header__name:hover .site-header__label,
+  .site-header a.site-header__name#{$hover} .site-header__label,
   .site-header a.site-header__name:focus-visible .site-header__label {
     opacity: 1;
   }
 
-  .site-header__name:hover,
+  .site-header__name#{$hover},
   .site-header__name:focus-visible {
     .site-header__swap-from {
       opacity: 0;
@@ -515,7 +524,7 @@ body:has(#swup[data-page="detail"]) {
 }
 
 @media (min-width: 521px) {
-  .site-header__name:hover .site-header__tail span,
+  .site-header__name#{$hover} .site-header__tail span,
   .site-header__name:focus-visible .site-header__tail span {
     opacity: 1;
     filter: blur(0);
@@ -562,7 +571,7 @@ body:has(#swup[data-page="detail"]) {
 //
 // Focus is included so the same thing happens for anyone moving through the bar
 // by keyboard, who otherwise gets no equivalent of the effect at all.
-.site-header:has(a:hover) a:not(:hover),
+.site-header:has(a#{$hover}) a:not(#{$hover}),
 .site-header:has(a:focus-visible) a:not(:focus-visible) {
   // color: var(--ink-quiet);
   opacity: 0.6;
@@ -836,7 +845,7 @@ html:has(#swup[data-page="top"]) {
   flex-direction: column;
   text-decoration: none;
   transition: all 0.2s ease;
-   &:hover {
+   &#{$hover} {
     transform: scale(1.01);
     transition: all 0.35s ease;
    }
@@ -853,7 +862,7 @@ html:has(#swup[data-page="top"]) {
 //
 // Focus is included so the same thing happens for anyone moving through the
 // list by keyboard, who otherwise gets no equivalent of the effect at all.
-.projects:has(.project__link:hover) .project__link:not(:hover),
+.projects:has(.project__link#{$hover}) .project__link:not(#{$hover}),
 .projects:has(.project__link:focus-visible) .project__link:not(:focus-visible) {
   opacity: 0.7;
 }
@@ -914,12 +923,12 @@ html:has(#swup[data-page="top"]) {
 
 // The number gives way to the eye. Both fade rather than one being removed:
 // they are in the same place, so a cut would read as a flicker.
-.project__link:hover .project__head::before,
+.project__link#{$hover} .project__head::before,
 .project__link:focus-visible .project__head::before {
   opacity: 0;
 }
 
-.project__link:hover .project__view,
+.project__link#{$hover} .project__view,
 .project__link:focus-visible .project__view {
   opacity: 1;
 }
@@ -1078,7 +1087,7 @@ html:has(#swup[data-page="top"]) {
   cursor: pointer;
   transition: background-color 0.2s ease;
 
-  &:hover {
+  &#{$hover} {
     background-color: rgb(255 255 255 / 0.14);
   }
 
@@ -1110,6 +1119,13 @@ html:has(#swup[data-page="top"]) {
   // with a black bar down each side, between the picture and the frame.
   box-sizing: content-box;
   width: calc(100% - var(--vplayer-border) * 2);
+  // Then stepped down to a whole multiple of 16px, so the 16:9 height is a
+  // whole number of px too (a multiple of 9). On a screen where the column
+  // gave a width like 339px the video was 190.69px tall, and a phone's player
+  // cannot fill a fraction of a pixel: it showed as a dark hairline along the
+  // top and bottom of the picture. Up to 15px narrower than the column for it.
+  // (The line above is for a browser without round().)
+  width: round(down, 100% - var(--vplayer-border) * 2, 16px);
   aspect-ratio: 16 / 9;
   min-width: 200px;
   min-height: 200px;
@@ -1133,11 +1149,17 @@ html:has(#swup[data-page="top"]) {
 }
 
 .vplayer__video {
+  position: relative;
   // The ink, not black: what shows in the corners, between the iframe's
   // rounding and the border's, is then more of the border.
   background: var(--ink);
 
+  // Pinned to the box's four sides rather than given 100% of its height: the
+  // box's height comes from its aspect-ratio, and a percentage of that is not
+  // something every browser will resolve.
   iframe {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
@@ -1221,7 +1243,7 @@ html:has(#swup[data-page="top"]) {
 
   // The same look for the row being pointed at and the row whose track is in
   // the window (aria-current, set by playerWindow.js): that one keeps it.
-  &:hover .vplayer-open__title,
+  &#{$hover} .vplayer-open__title,
   &:focus-visible .vplayer-open__title,
   &[aria-current="true"] .vplayer-open__title {
     @include grown-underline-full;
@@ -1235,7 +1257,7 @@ html:has(#swup[data-page="top"]) {
     transition: opacity 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  &:hover .chevron__play,
+  &#{$hover} .chevron__play,
   &:focus-visible .chevron__play,
   &[aria-current="true"] .chevron__play {
     opacity: 1;
@@ -1326,7 +1348,7 @@ html:has(#swup[data-page="top"]) {
     @include grown-underline(left);
   }
 
-  &:hover span,
+  &#{$hover} span,
   &:focus-visible span {
     @include grown-underline-full;
   }
@@ -1471,7 +1493,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
     @include grown-underline(right);
   }
 
-  &:hover span,
+  &#{$hover} span,
   &:focus-visible span {
     @include grown-underline-full;
   }
@@ -1556,7 +1578,7 @@ body:has(#swup[data-page="detail"]) .page__eye {
   background-size: 0% 2px;
   transition: background-size 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  &:hover,
+  &#{$hover},
   &:focus-visible {
     background-size: 100% 2px;
   }
@@ -1878,7 +1900,7 @@ ndc-micro {
     padding: 6px 14px;
     cursor: pointer;
 
-    &:hover {
+    &#{$hover} {
       border-color: var(--ink);
     }
   }
@@ -3026,7 +3048,7 @@ vitosha-ridge {
   text-underline-offset: 0.18em;
   text-decoration-thickness: 1px;
 
-  &:hover,
+  &#{$hover},
   &:focus-visible {
     opacity: 1;
     text-decoration-thickness: 2px;
@@ -3106,7 +3128,7 @@ vitosha-ridge {
   // name stayed swapped for an eye and the other links stayed quiet after
   // every navigation. Each rule puts back what its desktop one changes, at the
   // same specificity, so being later is what wins.
-  .site-header a:hover {
+  .site-header a#{$hover} {
     .site-header__label {
       opacity: 1;
     }
@@ -3131,7 +3153,7 @@ vitosha-ridge {
   }
 
   .site-header a,
-  .site-header:has(a:hover) a:not(:hover) {
+  .site-header:has(a#{$hover}) a:not(#{$hover}) {
     opacity: var(--nav-rest);
   }
 
