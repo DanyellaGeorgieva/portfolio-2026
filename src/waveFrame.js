@@ -202,3 +202,84 @@ export default class WaveFrame {
     this.path.removeAttribute('d');
   }
 }
+
+// --- The bar on a phone -----------------------------------------------------
+// On a phone there is no frame round the screen (main.scss, Small screens):
+// what is left of it is the bar across the top — the header, or a case
+// study's Back bar — and that keeps the frame's edge. The bar's ink is drawn
+// here as one <path>: its box, with the bottom side swelling the way the
+// frame's inner edge does, read from the same noise by position.
+//
+// The svg is put inside the bar, behind what is in it, and sized by the
+// stylesheet (.wave-bar); it is drawn again whenever the bar changes size.
+// The root is marked .has-wave-bar while any bar is drawn this way, which is
+// when the stylesheet takes the bars' own flat background away.
+
+// The frame's own swell is 5px over a 190px wavelength, which along a 390px
+// bar came out as two shallow swells that read as a bar cut slightly crooked.
+// So the bar's is deeper and shorter, to read as a wave at that width — and
+// it hangs: the edge strays further below the bar's box than above it, where
+// the words are.
+const BAR_SWELL = 8; // the edge's reach, px: this far either side of its middle
+const BAR_HANG = 0.4; // the middle sits this share of the reach below the box
+const BAR_WAVELENGTH = 105; // px for one swell along the bar
+const BAR_SLICE = 2; // which layer of the noise: not the frame's
+let waveBars = 0;
+
+export class WaveBar {
+  /**
+   * @param {HTMLElement} bar the fixed bar to give the edge to
+   */
+  constructor(bar) {
+    this.bar = bar;
+    this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.svg.setAttribute('class', 'wave-bar');
+    this.svg.setAttribute('aria-hidden', 'true');
+    this.svg.setAttribute('focusable', 'false');
+    this.path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    this.path.setAttribute('fill', 'currentColor');
+    this.svg.append(this.path);
+    bar.prepend(this.svg);
+
+    this.observer = new ResizeObserver(() => this.draw());
+    this.observer.observe(bar);
+    this.draw();
+    if (++waveBars === 1) document.documentElement.classList.add('has-wave-bar');
+  }
+
+  draw() {
+    const w = this.bar.offsetWidth;
+    const h = this.bar.offsetHeight;
+    // Not a box at this width (a case study's bar on a desktop): nothing to draw.
+    if (!w || !h) return;
+
+    // The bottom side, right to left, a point every 8px: closer than the
+    // frame's, for the shorter swell.
+    const count = Math.max(2, Math.round(w / 8));
+    const f = (v) => v.toFixed(1);
+    const at = (i) => {
+      const x = w - (i / count) * w;
+      // Read along the bar at the bar's own, shorter wavelength.
+      const along = (x * WAVE.wavelength) / BAR_WAVELENGTH;
+      return [x, h + (BAR_HANG + swell(along, h, BAR_SLICE)) * BAR_SWELL];
+    };
+    // The same smooth line as the frame's, open at both ends: each point is
+    // the control point of a curve between the midpoints either side of it.
+    let [px, py] = at(0);
+    let d = `M-1-1H${w + 1}V${f(py)}L${f(px)} ${f(py)}`;
+    for (let i = 1; i < count; i++) {
+      const [x, y] = at(i);
+      const [nx, ny] = at(i + 1);
+      d += `Q${f(x)} ${f(y)} ${f((x + nx) / 2)} ${f((y + ny) / 2)}`;
+      [px, py] = [x, y];
+    }
+    const [ex, ey] = at(count);
+    this.path.setAttribute('d', `${d}L${f(ex)} ${f(ey)}H-1Z`);
+  }
+
+  destroy() {
+    this.observer.disconnect();
+    this.svg.remove();
+    if (--waveBars === 0) document.documentElement.classList.remove('has-wave-bar');
+  }
+}
