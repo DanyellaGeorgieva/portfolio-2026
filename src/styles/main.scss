@@ -257,6 +257,23 @@ body:has(#swup[data-page="detail"]) {
   }
 }
 
+// The ink of a phone's top bar, drawn by waveFrame.js (WaveBar) with the
+// frame's wavy edge along its bottom. Inside the bar, behind what is in it,
+// and one unit to a CSS px (no viewBox). Shown only where the bar is a bar:
+// see Small screens.
+.wave-bar {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--ink);
+  pointer-events: none;
+  transition: color 1.2s ease;
+}
+
 // Holds the SVG filter definitions from frame.html. It must stay in the
 // document — display: none would take the <defs> with it — but occupy nothing
 // and catch nothing.
@@ -1079,8 +1096,12 @@ html:has(#swup[data-page="top"]) {
 // The video's frame: a border of the ink round it, and under it a soft shadow
 // of the same ink, the palette's darkest colour, at about a third strength.
 // Nothing is positioned over the video, and nothing may be: only the rounded
-// clip and the border round it. min-height is YouTube's 200px, for the screens
-// where the column is too narrow for 16:9 to reach it.
+// clip and the border round it. min-height is YouTube's 200px, for a column
+// too narrow for 16:9 to reach it — but not on a phone, where holding it
+// there made the box taller than the picture and YouTube filled the rest
+// with black bars. There the box is 16:9 whatever that comes to, inside the
+// page's own margins like everything else: 189px on a 390px screen, 172 on
+// a 360.
 .vplayer__video,
 .vplayer__fallback {
   // content-box, and the width less the border: the 16:9 has to be the
@@ -1103,6 +1124,11 @@ html:has(#swup[data-page="top"]) {
 
   &[hidden] {
     display: none;
+  }
+
+  @media (max-width: 520px) {
+    min-width: 0;
+    min-height: 0;
   }
 }
 
@@ -1230,6 +1256,15 @@ html:has(#swup[data-page="top"]) {
   --ink-right: 0.119em;
   --underline-drop: 0.079em;
   @include grown-underline(left);
+}
+
+// Room under the visualizer's window where it sits in the flow, at the end of
+// the page (below 1440px: above that it floats). Without it the window's
+// bottom edge was the page's, flush against the screen's or the frame's.
+@media (max-width: 1439px) {
+  #the-spark {
+    padding-bottom: 4rem;
+  }
 }
 
 // The names on The Spark — the band's and the album's in the copy, and each
@@ -3015,14 +3050,34 @@ vitosha-ridge {
     // The margin everything on a page hangs off. 36px is a desktop gutter; on a
     // phone it is a tenth of the screen.
     --content-left: 20px;
+    // No frame on a phone (below), so nothing steps in for one.
+    --frame: 0px;
+  }
+
+  // The frame round the screen is gone on a phone: 16px a side is a twelfth of
+  // a 390px screen, and the field runs to the glass instead. Both drawings of
+  // it — the wavy one and the plain one that stands in before the script runs.
+  .screen-frame,
+  body::after {
+    display: none;
+  }
+
+  // What is left of the frame is the bar's bottom edge, wavy like the frame's:
+  // the bar's ink is the drawing (.wave-bar), and its own flat background
+  // stands down once that is there — never before, or the white words would
+  // have nothing behind them.
+  .site-header .wave-bar {
+    display: block;
+  }
+
+  .has-wave-bar .site-header {
+    background-color: transparent;
   }
 
   .site-header {
-    // Clear of the frame at the top and the sides: it is drawn over the bar,
-    // 16px of it and a swell of up to 5 more, and at 12px all round the name's
-    // first letter and the nav's last were under it, and the tops of the
-    // capitals under its crests.
-    padding: calc(var(--frame) + 2px) calc(var(--frame) + 6px) 12px;
+    // 12px at the top and 20px at the sides, where the copy below starts.
+    // (There is no frame here to clear: see above.)
+    padding: 12px var(--content-left);
     // A step under --fs-small, which in this face no longer fits a 390px
     // screen on one line with the bar clear of the frame — and a little less
     // again below 370px, so a 360px screen still holds one line.
@@ -3111,6 +3166,18 @@ vitosha-ridge {
     --content-left: 20px;
   }
 
+  // A case study is in its phone layout from here, so its frame goes from
+  // here too, as the shell's does at 520px: between the two the copy sat 20px
+  // in with the frame's 16px and its swell right against it.
+  :root:has(#swup[data-page="detail"]) {
+    --frame: 0px;
+
+    .screen-frame,
+    body::after {
+      display: none;
+    }
+  }
+
   // --- A case study ---------------------------------------------------------
   // Same move as the work list: the reading column is a proportion of a desktop
   // window, and on a phone the screen is already the column. Measured at 390px
@@ -3121,9 +3188,8 @@ vitosha-ridge {
     margin-inline: var(--content-left);
     // Clears the bar below, then the same 2rem the title had under the old
     // in-flow Back. The bar's height is its line (the 1.5 it inherits) plus
-    // its padding — the frame and 2px above, 12px below — so it is stated
-    // rather than measured.
-    padding: calc(1.5 * var(--fs-small) + var(--frame) + 14px + 2rem) 0 6rem;
+    // its padding, so it is stated rather than measured.
+    padding: calc(1.5 * var(--fs-small) + 24px + 2rem) 0 6rem;
   }
 
   // The case study's bar: the mobile header's ink, white and padding, so the
@@ -3147,8 +3213,17 @@ vitosha-ridge {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    // Clear of the frame at the top and the sides, as the header's bar is.
-    padding: calc(var(--frame) + 2px) calc(var(--frame) + 6px) 12px;
+    // 12px and the copy's margin, as the header's bar has.
+    padding: 12px var(--content-left);
+
+    // The same wavy bottom edge as the header's bar, drawn the same way.
+    .wave-bar {
+      display: block;
+    }
+
+    .has-wave-bar & {
+      background-color: transparent;
+    }
     background-color: var(--ink);
     color: #fff;
     transition: background-color 1.2s ease;

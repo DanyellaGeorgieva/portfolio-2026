@@ -4,7 +4,7 @@ import SwupA11yPlugin from '@swup/a11y-plugin';
 import Scene from './webgl/Scene.js';
 import GooeyText from './gooeyText.js';
 import QuietGoo, { PROJECT_GOO, NAV_GOO } from './quietGoo.js';
-import WaveFrame from './waveFrame.js';
+import WaveFrame, { WaveBar } from './waveFrame.js';
 import { paletteNames } from './webgl/palettes.js';
 // Define <vitosha-ridge> and <vitosha-textiles>, used by the Vitosha case study.
 import './vitoshaRidge.js';
@@ -30,6 +30,10 @@ if (import.meta.env.DEV) window.__scene = scene;
 // The frame round the screen. In the shell, like the canvas, so it is built
 // once and outlives page navigations. It is drawn in its shape and stays there.
 const waveFrame = new WaveFrame(document.querySelector('.screen-frame'));
+// On a phone the frame is gone and the bar across the top keeps its edge: the
+// header's here, once, and a case study's Back bar per page (setupPage).
+const headerBar = new WaveBar(document.querySelector('.site-header'));
+let pageBar = null;
 
 // Vite replaces this module on edit without reloading the page, which would
 // leave the previous Scene's render loop running: two Scenes then draw to the
@@ -40,6 +44,8 @@ if (import.meta.hot) {
     scene.dispose();
     // Two of these would both write the one path.
     waveFrame.destroy();
+    headerBar.destroy();
+    pageBar?.destroy();
     // swup has to go too. It binds a document-level click handler, so a second
     // instance from a hot reload leaves two routers intercepting the same link:
     // the first navigation appears to work and every one after it is swallowed.
@@ -308,6 +314,23 @@ function advancePalette() {
 // Scene's defaults come back on any top-level page.
 const PAGE_SCALE = 0.9; // vs 3.6 default — a 4× magnification
 const PAGE_SPEED = 0.05; // vs 0.18 default — barely moving
+const TOP_SCALE = 3.6; // Scene's own default, restated to be scaled below
+
+// On a phone the field is seen a little further off. The field is measured in
+// screen heights, so an upright phone shows a strip of it about half as wide
+// as it is tall: under two cells across at the default, which reads as a few
+// big blobs rather than a field. A higher uScale packs more of it in — 1.35×
+// is about two and a half cells across — on case studies in proportion.
+// The width is the shell's phone breakpoint (main.scss, Small screens).
+const PHONE_ZOOM_OUT = 1.35;
+const phoneField = matchMedia('(max-width: 520px)');
+const fieldScale = (isDetail) =>
+  (isDetail ? PAGE_SCALE : TOP_SCALE) * (phoneField.matches ? PHONE_ZOOM_OUT : 1);
+// A window dragged across the breakpoint, or a phone turned on its side.
+phoneField.addEventListener('change', () => {
+  const main = document.querySelector('#swup');
+  if (main) scene.setScale(fieldScale(main.dataset.page === 'detail'));
+});
 
 // The pinned "back" on a detail page. Null on the top-level pages, which have
 // none. Kept because Esc navigates to wherever it points.
@@ -343,6 +366,10 @@ function setupPage() {
   gooeyText = null;
   quietGoo?.destroy();
   quietGoo = null;
+  // The last page's Back bar went with the page; this page's, if it has one.
+  pageBar?.destroy();
+  const bar = main.querySelector('.page__bar');
+  pageBar = bar ? new WaveBar(bar) : null;
   // The visualizer's window lives in The Spark's own section, so it leaves
   // with the page — and takes the player, and its sound, with it.
   playerWindow?.destroy();
@@ -398,12 +425,12 @@ function setupPage() {
     // Fresh page, fresh scroll position — and the hatch starts closed, so the
     // case study opens on its title and nothing else.
     backLink = main.querySelector('.back');
-    scene.setScale(PAGE_SCALE, field);
+    scene.setScale(fieldScale(true), field);
     scene.setSpeed(PAGE_SPEED, field);
   } else {
     backLink = null;
-    // Back to the default field.
-    scene.setScale(undefined, field);
+    // Back to the default field (further off on a phone: see fieldScale).
+    scene.setScale(fieldScale(false), field);
     scene.setSpeed(undefined, field);
   }
 
@@ -518,6 +545,7 @@ document.addEventListener('keydown', (event) => {
 // nav rearranges this with it. Home and contact are the two ends: there is
 // nowhere further, and a push past them does nothing. Case studies are left
 // alone — they are long reads, and the end of one is not a request to leave.
+// So is every page in the phone layout: see phoneLayout below.
 //
 // One gesture has to mean exactly one step, and that can't be done on a timer.
 // A trackpad flick keeps emitting wheel events from momentum long after the
@@ -597,6 +625,13 @@ swup.hooks.on('visit:abort', () => (visiting = false));
 
 const onTopPage = () => document.querySelector('#swup')?.dataset.page === 'top';
 
+// Not on a phone. There a swipe is how the page is read, and one that ran a
+// little past the end kept turning into a change of page; the links in the
+// bar are how pages change. The width is the shell's own phone breakpoint
+// (main.scss, Small screens), so it is the layout that decides, not the
+// device: a narrow desktop window is a phone here too.
+const phoneLayout = matchMedia('(max-width: 520px)');
+
 /**
  * Whether the page is at the edge a push in `direction` would go past: the
  * bottom for 1, the top for -1. A pixel of slack either way: on a zoomed or
@@ -614,7 +649,7 @@ function atEdge(direction) {
  * there was nowhere to go.
  */
 function step(direction) {
-  if (visiting) return false;
+  if (visiting || phoneLayout.matches) return false;
   const current = navLinks.findIndex((a) => a.classList.contains('is-active'));
   const target = navLinks[current + direction];
   if (current < 0 || !target) return false;
