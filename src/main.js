@@ -331,10 +331,12 @@ const TOP_SCALE = 3.6; // Scene's own default, restated to be scaled below
 // On a phone the field is seen a little further off. The field is measured in
 // screen heights, so an upright phone shows a strip of it about half as wide
 // as it is tall: under two cells across at the default, which reads as a few
-// big blobs rather than a field. A higher uScale packs more of it in — 1.35×
-// is about two and a half cells across — on case studies in proportion.
+// big blobs rather than a field. A higher uScale packs more of it in — 1.8×
+// is a little over three cells across, about what a desktop screen shows
+// down its height — on case studies in proportion. (1.35× was tried first
+// and was too little to notice on a real phone.)
 // The width is the shell's phone breakpoint (main.scss, Small screens).
-const PHONE_ZOOM_OUT = 1.35;
+const PHONE_ZOOM_OUT = 1.8;
 const phoneField = matchMedia('(max-width: 520px)');
 const fieldScale = (isDetail) =>
   (isDetail ? PAGE_SCALE : TOP_SCALE) * (phoneField.matches ? PHONE_ZOOM_OUT : 1);
